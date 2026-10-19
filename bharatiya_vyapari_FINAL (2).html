@@ -4811,6 +4811,22 @@
                         <li><strong>कोई पक्षपात नहीं:</strong> बाएं पैनल में हर पल लाइव दिखता है कि कौन "डेंजर ज़ोन" में है, और यदि सबसे नीचे दो खिलाड़ियों की संपत्ति बराबर (Tie) है, तो किसी को बाहर नहीं किया जाता!</li>
                     </ul>
                 </div>
+                <div class="p-3.5 rounded-2xl bg-indigo-950/50 border border-indigo-400/50">
+                    <h4 class="font-bold text-indigo-300 mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-life-ring"></i> 7. एक बार का RBI बचाव ऋण और 3-संकट सुनवाई</h4>
+                    <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-amber-100/90">
+                        <li>हर खिलाड़ी पूरे खेल में एक बार ₹2,000 बचाव ऋण ले सकता है; कुल ₹2,200 देयता दर्ज होती है और इसे कुल संपत्ति से घटाया जाता है।</li>
+                        <li>START पार करते समय उपलब्ध नकदी से ऋण की किस्त चुकती है; भुगतान खाता-बही में दिखता है। AI भी यही नियम उपयोग करता है।</li>
+                        <li>तीन बार ऋण-संकट में जाने पर अगले RBI ऑडिट में ₹500 अतिरिक्त सुनवाई शुल्क लगता है। इससे अपने-आप निष्कासन नहीं होता; शुल्क न चुका पाने पर सामान्य ऑडिट/दिवालियापन नियम लागू होते हैं।</li>
+                        <li>दिवालियापन चुनने से पहले पात्र घर बेचने और शहर गिरवी रखने का प्रयास करना आवश्यक है।</li>
+                    </ul>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-rose-950/50 border border-rose-400/50">
+                    <h4 class="font-bold text-rose-300 mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-chart-line"></i> 8. मार्केट क्रैश और Last Tycoon Showdown</h4>
+                    <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-amber-100/90">
+                        <li>हर नए लाइव इवेंट की तरह Market Crash भी स्पष्ट शहर-सूची के साथ घोषित होता है; सूचीबद्ध छह शहरों का किराया उस इवेंट में 50% घटता है।</li>
+                        <li>केवल दो खिलाड़ी बचने पर अंतिम मुकाबला घोषित होता है और सभी शहर/सेवा किराए पर 1.25x गुणक लागू होता है। यह दोनों खिलाड़ियों पर समान रूप से लागू होता है।</li>
+                    </ul>
+                </div>
             </div>
 
             <!-- लैपटॉप कीबोर्ड शॉर्टकट और फुल-स्क्रीन नियंत्रण गाइड -->
@@ -4954,10 +4970,18 @@
                 </div>
             </div>
 
+            <div id="debtStrikeNotice" class="mb-3 p-2.5 rounded-xl bg-amber-950/60 border border-amber-400/40 text-[11px] text-amber-100" aria-live="polite">
+                वित्तीय संकट के दौरान पहले पात्र संपत्तियां बेचें या गिरवी रखें।
+            </div>
             <div id="debtAssetsList" class="space-y-2 max-h-60 overflow-y-auto pr-1 mb-4">
                 <!-- JS द्वारा विक्रय योग्य घर और बंधक योग्य शहर दिखाए जाएंगे -->
             </div>
 
+            <div class="mb-3 flex justify-end">
+                <button id="businessRescueBtn" type="button" onclick="useBusinessRescue()" class="hidden px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-400 to-purple-600 hover:from-indigo-300 hover:to-purple-500 text-white font-black text-xs shadow-lg border border-indigo-200 transition">
+                    एक बार RBI बचाव ऋण लें (+₹2,000; वापसी ₹2,200)
+                </button>
+            </div>
             <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gold-500/20">
                 <button id="declareBankruptcyBtn" onclick="confirmBankruptcy()" class="px-4 py-2.5 rounded-xl bg-rose-950 hover:bg-rose-900 border border-rose-500 text-rose-200 font-bold text-xs transition">
                     दिवालियापन घोषित करें (संपत्ति सौंपें)
@@ -5044,7 +5068,7 @@
 
             <!-- सभी खिलाड़ियों का नेट वर्थ ब्रेकडाउन -->
             <div class="mb-4">
-                <h3 class="text-xs font-extrabold text-gold-300 mb-2">खिलाड़ीवार कुल संपत्ति विवरण (नकद + शहर मूल्य + घर/होटल - बंधक)</h3>
+                <h3 class="text-xs font-extrabold text-gold-300 mb-2">खिलाड़ीवार कुल संपत्ति (नकद + शहर + निर्माण - बंधक - बचाव ऋण)</h3>
                 <div id="ledgerNetWorthGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs"></div>
             </div>
 
@@ -5512,6 +5536,15 @@
                 rentMultiplierFn: (space) => (space.type === 'utility' || [24, 27, 32].includes(space.id)) ? 2.0 : 1
             },
             {
+                id: 'MARKET_CRASH',
+                name: '📉 राष्ट्रीय बाज़ार में गिरावट!',
+                icon: '📉',
+                desc: 'चुनिंदा शहरों (जयपुर, लखनऊ, पुणे, भोपाल, पटना और कोच्चि) का किराया इस इवेंट के दौरान 50% घटेगा।',
+                startBonus: 1500,
+                crashIds: [9, 16, 24, 28, 31, 36],
+                rentMultiplierFn: (space) => [9, 16, 24, 28, 31, 36].includes(space.id) ? 0.5 : 1
+            },
+            {
                 id: 'RBI_SUBSIDY',
                 name: '🏦 रिज़र्व बैंक निर्माण सब्सिडी उत्सव!',
                 icon: '🏦',
@@ -5563,6 +5596,7 @@
             activeWorldEvent: null,
             lastEventRoundTriggered: 0,
             lastEliminationAuditRound: 0,
+            finalShowdownAnnounced: false,
             inflationMultiplier: 1.0,
             aiTimer: null,
             activeTimers: []
@@ -5813,6 +5847,7 @@
             gameState.activeWorldEvent = WORLD_EVENTS_POOL[0]; // पहले राउंड से ही शुभ दीपावली या प्रारंभिक इवेंट का रोमांच
             gameState.lastEventRoundTriggered = 1;
             gameState.lastEliminationAuditRound = 0;
+            gameState.finalShowdownAnnounced = false;
             gameState.inflationMultiplier = 1.0;
 
             gameState.players = [];
@@ -5832,6 +5867,10 @@
                     jailTurns: 0,
                     bankrupt: false,
                     rentShieldActive: false,
+                    rescueUsed: false,
+                    rescueLoanBalance: 0,
+                    financialStrikes: 0,
+                    rbiHearingPending: false,
                     powerCards: dealInitialPowerCards(),
                     rollCount: 0,
                     rollSumTotal: 0,
@@ -6084,12 +6123,14 @@
             // चरण 1: सभी सक्रिय सेठों पर समान रूप से पूर्व-निर्धारित RBI व्यापार लाइसेंस शुल्क लागू करें
             aliveAtStart.forEach(p => {
                 const nwBefore = getNetWorthBreakdown(p.id);
+                const hearingSurcharge = p.rbiHearingPending ? 500 : 0;
+                const playerLicenseFee = licenseFee + hearingSurcharge;
                 let AutoLiquidated = 0;
 
                 // यदि नकदी लाइसेंस शुल्क से कम है, तो निष्पक्ष रूप से स्वचालित तरलीकरण (Auto-Liquidation: पहले घर 50%, फिर शहर बंधक 50%) करें
-                if (p.cash < licenseFee) {
+                if (p.cash < playerLicenseFee) {
                     let guard = 0;
-                    while (p.cash < licenseFee && guard < 60) {
+                    while (p.cash < playerLicenseFee && guard < 60) {
                         guard++;
                         const sellableId = Object.keys(gameState.ownership)
                             .map(Number)
@@ -6110,7 +6151,7 @@
                     }
 
                     guard = 0;
-                    while (p.cash < licenseFee && guard < 40) {
+                    while (p.cash < playerLicenseFee && guard < 40) {
                         guard++;
                         const mortId = Object.keys(gameState.ownership)
                             .map(Number)
@@ -6129,19 +6170,24 @@
                     }
                 }
 
-                if (p.cash >= licenseFee) {
+                if (p.cash >= playerLicenseFee) {
                     const beforeCash = p.cash;
-                    p.cash -= licenseFee;
+                    p.cash -= playerLicenseFee;
                     gameState.jackpotPot += Math.round(licenseFee * 0.5);
-                    recordLedgerEntry(p.id, `RBI राउंड ${completedRound} लाइसेंस नवीनीकरण शुल्क`, -licenseFee, beforeCash, p.cash, 'भारतीय रिज़र्व बैंक');
+                    recordLedgerEntry(p.id, `RBI राउंड ${completedRound} लाइसेंस नवीनीकरण शुल्क${hearingSurcharge ? ' + सुनवाई शुल्क' : ''}`, -playerLicenseFee, beforeCash, p.cash, 'भारतीय रिज़र्व बैंक');
                     reportRows.push({
                         player: p,
                         nwBefore: nwBefore.total,
                         autoLiquidated: AutoLiquidated,
-                        paidFee: licenseFee,
+                        paidFee: playerLicenseFee,
+                        hearingSurcharge,
                         nwAfter: calculateNetWorth(p.id),
                         status: 'SURVIVED_FEE'
                     });
+                    if (p.rbiHearingPending) {
+                        p.rbiHearingPending = false;
+                        p.financialStrikes = 0;
+                    }
                 } else {
                     // पूरी संपत्ति बेचने/गिरवी रखने के बाद भी लाइसेंस शुल्क न चुका पाने पर नियमबद्ध दिवालियापन
                     Object.keys(gameState.ownership).forEach(id => {
@@ -6160,6 +6206,7 @@
                         nwBefore: nwBefore.total,
                         autoLiquidated: AutoLiquidated,
                         paidFee: 0,
+                        hearingSurcharge,
                         nwAfter: 0,
                         status: 'ELIMINATED_FEE_DEFAULT'
                     });
@@ -6245,7 +6292,7 @@
                                     </div>
                                     <div class="text-[10.5px] text-amber-200/75">
                                         ऑडिट पूर्व संपत्ति: ${formatRupee(row.nwBefore)} • लाइसेंस शुल्क: -${formatRupee(row.paidFee)}
-                                        ${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
+                                        ${row.hearingSurcharge > 0 ? ` • RBI सुनवाई शुल्क: -${formatRupee(row.hearingSurcharge)}` : ''}${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -7339,6 +7386,14 @@
                     } else {
                         addLog(`${player.name} ने प्रारंभ (START) पार किया (उच्च मुद्रास्फीति चरण में RBI वेतन सब्सिडी ₹0 है)।`, 'amber');
                     }
+                    if ((Number(player.rescueLoanBalance) || 0) > 0 && player.cash > 0) {
+                        const repayment = Math.min(player.cash, player.rescueLoanBalance);
+                        const beforeRepayment = player.cash;
+                        player.cash -= repayment;
+                        player.rescueLoanBalance -= repayment;
+                        recordLedgerEntry(player.id, 'RBI बचाव ऋण की START किस्त', -repayment, beforeRepayment, player.cash, 'भारतीय रिज़र्व बैंक');
+                        addLog(`🏦 ${player.name} ने START पर बचाव ऋण की ${formatRupee(repayment)} किस्त चुकाई; शेष बकाया ${formatRupee(player.rescueLoanBalance)}।`, 'amber');
+                    }
                 }
 
                 renderBoardTokensAndOwnership();
@@ -7532,7 +7587,8 @@
                 ? gameState.activeWorldEvent.rentMultiplierFn(space)
                 : 1;
             const inflation = setupConfig.progressiveElimination ? (gameState.inflationMultiplier || 1) : 1;
-            return Math.max(10, Math.round(baseRent * mult * inflation));
+            const finalShowdownMultiplier = gameState.players.filter(p => !p.bankrupt).length === 2 ? 1.25 : 1;
+            return Math.max(10, Math.round(baseRent * mult * inflation * finalShowdownMultiplier));
         }
 
         function getEffectiveHouseCost(space) {
@@ -8106,6 +8162,13 @@
             }
 
             // नकदी कम होने पर: ऋण संकट समाधान चरण (Debt Settlement Phase)
+            player.financialStrikes = Math.min(3, (Number(player.financialStrikes) || 0) + 1);
+            if (setupConfig.progressiveElimination && player.financialStrikes >= 3 && !player.rbiHearingPending) {
+                player.financialStrikes = 0;
+                player.rbiHearingPending = true;
+                addLog(`⚖️ RBI वित्तीय सुनवाई: <strong>${player.name}</strong> को 3 वित्तीय संकट हुए। अगले RBI ऑडिट में पारदर्शी ₹500 सुनवाई शुल्क लगेगा; यह अपने-आप निष्कासन नहीं है।`, 'amber');
+                showCenterScreenBanner('⚖️', 'RBI वित्तीय सुनवाई', `${player.name} — 3 वित्तीय संकट`, 'अगले RBI ऑडिट में ₹500 अतिरिक्त सुनवाई शुल्क; स्वचालित निष्कासन नहीं।');
+            }
             gameState.phase = 'DEBT_SETTLEMENT';
             gameState.pendingDebt = {
                 playerId: player.id,
@@ -8177,6 +8240,18 @@
             document.getElementById('debtAmountDue').textContent = formatRupee(debt.amount);
             const shortfall = Math.max(0, debt.amount - player.cash);
             document.getElementById('debtShortfall').textContent = shortfall > 0 ? formatRupee(shortfall) : '₹0 (पर्याप्त!)';
+            const strikeNotice = document.getElementById('debtStrikeNotice');
+            if (strikeNotice) {
+                const hearing = player.rbiHearingPending
+                    ? 'RBI सुनवाई लंबित: अगले RBI ऑडिट में ₹500 अतिरिक्त शुल्क लगेगा। यह स्वतः निष्कासन नहीं है।'
+                    : `वित्तीय संकट स्ट्राइक: ${player.financialStrikes || 0}/3। तीसरी स्ट्राइक पर अगला RBI ऑडिट ₹500 सुनवाई शुल्क लगाएगा।`;
+                strikeNotice.textContent = `${hearing} एक बार का बचाव ऋण ₹2,000 देता है; ₹2,200 का बकाया कुल संपत्ति से घटेगा और START पार करते समय उपलब्ध नकदी से चुकाया जाएगा।`;
+            }
+            const rescueBtn = document.getElementById('businessRescueBtn');
+            if (rescueBtn) {
+                rescueBtn.classList.toggle('hidden', player.isAI || player.rescueUsed || player.cash + 2000 < debt.amount);
+                rescueBtn.disabled = player.isAI || player.rescueUsed || player.cash + 2000 < debt.amount;
+            }
 
             const list = document.getElementById('debtAssetsList');
             list.innerHTML = '';
@@ -8241,6 +8316,25 @@
             }
         }
 
+        function useBusinessRescue() {
+            const debt = gameState.pendingDebt;
+            if (!debt || gameState.phase !== 'DEBT_SETTLEMENT') return;
+            const player = gameState.players[debt.playerId];
+            if (!player || player.isAI || player.bankrupt || player.rescueUsed || player.cash + 2000 < debt.amount) return;
+
+            player.rescueUsed = true;
+            const before = player.cash;
+            player.cash += 2000;
+            player.rescueLoanBalance = (Number(player.rescueLoanBalance) || 0) + 2200;
+            recordLedgerEntry(player.id, 'एक बार का RBI बचाव ऋण प्राप्त (+₹2,000)', 2000, before, player.cash, 'भारतीय रिज़र्व बैंक');
+            recordLedgerEntry(player.id, 'बचाव ऋण देयता दर्ज (कुल वापसी ₹2,200)', 0, player.cash, player.cash, 'भारतीय रिज़र्व बैंक');
+            addLog(`🛟 <strong>${player.name}</strong> ने अपना एकमात्र RBI बचाव ऋण लिया: +₹2,000 नकद, ₹2,200 बकाया। बकाया कुल संपत्ति में घटाया गया है।`, 'amber');
+            setToast('RBI बचाव ऋण सक्रिय — ₹2,200 बकाया दर्ज');
+            sfxCash();
+            renderAll();
+            openDebtModal();
+        }
+
         function completeDebtPayment() {
             const debt = gameState.pendingDebt;
             if (!debt) return;
@@ -8290,6 +8384,15 @@
             if (aiPlayer.cash >= debt.amount) {
                 showAIReasoning(`🤖 ${aiPlayer.name}: ऋण संकट से बचने हेतु घर/शहर गिरवी रखकर ${formatRupee(debt.amount)} जुटाए।`);
                 completeDebtPayment();
+            } else if (!aiPlayer.rescueUsed && aiPlayer.cash + 2000 >= debt.amount) {
+                aiPlayer.rescueUsed = true;
+                const before = aiPlayer.cash;
+                aiPlayer.cash += 2000;
+                aiPlayer.rescueLoanBalance = (Number(aiPlayer.rescueLoanBalance) || 0) + 2200;
+                recordLedgerEntry(aiPlayer.id, 'AI ने एक बार का RBI बचाव ऋण लिया (+₹2,000)', 2000, before, aiPlayer.cash, 'भारतीय रिज़र्व बैंक');
+                recordLedgerEntry(aiPlayer.id, 'AI बचाव ऋण देयता दर्ज (कुल वापसी ₹2,200)', 0, aiPlayer.cash, aiPlayer.cash, 'भारतीय रिज़र्व बैंक');
+                addLog(`🛟 <strong>${aiPlayer.name}</strong> ने समान नियमों के तहत एक बार का RBI बचाव ऋण लिया: ₹2,000 नकद / ₹2,200 बकाया।`, 'amber');
+                completeDebtPayment();
             } else {
                 confirmBankruptcy();
             }
@@ -8299,6 +8402,18 @@
             const debt = gameState.pendingDebt;
             if (!debt) return;
             const player = gameState.players[debt.playerId];
+            if (!player || player.bankrupt) return;
+            if (player.cash < debt.amount) {
+                const ownedIdsForCheck = Object.keys(gameState.ownership).map(Number)
+                    .filter(id => gameState.ownership[id]?.ownerId === player.id);
+                const canStillSell = ownedIdsForCheck.some(id => canSellEvenlyOnSpace(player.id, id).allowed);
+                const canStillMortgage = ownedIdsForCheck.some(id => canMortgageSpace(player.id, id));
+                if (canStillSell || canStillMortgage) {
+                    setToast('पहले पात्र घर बेचें / शहर गिरवी रखें या बचाव ऋण का उपयोग करें; फिर दिवालियापन चुनें।');
+                    renderDebtModalContent();
+                    return;
+                }
+            }
             const creditorId = debt.creditorId;
             const cb = debt.onComplete;
 
@@ -8402,8 +8517,9 @@
                     if (o.houses > 0 && sp.houseCost) buildVal += o.houses * sp.houseCost;
                 }
             });
-            const total = p.cash + propVal + buildVal - mortgageDeduction;
-            return { cash: p.cash, propVal, buildVal, mortgageDeduction, total };
+            const rescueLoanDebt = Math.max(0, Number(p.rescueLoanBalance) || 0);
+            const total = p.cash + propVal + buildVal - mortgageDeduction - rescueLoanDebt;
+            return { cash: p.cash, propVal, buildVal, mortgageDeduction, rescueLoanDebt, total };
         }
 
         function calculateNetWorth(playerId) {
@@ -8427,6 +8543,11 @@
                 document.getElementById('winnerSubtext').textContent = `कुल ${formatRupee(calculateNetWorth(winner.id))} की संपत्ति के साथ पूरे भारतीय बाज़ार के सम्राट बने!`;
                 document.getElementById('victoryModal').classList.remove('hidden');
                 return true;
+            }
+            if (alive.length === 2 && !gameState.finalShowdownAnnounced) {
+                gameState.finalShowdownAnnounced = true;
+                addLog('⚔️ <strong>Last Tycoon Showdown!</strong> अब केवल 2 खिलाड़ी बचे हैं; सभी शहर/सेवा किराए पर 1.25x अंतिम मुकाबला गुणक लागू है।', 'gold');
+                showCenterScreenBanner('⚔️', 'अंतिम मुकाबला', 'LAST TYCOON SHOWDOWN', 'अब केवल 2 खिलाड़ी बचे हैं — किराया 1.25x, नियम दोनों पर समान।');
             }
             return false;
         }
@@ -8752,6 +8873,7 @@
                         <div class="flex justify-between text-[11px] text-amber-200/80"><span>शहर मूल्य:</span><span>${formatRupee(nw.propVal)}</span></div>
                         <div class="flex justify-between text-[11px] text-amber-200/80"><span>घर/होटल:</span><span>${formatRupee(nw.buildVal)}</span></div>
                         <div class="flex justify-between text-[11px] text-rose-300"><span>बंधक कटौती:</span><span>-${formatRupee(nw.mortgageDeduction)}</span></div>
+                        <div class="flex justify-between text-[11px] text-rose-300"><span>RBI बचाव ऋण देय:</span><span>-${formatRupee(nw.rescueLoanDebt || 0)}</span></div>
                     </div>
                 `;
             });
