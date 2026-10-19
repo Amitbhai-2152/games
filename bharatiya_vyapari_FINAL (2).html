@@ -4626,9 +4626,9 @@
             <div class="bg-wood-950/90 border border-rose-500/50 rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div>
                     <span class="font-bold text-rose-300 flex items-center gap-1.5">
-                        <i class="fa-solid fa-gavel text-gold-400"></i> रिज़र्व बैंक क्रमिक निष्कासन नियम (Fair Elimination Mode):
+                        <i class="fa-solid fa-gavel text-gold-400"></i> रिज़र्व बैंक लाइसेंस ऑडिट (Fair Audit Mode):
                     </span>
-                    <p class="text-[11px] text-amber-200/80">हर 5 राउंड पर सभी सेठों की खुली संपत्ति जांच, लाइसेंस शुल्क और क्रमिक किराया वृद्धि से नियम-आधारित एलिमिनेशन</p>
+                    <p class="text-[11px] text-amber-200/80">हर 5 राउंड पर खुली संपत्ति जांच, समान लाइसेंस शुल्क, शुल्क-डिफॉल्ट नियम और क्रमिक किराया वृद्धि; कम नेट-वर्थ अकेले निष्कासन नहीं करती।</p>
                 </div>
                 <button type="button" id="eliminationRuleBtn" onclick="toggleEliminationRule()" class="px-3.5 py-2 rounded-xl font-extrabold text-xs border transition">
                     सक्रिय (हर 5 राउंड ऑडिट)
@@ -4802,7 +4802,7 @@
                 <!-- नियम 6 -->
                 <div class="p-3.5 rounded-2xl bg-rose-950/50 border border-rose-400/50">
                     <h4 class="font-bold text-rose-300 mb-1.5 flex items-center gap-1.5">
-                        <i class="fa-solid fa-scale-balanced"></i> 6. पूर्व-घोषित नियमों वाला RBI लाइसेंस ऑडिट (क्रमिक निष्कासन)
+                        <i class="fa-solid fa-scale-balanced"></i> 6. पूर्व-घोषित नियमों वाला RBI लाइसेंस ऑडिट
                     </h4>
                     <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-amber-100/90">
                         <li>खेल को रोमांचक और समयबद्ध रखने के लिए <strong>हर 5 राउंड के अंत में (राउंड 5, 10, 15...)</strong> रिज़र्व बैंक ऑडिट होता है।</li>
@@ -6241,8 +6241,6 @@
                     const isElim = row.status.startsWith('ELIMINATED');
                     const badgeHtml = row.status === 'ELIMINATED_FEE_DEFAULT'
                         ? '<span class="px-2 py-0.5 rounded bg-rose-700 text-white text-[10px] font-black">लाइसेंस शुल्क चूक — बाहर</span>'
-                        : row.status === 'ELIMINATED_LOWEST_NW'
-                        ? '<span class="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-black">न्यूनतम नेट-वर्थ कट-ऑफ — बाहर</span>'
                         : '<span class="px-2 py-0.5 rounded bg-emerald-700 text-white text-[10px] font-black">लाइसेंस नवीनीकृत ✓</span>';
 
                     return `
@@ -6260,7 +6258,7 @@
                                     </div>
                                     <div class="text-[10.5px] text-amber-200/75">
                                         ऑडिट पूर्व संपत्ति: ${formatRupee(row.nwBefore)} • मूल लाइसेंस शुल्क: ${formatRupee(row.baseLicenseFee || 0)} • कुल शुल्क भुगतान: ${formatRupee(row.paidFee)}
-                                        ${row.hearingSurcharge > 0 ? ` • कुल शुल्क में अतिरिक्त सुनवाई शुल्क ${formatRupee(row.hearingSurcharge)} शामिल था` : ''}${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
+                                        ${row.hearingSurcharge > 0 ? (row.paidFee > 0 ? ` • कुल भुगतान में सुनवाई शुल्क ${formatRupee(row.hearingSurcharge)} शामिल` : ` • अतिरिक्त सुनवाई शुल्क ${formatRupee(row.hearingSurcharge)} देय था, भुगतान नहीं हुआ`) : ''}${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
                                     </div>
                                 </div>
                             </div>
