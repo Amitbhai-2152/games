@@ -4102,11 +4102,11 @@
                     </span>
                 </div>
 
-                <!-- ⚖️ रिज़र्व बैंक निष्पक्ष लाइसेंस कट-ऑफ एवं मुद्रास्फीति ट्रैकर (Pre-announced Rule-based Progressive Elimination Widget) -->
+                <!-- ⚖️ रिज़र्व बैंक लाइसेंस ऑडिट एवं मुद्रास्फीति ट्रैकर (Pre-announced Rule-based Progressive Elimination Widget) -->
                 <div id="rbiEliminationTrackerBox" class="mb-2.5 p-2.5 rounded-xl bg-gradient-to-r from-rose-950/90 via-wood-950 to-amber-950/90 border border-rose-400/60 shadow-inner text-[11px]">
                     <div class="flex flex-wrap items-start justify-between gap-1 mb-1">
                         <span class="font-extrabold text-rose-300 flex items-center gap-1 flex-1 min-w-0 leading-snug">
-                            <i class="fa-solid fa-scale-balanced text-gold-400"></i> RBI लाइसेंस ऑडिट (निष्कासन)
+                            <i class="fa-solid fa-scale-balanced text-gold-400"></i> RBI लाइसेंस ऑडिट
                         </span>
                         <span id="rbiAuditCountdownBadge" class="px-2 py-0.5 rounded-full bg-rose-600/40 border border-rose-400 text-rose-100 font-black text-[10px] shrink-0">
                             ऑडिट: राउंड 5
@@ -4123,7 +4123,7 @@
                         </div>
                     </div>
                     <div id="rbiDangerZoneStatus" class="text-[10px] text-amber-100/90 flex items-center justify-between pt-0.5">
-                        <span>डेंजर ज़ोन (सबसे कम संपत्ति):</span>
+                        <span>न्यूनतम नेट-वर्थ (जानकारी):</span>
                         <strong id="rbiDangerPlayerLabel" class="text-rose-300 truncate max-w-[130px]">समान स्तर</strong>
                     </div>
                 </div>
@@ -4807,8 +4807,8 @@
                     <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-amber-100/90">
                         <li>खेल को रोमांचक और समयबद्ध रखने के लिए <strong>हर 5 राउंड के अंत में (राउंड 5, 10, 15...)</strong> रिज़र्व बैंक ऑडिट होता है।</li>
                         <li>इसमें सभी खिलाड़ियों को समान <strong>लाइसेंस शुल्क (₹1,000, ₹2,000...)</strong> देना होता है।</li>
-                        <li>यदि 2 से अधिक खिलाड़ी बचे हैं, तो जिस खिलाड़ी की <strong>कुल संपत्ति (नकद + शहर + घर - बंधक) सबसे कम</strong> होती है, वह खेल से बाहर हो जाता है।</li>
-                        <li><strong>कोई पक्षपात नहीं:</strong> बाएं पैनल में हर पल लाइव दिखता है कि कौन "डेंजर ज़ोन" में है, और यदि सबसे नीचे दो खिलाड़ियों की संपत्ति बराबर (Tie) है, तो किसी को बाहर नहीं किया जाता!</li>
+                        <li>सभी सक्रिय खिलाड़ियों को समान, पहले से घोषित लाइसेंस शुल्क देना होता है; पर्याप्त नकदी न होने पर पहले पात्र निर्माण बेचे और शहर गिरवी रखे जाते हैं। जो शुल्क नहीं चुका पाता, वह डिफॉल्ट नियम के तहत बाहर हो सकता है।</li>
+                        <li><strong>नेट-वर्थ कट-ऑफ नहीं:</strong> कम कुल संपत्ति वाला खिलाड़ी केवल गरीब होने के कारण बाहर नहीं होता। लाइव डैशबोर्ड स्थिति दिखाता है; बराबरी होने पर भी कोई मनमाना निष्कासन नहीं होता।</li>
                     </ul>
                 </div>
                 <div class="p-3.5 rounded-2xl bg-indigo-950/50 border border-indigo-400/50">
@@ -4823,7 +4823,7 @@
                 <div class="p-3.5 rounded-2xl bg-rose-950/50 border border-rose-400/50">
                     <h4 class="font-bold text-rose-300 mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-chart-line"></i> 8. मार्केट क्रैश और Last Tycoon Showdown</h4>
                     <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-amber-100/90">
-                        <li>हर नए लाइव इवेंट की तरह Market Crash भी स्पष्ट शहर-सूची के साथ घोषित होता है; सूचीबद्ध छह शहरों का किराया उस इवेंट में 50% घटता है।</li>
+                        <li>हर नए लाइव इवेंट की तरह Market Crash भी स्पष्ट शहर-सूची के साथ घोषित होता है; पटना, भोपाल, जयपुर, कोच्चि, लखनऊ और पुणे का किराया उस इवेंट में 50% घटता है।</li>
                         <li>केवल दो खिलाड़ी बचने पर अंतिम मुकाबला घोषित होता है और सभी शहर/सेवा किराए पर 1.25x गुणक लागू होता है। यह दोनों खिलाड़ियों पर समान रूप से लागू होता है।</li>
                     </ul>
                 </div>
@@ -5541,8 +5541,8 @@
                 icon: '📉',
                 desc: 'चुनिंदा शहरों (जयपुर, लखनऊ, पुणे, भोपाल, पटना और कोच्चि) का किराया इस इवेंट के दौरान 50% घटेगा।',
                 startBonus: 1500,
-                crashIds: [9, 16, 24, 28, 31, 36],
-                rentMultiplierFn: (space) => [9, 16, 24, 28, 31, 36].includes(space.id) ? 0.5 : 1
+                crashIds: [1, 4, 11, 13, 21, 24],
+                rentMultiplierFn: (space) => [1, 4, 11, 13, 21, 24].includes(space.id) ? 0.5 : 1
             },
             {
                 id: 'RBI_SUBSIDY',
@@ -6096,10 +6096,10 @@
             const secondLowest = ranked[1];
             if (dangerEl) {
                 if (lowest.nw === secondLowest.nw) {
-                    dangerEl.textContent = `बराबरी (${formatRupee(lowest.nw)}) — कट-ऑफ सुरक्षित`;
+                    dangerEl.textContent = `बराबरी (${formatRupee(lowest.nw)}) — स्वतः निष्कासन नहीं`;
                     dangerEl.className = 'text-emerald-300 font-bold truncate max-w-[155px]';
                 } else {
-                    dangerEl.textContent = `${lowest.player.name} (${formatRupee(lowest.nw)})`;
+                    dangerEl.textContent = `${lowest.player.name} (${formatRupee(lowest.nw)}) — सूचना`;
                     dangerEl.className = 'text-rose-300 font-black truncate max-w-[155px]';
                 }
             }
@@ -6213,47 +6213,13 @@
                 }
             });
 
-            // चरण 2: शुल्क चूक के बाद भी यदि 2 से अधिक खिलाड़ी बचे हैं, तो शेष खिलाड़ियों में
-            // सबसे कम नेट-वर्थ वाले 1 खिलाड़ी का लाइसेंस रद्द होगा; बराबरी होने पर कोई कट-ऑफ नहीं।
-            let cutoffEliminatedPlayer = null;
-            let tieProtected = false;
+            // चरण 2: कम नेट-वर्थ पारदर्शी रूप से दिखाएं, लेकिन गरीबी अकेले निष्कासन का कारण नहीं होगी।
+            const cutoffEliminatedPlayer = null;
+            const tieProtected = false;
             const stillAlive = gameState.players.filter(p => !p.bankrupt);
-
-            if (stillAlive.length > 2) {
-                const sortedByNW = [...reportRows]
-                    .filter(r => r.status === 'SURVIVED_FEE')
-                    .sort((a, b) => a.nwAfter - b.nwAfter);
-
-                if (sortedByNW.length >= 2) {
-                    const lowestRow = sortedByNW[0];
-                    const secondLowestRow = sortedByNW[1];
-
-                    if (lowestRow.nwAfter < secondLowestRow.nwAfter) {
-                        cutoffEliminatedPlayer = lowestRow.player;
-                        lowestRow.status = 'ELIMINATED_LOWEST_NW';
-                        // उनकी संपत्तियों को बाज़ार में मुक्त करें ताकि शेष सेठों को समान अवसर मिले
-                        Object.keys(gameState.ownership).forEach(id => {
-                            if (gameState.ownership[id].ownerId === cutoffEliminatedPlayer.id) {
-                                const releasedSpace = BOARD_SPACES[id];
-                                recordLedgerEntry(cutoffEliminatedPlayer.id, `RBI कट-ऑफ: ${releasedSpace.name} बाजार में मुक्त`, 0, cutoffEliminatedPlayer.cash, cutoffEliminatedPlayer.cash, 'RBI सॉल्वेंसी ट्रिब्यूनल');
-                                delete gameState.ownership[id];
-                            }
-                        });
-                        recordLedgerEntry(
-                            cutoffEliminatedPlayer.id,
-                            `RBI राउंड ${completedRound} सॉल्वेंसी कट-ऑफ (न्यूनतम नेट वर्थ: ${formatRupee(lowestRow.nwAfter)})`,
-                            -cutoffEliminatedPlayer.cash,
-                            cutoffEliminatedPlayer.cash,
-                            0,
-                            'RBI सॉल्वेंसी ट्रिब्यूनल'
-                        );
-                        cutoffEliminatedPlayer.cash = 0;
-                        cutoffEliminatedPlayer.bankrupt = true;
-                    } else {
-                        tieProtected = true;
-                    }
-                }
-            }
+            const lowestNetWorthAfterAudit = [...stillAlive]
+                .map(p => ({ player: p, nw: calculateNetWorth(p.id) }))
+                .sort((a, b) => a.nw - b.nw)[0] || null;
 
             // चरण 3: बाज़ार मुद्रास्फीति सूचकांक (+25% किराया वृद्धि) लागू करें ताकि आगे का खेल और तेज़ हो
             gameState.inflationMultiplier = Number((gameState.inflationMultiplier + 0.25).toFixed(2));
@@ -6292,7 +6258,7 @@
                                     </div>
                                     <div class="text-[10.5px] text-amber-200/75">
                                         ऑडिट पूर्व संपत्ति: ${formatRupee(row.nwBefore)} • लाइसेंस शुल्क: -${formatRupee(row.paidFee)}
-                                        ${row.hearingSurcharge > 0 ? ` • RBI सुनवाई शुल्क: -${formatRupee(row.hearingSurcharge)}` : ''}${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
+                                        ${row.hearingSurcharge > 0 && row.paidFee > 0 ? ` • RBI सुनवाई शुल्क: -${formatRupee(row.hearingSurcharge)}` : ''}${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -6308,23 +6274,18 @@
             if (verdictEl) {
                 if (eliminatedByDefaultNames.length > 0) {
                     verdictEl.className = 'p-3 rounded-2xl border border-rose-400 bg-rose-950/80 text-rose-100 text-xs font-bold text-center mb-4';
-                    const cutoffRow = cutoffEliminatedPlayer ? reportRows.find(r => r.player.id === cutoffEliminatedPlayer.id) : null;
-                    const cutoffDisclosure = cutoffEliminatedPlayer
-                        ? ` इसके अतिरिक्त ${cutoffEliminatedPlayer.name} सबसे कम ऑडिट-पश्चात नेट-वर्थ (${formatRupee(cutoffRow?.nwAfter ?? 0)}) के कारण कट-ऑफ से बाहर हुए।`
-                        : '';
-                    verdictEl.innerHTML = `⚖️ <strong>निष्पक्ष निर्णय:</strong> ${eliminatedByDefaultNames.join(', ')} निर्धारित लाइसेंस शुल्क (${formatRupee(licenseFee)}) नहीं चुका सके और नियमपूर्वक बाहर हो गए।${cutoffDisclosure} बाज़ार किराया सूचकांक अब <strong>${gameState.inflationMultiplier.toFixed(2)}x</strong> हो गया है!`;
-                    addLog(`⚖️ <strong>RBI ऑडिट (राउंड ${completedRound}):</strong> लाइसेंस शुल्क (${formatRupee(licenseFee)}) न चुका पाने के कारण <strong>${eliminatedByDefaultNames.join(', ')}</strong> खेल से बाहर हुए।${cutoffDisclosure}`, 'rose');
-                } else if (cutoffEliminatedPlayer) {
-                    verdictEl.className = 'p-3 rounded-2xl border border-rose-400 bg-rose-950/80 text-rose-100 text-xs font-bold text-center mb-4';
-                    verdictEl.innerHTML = `⚖️ <strong>निष्पक्ष सॉल्वेंसी कट-ऑफ निर्णय:</strong> सभी ने ${formatRupee(licenseFee)} शुल्क चुकाया, किंतु सबसे कम कुल संपत्ति होने के कारण <strong>${cutoffEliminatedPlayer.name}</strong> का व्यापार लाइसेंस समाप्त हुआ और उनके शहर बाज़ार में मुक्त हो गए! नया किराया सूचकांक: <strong>${gameState.inflationMultiplier.toFixed(2)}x</strong>।`;
-                    addLog(`⚖️ <strong>RBI सॉल्वेंसी कट-ऑफ (राउंड ${completedRound}):</strong> सबसे कम कुल संपत्ति के कारण <strong>${cutoffEliminatedPlayer.name}</strong> खेल से निष्कासित हुए। उनके शहर बाज़ार में पुनः उपलब्ध!`, 'rose');
-                } else if (tieProtected) {
-                    verdictEl.className = 'p-3 rounded-2xl border border-emerald-400 bg-emerald-950/80 text-emerald-100 text-xs font-bold text-center mb-4';
-                    verdictEl.innerHTML = `⚖️ <strong>पूर्व-घोषित बराबरी सुरक्षा (Tie Protection):</strong> सबसे कम संपत्ति पर दो सेठ बराबर रहे, इसलिए बिना किसी पक्षपात के इस राउंड में किसी को बाहर नहीं किया गया! नया किराया सूचकांक: <strong>${gameState.inflationMultiplier.toFixed(2)}x</strong>।`;
-                    addLog(`⚖️ <strong>RBI ऑडिट (राउंड ${completedRound}):</strong> न्यूनतम संपत्ति पर बराबरी (Tie) होने से सभी सेठ सुरक्षित रहे! किराया सूचकांक बढ़कर ${gameState.inflationMultiplier.toFixed(2)}x हुआ।`, 'emerald');
-                } else {
+                    verdictEl.innerHTML = `⚖️ <strong>RBI ऑडिट निर्णय:</strong> ${eliminatedByDefaultNames.join(', ')} निर्धारित लाइसेंस/सुनवाई शुल्क (${formatRupee(licenseFee)}) बेचने योग्य निर्माण बेचने और गिरवी योग्य शहर गिरवी रखने के बाद भी नहीं चुका सके, इसलिए शुल्क-डिफॉल्ट नियम के तहत बाहर हुए। <strong>केवल कम नेट-वर्थ होने से कोई खिलाड़ी बाहर नहीं होता।</strong> किराया सूचकांक अब ${gameState.inflationMultiplier.toFixed(2)}x है।`;
+                    addLog(`⚖️ <strong>RBI ऑडिट (राउंड ${completedRound}):</strong> ${eliminatedByDefaultNames.join(', ')} निर्धारित शुल्क न चुका पाने के कारण बाहर हुए। कम नेट-वर्थ अपने-आप निष्कासन का कारण नहीं है।`, 'rose');
+                } else if (stillAlive.length === 2) {
                     verdictEl.className = 'p-3 rounded-2xl border border-amber-400 bg-amber-950/80 text-amber-100 text-xs font-bold text-center mb-4';
-                    verdictEl.innerHTML = `⚖️ <strong>अंतिम 2 फाइनलिस्ट चरण:</strong> अब केवल 2 सेठ शेष हैं — अंतिम मुकाबला केवल सीधी टक्कर और किराए से तय होगा! नया किराया सूचकांक: <strong>${gameState.inflationMultiplier.toFixed(2)}x</strong>।`;
+                    verdictEl.innerHTML = `⚔️ <strong>Last Tycoon चरण:</strong> अब 2 खिलाड़ी शेष हैं। दोनों पर समान अंतिम मुकाबला नियम लागू होंगे। किराया सूचकांक ${gameState.inflationMultiplier.toFixed(2)}x है।`;
+                } else {
+                    verdictEl.className = 'p-3 rounded-2xl border border-emerald-400 bg-emerald-950/80 text-emerald-100 text-xs font-bold text-center mb-4';
+                    const lowText = lowestNetWorthAfterAudit
+                        ? ` वर्तमान न्यूनतम नेट-वर्थ: ${lowestNetWorthAfterAudit.player.name} (${formatRupee(lowestNetWorthAfterAudit.nw)})।`
+                        : '';
+                    verdictEl.innerHTML = `⚖️ <strong>सॉल्वेंसी रिपोर्ट:</strong> शुल्क चुकाने वाले खिलाड़ियों में केवल न्यूनतम नेट-वर्थ के कारण कोई निष्कासन नहीं होगा। लाइसेंस शुल्क चुकाने और अपनी वित्तीय स्थिति सुधारने की रणनीति जारी रखें।${lowText} किराया सूचकांक अब ${gameState.inflationMultiplier.toFixed(2)}x है।`;
+                    addLog(`⚖️ <strong>RBI ऑडिट (राउंड ${completedRound}):</strong> शुल्क ऑडिट पूरा हुआ; न्यूनतम नेट-वर्थ अकेले निष्कासन नहीं करता।${lowText} किराया सूचकांक ${gameState.inflationMultiplier.toFixed(2)}x हुआ।`, 'emerald');
                 }
             }
 
