@@ -6179,6 +6179,7 @@
                         player: p,
                         nwBefore: nwBefore.total,
                         autoLiquidated: AutoLiquidated,
+                        baseLicenseFee: licenseFee,
                         paidFee: playerLicenseFee,
                         hearingSurcharge,
                         nwAfter: calculateNetWorth(p.id),
@@ -6205,6 +6206,7 @@
                         player: p,
                         nwBefore: nwBefore.total,
                         autoLiquidated: AutoLiquidated,
+                        baseLicenseFee: licenseFee,
                         paidFee: 0,
                         hearingSurcharge,
                         nwAfter: 0,
@@ -6257,8 +6259,8 @@
                                         ${badgeHtml}
                                     </div>
                                     <div class="text-[10.5px] text-amber-200/75">
-                                        ऑडिट पूर्व संपत्ति: ${formatRupee(row.nwBefore)} • लाइसेंस शुल्क: -${formatRupee(row.paidFee)}
-                                        ${row.hearingSurcharge > 0 && row.paidFee > 0 ? ` • RBI सुनवाई शुल्क: -${formatRupee(row.hearingSurcharge)}` : ''}${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
+                                        ऑडिट पूर्व संपत्ति: ${formatRupee(row.nwBefore)} • मूल लाइसेंस शुल्क: ${formatRupee(row.baseLicenseFee || 0)} • कुल शुल्क भुगतान: ${formatRupee(row.paidFee)}
+                                        ${row.hearingSurcharge > 0 ? ` • कुल शुल्क में अतिरिक्त सुनवाई शुल्क ${formatRupee(row.hearingSurcharge)} शामिल था` : ''}${row.autoLiquidated > 0 ? ` • स्व-तरलीकरण: +${formatRupee(row.autoLiquidated)}` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -7347,13 +7349,14 @@
                     } else {
                         addLog(`${player.name} ने प्रारंभ (START) पार किया (उच्च मुद्रास्फीति चरण में RBI वेतन सब्सिडी ₹0 है)।`, 'amber');
                     }
-                    if ((Number(player.rescueLoanBalance) || 0) > 0 && player.cash > 0) {
-                        const repayment = Math.min(player.cash, player.rescueLoanBalance);
+                    if ((Number(player.rescueLoanBalance) || 0) > 0 && salary > 0 && player.cash > 0) {
+                        // केवल इसी START पर मिला वेतन ही किस्त में जाता है; पहले से मौजूद नकदी नहीं छीनी जाती।
+                        const repayment = Math.min(salary, player.cash, player.rescueLoanBalance);
                         const beforeRepayment = player.cash;
                         player.cash -= repayment;
                         player.rescueLoanBalance -= repayment;
-                        recordLedgerEntry(player.id, 'RBI बचाव ऋण की START किस्त', -repayment, beforeRepayment, player.cash, 'भारतीय रिज़र्व बैंक');
-                        addLog(`🏦 ${player.name} ने START पर बचाव ऋण की ${formatRupee(repayment)} किस्त चुकाई; शेष बकाया ${formatRupee(player.rescueLoanBalance)}।`, 'amber');
+                        recordLedgerEntry(player.id, 'RBI बचाव ऋण की START वेतन-किस्त', -repayment, beforeRepayment, player.cash, 'भारतीय रिज़र्व बैंक');
+                        addLog(`🏦 ${player.name} ने START के वेतन से बचाव ऋण की ${formatRupee(repayment)} किस्त चुकाई; शेष बकाया ${formatRupee(player.rescueLoanBalance)}।`, 'amber');
                     }
                 }
 
