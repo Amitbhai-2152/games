@@ -6379,14 +6379,49 @@
             return totalLiquidated;
         }
 
+        function getPlayerRecoveryPotential(player) {
+            let structureRefund = 0;
+            let mortgagePotential = 0;
+            const rescuePotential = (!player.rescueUsed) ? 2000 : 0;
+            const ownedIds = Object.keys(gameState.ownership)
+                .map(Number)
+                .filter(id => gameState.ownership[id]?.ownerId === player.id);
+
+            ownedIds.forEach(spaceId => {
+                const sp = BOARD_SPACES[spaceId];
+                const pr = gameState.ownership[spaceId];
+                if (!sp || !pr) return;
+                if (sp.type === 'city' && pr.houses > 0) {
+                    const costs = [...(pr.buildCosts || [])];
+                    while (costs.length < pr.houses) costs.push(sp.houseCost || 0);
+                    for (let h = 0; h < pr.houses; h++) {
+                        const c = costs[costs.length - 1 - h] || sp.houseCost || 0;
+                        structureRefund += Math.floor(c / 2);
+                    }
+                }
+                if (!pr.mortgaged) {
+                    mortgagePotential += Math.floor(sp.price / 2);
+                }
+            });
+
+            const maxPossibleCash = player.cash + structureRefund + mortgagePotential + rescuePotential;
+            return {
+                currentCash: player.cash,
+                structureRefund,
+                mortgagePotential,
+                rescuePotential,
+                maxPossibleCash
+            };
+        }
+
         function startFairRbiAudit(completedRound, nextIdx) {
             if (!setupConfig.progressiveElimination) return;
+            if (gameState.rbiAuditContext) return; // सक्रिय ऑडिट के दौरान दोहराव रोकें
             const aliveAtStart = gameState.players.filter(p => !p.bankrupt);
             if (aliveAtStart.length <= 1) return;
 
             const auditStage = Math.max(1, Math.floor(completedRound / RBI_AUDIT_INTERVAL));
             const licenseFee = getScheduledLicenseFee(auditStage);
-
             gameState.rbiAuditContext = {
                 completedRound,
                 auditStage,
@@ -6397,7 +6432,8 @@
                 eliminatedByDefaultNames: [],
                 nextTurnPlayerIndex: nextIdx,
                 liquidatedByPlayer: {},
-                currentHumanWorkoutPlayerId: null
+                currentHumanWorkoutPlayerId: null,
+                finalized: false
             };
 
             processNextRbiAuditPlayer();
@@ -6445,6 +6481,35 @@
 
                 // नकदी लाइसेंस शुल्क से कम है
                 if (p.isAI) {
+                    const recovery = getPlayerRecoveryPotential(p);
+                    // समान आर्थिक नियम: यदि AI के सभी विकल्प मिलाकर भी शुल्क नहीं भर सकते, तो निष्पक्ष डिफॉल्ट
+                    if (recovery.maxPossibleCash < playerLicenseFee) {
+                        Object.keys(gameState.ownership).forEach(id => {
+                            if (gameState.ownership[id].ownerId === p.id) {
+                                const lostSpace = BOARD_SPACES[id];
+                                recordLedgerEntry(p.id, `RBI डिफॉल्ट: ${lostSpace.name} बाजार में मुक्त`, 0, p.cash, p.cash, 'भारतीय रिज़र्व बैंक');
+                                delete gameState.ownership[id];
+                            }
+                        });
+                        recordLedgerEntry(p.id, `RBI लाइसेंस शुल्क (${formatRupee(playerLicenseFee)}) चूकने पर लाइसेंस रद्द`, -p.cash, p.cash, 0, 'भारतीय रिज़र्व बैंक');
+                        p.cash = 0;
+                        p.bankrupt = true;
+                        ctx.eliminatedByDefaultNames.push(p.name);
+                        ctx.reportRows.push({
+                            player: p,
+                            nwBefore: nwBefore.total,
+                            autoLiquidated: 0,
+                            baseLicenseFee: ctx.licenseFee,
+                            paidFee: 0,
+                            hearingSurcharge,
+                            nwAfter: 0,
+                            status: 'ELIMINATED_FEE_DEFAULT'
+                        });
+                        ctx.queueIdx++;
+                        continue;
+                    }
+
+                    // AI के पास पर्याप्त विकल्प हैं — केवल आवश्यक राशि हेतु न्यूनतम स्मार्ट तरलीकरण
                     const liq = executeSmartAILiquidation(p, playerLicenseFee);
                     ctx.liquidatedByPlayer[p.id] = (ctx.liquidatedByPlayer[p.id] || 0) + liq;
 
@@ -6467,9 +6532,9 @@
                             nwAfter: calculateNetWorth(p.id),
                             status: 'SURVIVED_FEE'
                         });
-                        showAIReasoning(`🤖 ${p.name}: RBI लाइसेंस शुल्क (${formatRupee(playerLicenseFee)}) चुकाने हेतु परिसंपत्तियों का स्मार्ट तरलीकरण किया।`);
+                        showAIReasoning(`🤖 ${p.name}: RBI लाइसेंस शुल्क (${formatRupee(playerLicenseFee)}) चुकाने हेतु आवश्यक परिसंपत्तियों का स्मार्ट तरलीकरण किया।`);
                     } else {
-                        // AI पूरी तरह असमर्थ होने पर ही निष्कासित
+                        // सुरक्षित फॉलबैक यदि कोई अप्रत्याशित बाधा आए
                         Object.keys(gameState.ownership).forEach(id => {
                             if (gameState.ownership[id].ownerId === p.id) {
                                 const lostSpace = BOARD_SPACES[id];
@@ -6477,7 +6542,7 @@
                                 delete gameState.ownership[id];
                             }
                         });
-                        recordLedgerEntry(p.id, `RBI लाइसेंस शुल्क (${formatRupee(ctx.licenseFee)}) चूकने पर लाइसेंस रद्द`, -p.cash, p.cash, 0, 'भारतीय रिज़र्व बैंक');
+                        recordLedgerEntry(p.id, `RBI लाइसेंस शुल्क (${formatRupee(playerLicenseFee)}) चूकने पर लाइसेंस रद्द`, -p.cash, p.cash, 0, 'भारतीय रिज़र्व बैंक');
                         p.cash = 0;
                         p.bankrupt = true;
                         ctx.eliminatedByDefaultNames.push(p.name);
@@ -6511,21 +6576,34 @@
             const ctx = gameState.rbiAuditContext;
             if (!ctx) return;
 
-            document.getElementById('rbiWorkoutPlayerBadge').innerHTML = `
-                <span class="w-6 h-6 rounded-full flex items-center justify-center font-black text-[11px] text-white" style="background:${player.color}">
-                    ${player.icon}
-                </span>
-                <span>${player.name}</span>
-            `;
-            document.getElementById('rbiWorkoutStageBadge').textContent = `राउंड ${ctx.completedRound} ऑडिट (चरण ${ctx.auditStage})`;
-            document.getElementById('rbiWorkoutDueAmount').textContent = formatRupee(playerLicenseFee);
-            document.getElementById('rbiWorkoutCurrentCash').textContent = formatRupee(player.cash);
+            // एकल, विश्वसनीय शेष देय गणना
+            const totalAuditFee = playerLicenseFee;
+            const remainingDue = Math.max(0, totalAuditFee - player.cash);
+            const recovery = getPlayerRecoveryPotential(player);
 
-            const shortfall = Math.max(0, playerLicenseFee - player.cash);
+            const playerBadgeEl = document.getElementById('rbiWorkoutPlayerBadge');
+            if (playerBadgeEl) {
+                playerBadgeEl.innerHTML = `
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center font-black text-[11px] text-white" style="background:${player.color}">
+                        ${player.icon}
+                    </span>
+                    <span>${player.name}</span>
+                `;
+            }
+
+            const stageBadgeEl = document.getElementById('rbiWorkoutStageBadge');
+            if (stageBadgeEl) stageBadgeEl.textContent = `राउंड ${ctx.completedRound} ऑडिट (चरण ${ctx.auditStage})`;
+
+            const dueEl = document.getElementById('rbiWorkoutDueAmount');
+            if (dueEl) dueEl.textContent = formatRupee(totalAuditFee);
+
+            const cashEl = document.getElementById('rbiWorkoutCurrentCash');
+            if (cashEl) cashEl.textContent = formatRupee(player.cash);
+
             const sfEl = document.getElementById('rbiWorkoutShortfall');
             if (sfEl) {
-                sfEl.textContent = shortfall > 0 ? formatRupee(shortfall) : '₹0 (पर्याप्त!)';
-                sfEl.className = shortfall > 0 ? 'font-black text-rose-400 text-sm' : 'font-black text-emerald-400 text-sm';
+                sfEl.textContent = remainingDue > 0 ? formatRupee(remainingDue) : '₹0 (पर्याप्त!)';
+                sfEl.className = remainingDue > 0 ? 'font-black text-rose-400 text-sm' : 'font-black text-emerald-400 text-sm';
             }
 
             const noticeEl = document.getElementById('rbiWorkoutHearingNotice');
@@ -6538,13 +6616,18 @@
                 }
             }
 
-            // आपातकालीन बचाव ऋण विकल्प
+            // आपातकालीन बचाव ऋण विकल्प: यदि नकदी पहले से पर्याप्त है या ऋण लिया जा चुका है, तो छिपाएं
             const rescueContainer = document.getElementById('rbiWorkoutRescueContainer');
+            const rescueBtn = document.getElementById('rbiWorkoutRescueBtn');
             if (rescueContainer) {
-                if (player.rescueUsed) {
+                if (player.rescueUsed || remainingDue <= 0) {
                     rescueContainer.classList.add('hidden');
                 } else {
                     rescueContainer.classList.remove('hidden');
+                    if (rescueBtn) {
+                        rescueBtn.disabled = false;
+                        rescueBtn.className = 'px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow cursor-pointer';
+                    }
                 }
             }
 
@@ -6552,76 +6635,114 @@
             const list = document.getElementById('rbiWorkoutAssetsList');
             list.innerHTML = '';
 
-            const ownedIds = Object.keys(gameState.ownership)
-                .map(Number)
-                .filter(id => gameState.ownership[id].ownerId === player.id);
-
-            let hasActions = false;
-
-            // 1. निर्माण बिक्री विकल्प (समान बिक्री नियम का पालन)
-            ownedIds.forEach(spaceId => {
-                const sp = BOARD_SPACES[spaceId];
-                const pr = gameState.ownership[spaceId];
-                if (sp.type === 'city' && pr.houses > 0) {
-                    const sellCheck = canSellEvenlyOnSpace(player.id, spaceId);
-                    const refund = Math.floor(sp.houseCost / 2);
-                    hasActions = true;
-                    list.innerHTML += `
-                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-wood-950 border border-amber-500/40 text-xs">
-                            <div>
-                                <span class="font-bold text-amber-100">${sp.name}</span>
-                                <span class="text-gold-300 ml-1">(${pr.houses === 4 ? '🏨 होटल' : `🏠×${pr.houses}`})</span>
-                                <span class="text-[10px] text-amber-200/70 block">${sellCheck.allowed ? 'समान बिक्री नियम अनुसार पात्र' : sellCheck.reason}</span>
-                            </div>
-                            <button onclick="handleRbiWorkoutSellStructure(${spaceId})" ${sellCheck.allowed ? '' : 'disabled'}
-                                class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-wood-950 font-black text-xs shadow">
-                                निर्माण बेचें (+${formatRupee(refund)})
-                            </button>
-                        </div>
-                    `;
-                }
-            });
-
-            // 2. गिरवी विकल्प (समूह के सभी घर बिके होने पर)
-            ownedIds.forEach(spaceId => {
-                const sp = BOARD_SPACES[spaceId];
-                const pr = gameState.ownership[spaceId];
-                if (!pr.mortgaged && (pr.houses || 0) === 0) {
-                    const canMort = canMortgageSpace(player.id, spaceId);
-                    const mVal = Math.floor(sp.price / 2);
-                    hasActions = true;
-                    list.innerHTML += `
-                        <div class="flex items-center justify-between p-2.5 rounded-xl bg-wood-950 border border-gold-500/30 text-xs">
-                            <div>
-                                <span class="font-bold text-amber-100">${sp.name}</span>
-                                <span class="text-[10.5px] text-amber-200/70 block">${canMort ? 'गिरवी योग्य' : 'पहले समूह के सभी घर बेचें'}</span>
-                            </div>
-                            <button onclick="handleRbiWorkoutMortgage(${spaceId})" ${canMort ? '' : 'disabled'}
-                                class="px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed text-wood-950 font-black text-xs shadow">
-                                गिरवी रखें (+${formatRupee(mVal)})
-                            </button>
-                        </div>
-                    `;
-                }
-            });
-
-            if (!hasActions && player.rescueUsed) {
+            if (remainingDue <= 0) {
+                // नकदी पहले से पूरी है — अनावश्यक बिक्री और गिरवी विकल्प बंद
                 list.innerHTML = `
-                    <div class="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-center text-xs text-rose-200">
-                        बेचने या गिरवी रखने के लिए कोई अतिरिक्त संपत्ति उपलब्ध नहीं है।
+                    <div class="p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-400/50 text-center text-xs text-emerald-200">
+                        <div class="text-xl mb-1">✅</div>
+                        <div class="font-extrabold text-sm text-emerald-300">लाइसेंस शुल्क हेतु पर्याप्त नकदी उपलब्ध है!</div>
+                        <div class="text-[11px] text-emerald-200/80 mt-1">वर्तमान नकदी: ${formatRupee(player.cash)} • देय शुल्क: ${formatRupee(totalAuditFee)}</div>
+                        <div class="text-[10.5px] text-amber-200/70 mt-0.5">अतिरिक्त परिसंपत्ति बेचने, गिरवी रखने या ऋण लेने की आवश्यकता नहीं है। कृपया शुल्क चुकाएं।</div>
                     </div>
                 `;
+            } else {
+                const ownedIds = Object.keys(gameState.ownership)
+                    .map(Number)
+                    .filter(id => gameState.ownership[id].ownerId === player.id);
+
+                let hasActions = false;
+
+                // 1. निर्माण बिक्री विकल्प (समान बिक्री नियम का पालन)
+                ownedIds.forEach(spaceId => {
+                    const sp = BOARD_SPACES[spaceId];
+                    const pr = gameState.ownership[spaceId];
+                    if (sp.type === 'city' && pr.houses > 0) {
+                        const sellCheck = canSellEvenlyOnSpace(player.id, spaceId);
+                        const costs = [...(pr.buildCosts || [])];
+                        while (costs.length < pr.houses) costs.push(sp.houseCost || 0);
+                        const lastCost = costs.length ? costs[costs.length - 1] : (sp.houseCost || 0);
+                        const refund = Math.floor(lastCost / 2);
+                        hasActions = true;
+                        list.innerHTML += `
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-wood-950 border border-amber-500/40 text-xs">
+                                <div>
+                                    <span class="font-bold text-amber-100">${sp.name}</span>
+                                    <span class="text-gold-300 ml-1">(${pr.houses === 4 ? '🏨 होटल' : `🏠×${pr.houses}`})</span>
+                                    <span class="text-[10px] text-amber-200/70 block">${sellCheck.allowed ? 'समान बिक्री नियम अनुसार पात्र' : sellCheck.reason}</span>
+                                </div>
+                                <button onclick="handleRbiWorkoutSellStructure(${spaceId})" ${sellCheck.allowed ? '' : 'disabled'}
+                                    class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-wood-950 font-black text-xs shadow cursor-pointer">
+                                    निर्माण बेचें (+${formatRupee(refund)})
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+
+                // 2. गिरवी विकल्प (समूह के सभी घर बिके होने पर)
+                ownedIds.forEach(spaceId => {
+                    const sp = BOARD_SPACES[spaceId];
+                    const pr = gameState.ownership[spaceId];
+                    if (!pr.mortgaged && (pr.houses || 0) === 0) {
+                        const canMort = canMortgageSpace(player.id, spaceId);
+                        const mVal = Math.floor(sp.price / 2);
+                        hasActions = true;
+                        list.innerHTML += `
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-wood-950 border border-gold-500/30 text-xs">
+                                <div>
+                                    <span class="font-bold text-amber-100">${sp.name}</span>
+                                    <span class="text-[10.5px] text-amber-200/70 block">${canMort ? 'गिरवी योग्य' : 'पहले समूह के सभी घर बेचें'}</span>
+                                </div>
+                                <button onclick="handleRbiWorkoutMortgage(${spaceId})" ${canMort ? '' : 'disabled'}
+                                    class="px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-400 disabled:opacity-40 disabled:cursor-not-allowed text-wood-950 font-black text-xs shadow cursor-pointer">
+                                    गिरवी रखें (+${formatRupee(mVal)})
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+
+                if (!hasActions && player.rescueUsed) {
+                    list.innerHTML = `
+                        <div class="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-center text-xs text-rose-200">
+                            बेचने या गिरवी रखने के लिए कोई अतिरिक्त संपत्ति उपलब्ध नहीं है।
+                        </div>
+                    `;
+                }
             }
 
             // शुल्क भुगतान बटन
             const payBtn = document.getElementById('rbiWorkoutPayFeeBtn');
             if (payBtn) {
-                const canPay = player.cash >= playerLicenseFee;
+                const canPay = player.cash >= totalAuditFee;
                 payBtn.disabled = !canPay;
-                payBtn.textContent = `लाइसेंस शुल्क चुकाएं (${formatRupee(playerLicenseFee)})`;
+                payBtn.textContent = `लाइसेंस शुल्क चुकाएं (${formatRupee(totalAuditFee)})`;
                 payBtn.className = canPay
-                    ? 'px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm shadow-lg animate-pulse transition cursor-pointer'
+                    ? 'px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm shadow-lg animate-pulse ring-2 ring-emerald-400 transition cursor-pointer'
                     : 'px-6 py-2.5 rounded-xl bg-zinc-700 text-zinc-400 font-bold text-xs sm:text-sm shadow opacity-60 cursor-not-allowed transition';
+            }
+
+            // दिवालियापन बटन — केवल वास्तविक रूप से असमर्थ होने पर ही सक्रिय
+            const insolvBtn = document.getElementById('rbiWorkoutInsolvencyBtn');
+            if (insolvBtn) {
+                if (remainingDue <= 0) {
+                    insolvBtn.disabled = true;
+                    insolvBtn.className = 'px-4 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-500 font-bold text-xs opacity-50 cursor-not-allowed';
+                    insolvBtn.textContent = 'असमर्थ (नकदी पर्याप्त)';
+                    insolvBtn.title = 'आपके पास शुल्क चुकाने हेतु पर्याप्त नकदी है';
+                } else if (recovery.maxPossibleCash >= totalAuditFee) {
+                    // विकल्प शेष हैं
+                    insolvBtn.disabled = true;
+                    insolvBtn.className = 'px-4 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-500 font-bold text-xs opacity-50 cursor-not-allowed';
+                    insolvBtn.textContent = 'असमर्थ — दिवालियापन (विकल्प शेष)';
+                    insolvBtn.title = `आपके पास निर्माण, गिरवी या बचाव ऋण से कुल ${formatRupee(recovery.maxPossibleCash)} जुटाने का विकल्प है`;
+                } else {
+                    // वास्तविक रूप से असमर्थ — सभी विकल्प मिलाकर भी शुल्क पूरा नहीं हो सकता
+                    insolvBtn.disabled = false;
+                    insolvBtn.className = 'px-4 py-2 rounded-xl bg-rose-950 hover:bg-rose-900 border border-rose-500/60 text-rose-200 font-bold text-xs transition cursor-pointer';
+                    insolvBtn.textContent = `असमर्थ — दिवालियापन स्वीकार करें (कमी ${formatRupee(totalAuditFee - recovery.maxPossibleCash)})`;
+                    insolvBtn.title = 'सभी परिसंपत्तियां और विकल्प भी शुल्क पूरा करने में असमर्थ हैं';
+                }
             }
         }
 
@@ -6638,9 +6759,19 @@
             const ctx = gameState.rbiAuditContext;
             if (!ctx || ctx.currentHumanWorkoutPlayerId === null) return;
             const p = gameState.players[ctx.currentHumanWorkoutPlayerId];
+            if (!p) return;
+
+            const hearingSurcharge = p.rbiHearingPending ? 500 : 0;
+            const totalAuditFee = ctx.licenseFee + hearingSurcharge;
+            const remainingDue = Math.max(0, totalAuditFee - p.cash);
+            if (remainingDue <= 0) {
+                setToast('लाइसेंस शुल्क चुकाने के लिए पर्याप्त नकदी उपलब्ध है! अतिरिक्त निर्माण बेचने की आवश्यकता नहीं है।');
+                return;
+            }
+
             const space = BOARD_SPACES[spaceId];
             const prop = gameState.ownership[spaceId];
-            if (!p || !space || !prop || prop.ownerId !== p.id || prop.houses <= 0) return;
+            if (!space || !prop || prop.ownerId !== p.id || prop.houses <= 0) return;
 
             const sellCheck = canSellEvenlyOnSpace(p.id, spaceId);
             if (!sellCheck.allowed) {
@@ -6666,9 +6797,19 @@
             const ctx = gameState.rbiAuditContext;
             if (!ctx || ctx.currentHumanWorkoutPlayerId === null) return;
             const p = gameState.players[ctx.currentHumanWorkoutPlayerId];
+            if (!p) return;
+
+            const hearingSurcharge = p.rbiHearingPending ? 500 : 0;
+            const totalAuditFee = ctx.licenseFee + hearingSurcharge;
+            const remainingDue = Math.max(0, totalAuditFee - p.cash);
+            if (remainingDue <= 0) {
+                setToast('लाइसेंस शुल्क चुकाने के लिए पर्याप्त नकदी उपलब्ध है! अतिरिक्त संपत्ति गिरवी रखने की आवश्यकता नहीं है।');
+                return;
+            }
+
             const space = BOARD_SPACES[spaceId];
             const prop = gameState.ownership[spaceId];
-            if (!p || !space || !prop || prop.ownerId !== p.id || prop.mortgaged) return;
+            if (!space || !prop || prop.ownerId !== p.id || prop.mortgaged) return;
 
             if (!canMortgageSpace(p.id, spaceId)) {
                 setToast('समूह के सभी घर बेचे बिना शहर गिरवी नहीं रखा जा सकता!');
@@ -6694,6 +6835,14 @@
             const p = gameState.players[ctx.currentHumanWorkoutPlayerId];
             if (!p || p.rescueUsed) return;
 
+            const hearingSurcharge = p.rbiHearingPending ? 500 : 0;
+            const totalAuditFee = ctx.licenseFee + hearingSurcharge;
+            const remainingDue = Math.max(0, totalAuditFee - p.cash);
+            if (remainingDue <= 0) {
+                setToast('लाइसेंस शुल्क चुकाने के लिए पर्याप्त नकदी उपलब्ध है! आपातकालीन ऋण की आवश्यकता नहीं है।');
+                return;
+            }
+
             p.rescueUsed = true;
             const before = p.cash;
             p.cash += 2000;
@@ -6712,19 +6861,22 @@
             const ctx = gameState.rbiAuditContext;
             if (!ctx || ctx.currentHumanWorkoutPlayerId === null) return;
             const p = gameState.players[ctx.currentHumanWorkoutPlayerId];
-            if (!p) return;
+            if (!p || p.bankrupt) return;
+
+            // डुप्लिकेट भुगतान एवं रिकॉर्डिंग से बचाव
+            if (ctx.reportRows.some(r => r.player.id === p.id)) return;
 
             const hearingSurcharge = p.rbiHearingPending ? 500 : 0;
-            const playerLicenseFee = ctx.licenseFee + hearingSurcharge;
-            if (p.cash < playerLicenseFee) {
+            const totalAuditFee = ctx.licenseFee + hearingSurcharge;
+            if (p.cash < totalAuditFee) {
                 setToast('लाइसेंस शुल्क चुकाने के लिए नकदी अभी भी कम है!');
                 return;
             }
 
             const beforeCash = p.cash;
-            p.cash -= playerLicenseFee;
+            p.cash -= totalAuditFee;
             gameState.jackpotPot += Math.round(ctx.licenseFee * 0.5);
-            recordLedgerEntry(p.id, `RBI राउंड ${ctx.completedRound} लाइसेंस नवीनीकरण शुल्क${hearingSurcharge ? ' + सुनवाई शुल्क' : ''}`, -playerLicenseFee, beforeCash, p.cash, 'भारतीय रिज़र्व बैंक');
+            recordLedgerEntry(p.id, `RBI राउंड ${ctx.completedRound} लाइसेंस नवीनीकरण शुल्क${hearingSurcharge ? ' + सुनवाई शुल्क' : ''}`, -totalAuditFee, beforeCash, p.cash, 'भारतीय रिज़र्व बैंक');
             if (p.rbiHearingPending) {
                 p.rbiHearingPending = false;
                 p.financialStrikes = 0;
@@ -6732,18 +6884,17 @@
 
             ctx.reportRows.push({
                 player: p,
-                nwBefore: getNetWorthBreakdown(p.id).total + playerLicenseFee,
+                nwBefore: getNetWorthBreakdown(p.id).total + totalAuditFee,
                 autoLiquidated: ctx.liquidatedByPlayer[p.id] || 0,
                 baseLicenseFee: ctx.licenseFee,
-                paidFee: playerLicenseFee,
+                paidFee: totalAuditFee,
                 hearingSurcharge,
                 nwAfter: calculateNetWorth(p.id),
                 status: 'SURVIVED_FEE'
             });
 
             sfxPay();
-            addLog(`🏛️ <strong>${p.name}</strong> ने ${formatRupee(playerLicenseFee)} लाइसेंस शुल्क सफलतापूर्वक चुकाया — व्यापार लाइसेंस नवीनीकृत ✓`, 'emerald');
-
+            addLog(`🏛️ <strong>${p.name}</strong> ने ${formatRupee(totalAuditFee)} लाइसेंस शुल्क सफलतापूर्वक चुकाया — व्यापार लाइसेंस नवीनीकृत ✓`, 'emerald');
             document.getElementById('rbiWorkoutModal').classList.add('hidden');
             ctx.currentHumanWorkoutPlayerId = null;
             ctx.queueIdx++;
@@ -6754,9 +6905,36 @@
             const ctx = gameState.rbiAuditContext;
             if (!ctx || ctx.currentHumanWorkoutPlayerId === null) return;
             const p = gameState.players[ctx.currentHumanWorkoutPlayerId];
-            if (!p) return;
+            if (!p || p.bankrupt) return;
 
-            // खिलाड़ी की सभी संपत्तियां बाजार में मुक्त
+            // डुप्लिकेट निष्कासन से बचाव
+            if (ctx.eliminatedByDefaultNames.includes(p.name)) return;
+
+            const hearingSurcharge = p.rbiHearingPending ? 500 : 0;
+            const totalAuditFee = ctx.licenseFee + hearingSurcharge;
+            const remainingDue = Math.max(0, totalAuditFee - p.cash);
+
+            // 1. यदि खिलाड़ी के पास पहले से ही पर्याप्त नकदी है:
+            if (remainingDue <= 0) {
+                setToast('आपके पास पहले से ही पर्याप्त नकदी है! कृपया लाइसेंस शुल्क चुकाएं।');
+                updateRbiWorkoutModalUI();
+                return;
+            }
+
+            // 2. उपलब्ध विकल्पों का मूल्यांकन:
+            const recovery = getPlayerRecoveryPotential(p);
+            if (recovery.maxPossibleCash >= totalAuditFee) {
+                const parts = [];
+                if (recovery.structureRefund > 0) parts.push(`निर्माण बिक्री (+${formatRupee(recovery.structureRefund)})`);
+                if (recovery.mortgagePotential > 0) parts.push(`शहर गिरवी (+${formatRupee(recovery.mortgagePotential)})`);
+                if (recovery.rescuePotential > 0) parts.push(`बचाव ऋण (+₹2,000)`);
+
+                setToast(`आप दिवालिया घोषित नहीं कर सकते! आपके पास ${parts.join(', ')} से कुल ${formatRupee(recovery.maxPossibleCash)} जुटाने का विकल्प है (देय: ${formatRupee(totalAuditFee)})। कृपया उपलब्ध विकल्पों का उपयोग करें।`);
+                updateRbiWorkoutModalUI();
+                return;
+            }
+
+            // 3. खिलाड़ी वास्तविक रूप से देय शुल्क चुकाने में पूरी तरह असमर्थ है (maxPossibleCash < totalAuditFee)
             Object.keys(gameState.ownership).forEach(id => {
                 if (gameState.ownership[id].ownerId === p.id) {
                     const lostSpace = BOARD_SPACES[id];
@@ -6764,26 +6942,22 @@
                     delete gameState.ownership[id];
                 }
             });
-
-            recordLedgerEntry(p.id, `RBI लाइसेंस शुल्क (${formatRupee(ctx.licenseFee)}) चूकने पर लाइसेंस रद्द`, -p.cash, p.cash, 0, 'भारतीय रिज़र्व बैंक');
+            recordLedgerEntry(p.id, `RBI लाइसेंस शुल्क (${formatRupee(totalAuditFee)}) चूकने पर लाइसेंस रद्द`, -p.cash, p.cash, 0, 'भारतीय रिज़र्व बैंक');
             p.cash = 0;
             p.bankrupt = true;
             ctx.eliminatedByDefaultNames.push(p.name);
-
             ctx.reportRows.push({
                 player: p,
                 nwBefore: getNetWorthBreakdown(p.id).total,
                 autoLiquidated: ctx.liquidatedByPlayer[p.id] || 0,
                 baseLicenseFee: ctx.licenseFee,
                 paidFee: 0,
-                hearingSurcharge: p.rbiHearingPending ? 500 : 0,
+                hearingSurcharge,
                 nwAfter: 0,
                 status: 'ELIMINATED_FEE_DEFAULT'
             });
-
             sfxJail();
             addLog(`⚖️ <strong>${p.name}</strong> RBI लाइसेंस शुल्क न चुका पाने के कारण खेल से बाहर हो गए।`, 'rose');
-
             document.getElementById('rbiWorkoutModal').classList.add('hidden');
             ctx.currentHumanWorkoutPlayerId = null;
             ctx.queueIdx++;
@@ -6792,7 +6966,8 @@
 
         function finalizeRbiAuditReport() {
             const ctx = gameState.rbiAuditContext;
-            if (!ctx) return;
+            if (!ctx || ctx.finalized) return;
+            ctx.finalized = true;
 
             // बाज़ार मुद्रास्फीति सूचकांक (संतुलित कैप 1.75x)
             gameState.inflationMultiplier = Number(Math.min(MAX_INFLATION_MULTIPLIER, gameState.inflationMultiplier + 0.15).toFixed(2));
@@ -6847,7 +7022,14 @@
             }
 
             if (verdictEl) {
-                if (ctx.eliminatedByDefaultNames.length > 0) {
+                if (stillAlive.length === 1) {
+                    verdictEl.className = 'p-3 rounded-2xl border border-emerald-400 bg-emerald-950/80 text-emerald-100 text-xs font-bold text-center mb-4';
+                    verdictEl.innerHTML = `🏆 <strong>अंतिम परिणाम:</strong> केवल ${stillAlive[0].name} सॉल्वेंट बचे हैं! यह खिलाड़ी भारतीय बाज़ार के विजेता बन गए हैं।`;
+                    addLog(`🏆 <strong>RBI ऑडिट (राउंड ${ctx.completedRound}):</strong> केवल ${stillAlive[0].name} सॉल्वेंट बचे हैं! शाही विजय घोषित।`, 'emerald');
+                } else if (stillAlive.length === 0) {
+                    verdictEl.className = 'p-3 rounded-2xl border border-rose-400 bg-rose-950/80 text-rose-100 text-xs font-bold text-center mb-4';
+                    verdictEl.innerHTML = `⚖️ <strong>खेल बराबरी:</strong> सभी खिलाड़ी लाइसेंस शुल्क चूक के कारण बाहर हो गए।`;
+                } else if (ctx.eliminatedByDefaultNames.length > 0) {
                     verdictEl.className = 'p-3 rounded-2xl border border-rose-400 bg-rose-950/80 text-rose-100 text-xs font-bold text-center mb-4';
                     verdictEl.innerHTML = `⚖️ <strong>RBI ऑडिट निर्णय:</strong> ${ctx.eliminatedByDefaultNames.join(', ')} निर्धारित लाइसेंस शुल्क (${formatRupee(ctx.licenseFee)}) परिसंपत्ति समायोजन के बाद भी नहीं चुका सके, इसलिए शुल्क-डिफॉल्ट नियम के तहत बाहर हुए। <strong>केवल कम नेट-वर्थ होने से कोई खिलाड़ी बाहर नहीं होता।</strong> किराया सूचकांक अब ${gameState.inflationMultiplier.toFixed(2)}x (कैप ${MAX_INFLATION_MULTIPLIER}x) है।`;
                     addLog(`⚖️ <strong>RBI ऑडिट (राउंड ${ctx.completedRound}):</strong> ${ctx.eliminatedByDefaultNames.join(', ')} निर्धारित शुल्क न चुका पाने के कारण बाहर हुए। कम नेट-वर्थ अकेले निष्कासन का कारण नहीं है।`, 'rose');
@@ -6869,7 +7051,6 @@
             renderAll();
         }
 
-        // लिगेसी संगतता हेतु wrapper
         function executeFairRbiEliminationAudit(completedRound) {
             startFairRbiAudit(completedRound, gameState.currentPlayerIndex);
         }
@@ -8591,6 +8772,16 @@
             const prop = gameState.ownership[spaceId];
             if (!space || !prop || prop.ownerId !== p.id || prop.houses <= 0) return;
 
+            if (activeWorkoutPlayer) {
+                const hearingSurcharge = activeWorkoutPlayer.rbiHearingPending ? 500 : 0;
+                const totalAuditFee = gameState.rbiAuditContext.licenseFee + hearingSurcharge;
+                const remainingDue = Math.max(0, totalAuditFee - activeWorkoutPlayer.cash);
+                if (remainingDue <= 0) {
+                    setToast('लाइसेंस शुल्क चुकाने के लिए पर्याप्त नकदी उपलब्ध है! अतिरिक्त निर्माण बेचने की आवश्यकता नहीं है।');
+                    return;
+                }
+            }
+
             const sellCheck = canSellEvenlyOnSpace(p.id, spaceId);
             if (!sellCheck.allowed) {
                 setToast(sellCheck.reason);
@@ -8602,6 +8793,10 @@
             const before = p.cash;
             prop.houses -= 1;
             p.cash += refund;
+            if (activeWorkoutPlayer && gameState.rbiAuditContext) {
+                gameState.rbiAuditContext.liquidatedByPlayer[p.id] = (gameState.rbiAuditContext.liquidatedByPlayer[p.id] || 0) + refund;
+            }
+
             recordLedgerEntry(p.id, `${space.name} का निर्माण बेचा (वास्तविक लागत का 50%)`, refund, before, p.cash, 'भारतीय रिज़र्व बैंक');
             sfxCash();
             addLog(`${p.name} ने ${space.name} का 1 निर्माण बेचकर ${formatRupee(refund)} प्राप्त किए।`, 'amber');
@@ -8630,6 +8825,15 @@
             if (!space || !prop || prop.ownerId !== p.id) return;
 
             if (!prop.mortgaged) {
+                if (activeWorkoutPlayer) {
+                    const hearingSurcharge = activeWorkoutPlayer.rbiHearingPending ? 500 : 0;
+                    const totalAuditFee = gameState.rbiAuditContext.licenseFee + hearingSurcharge;
+                    const remainingDue = Math.max(0, totalAuditFee - activeWorkoutPlayer.cash);
+                    if (remainingDue <= 0) {
+                        setToast('लाइसेंस शुल्क चुकाने के लिए पर्याप्त नकदी उपलब्ध है! अतिरिक्त संपत्ति गिरवी रखने की आवश्यकता नहीं है।');
+                        return;
+                    }
+                }
                 if (!canMortgageSpace(p.id, spaceId)) {
                     setToast('पूरे रंग समूह के सभी घर बेचे बिना शहर गिरवी नहीं रखा जा सकता!');
                     return;
@@ -8638,10 +8842,17 @@
                 const before = p.cash;
                 prop.mortgaged = true;
                 p.cash += val;
+                if (activeWorkoutPlayer && gameState.rbiAuditContext) {
+                    gameState.rbiAuditContext.liquidatedByPlayer[p.id] = (gameState.rbiAuditContext.liquidatedByPlayer[p.id] || 0) + val;
+                }
                 recordLedgerEntry(p.id, `${space.name} गिरवी रखा (50%)`, val, before, p.cash, 'भारतीय रिज़र्व बैंक');
                 sfxCash();
                 addLog(`${p.name} ने ${space.name} को ${formatRupee(val)} में बैंक के पास गिरवी रखा।`, 'amber');
             } else {
+                if (activeWorkoutPlayer) {
+                    setToast('RBI लाइसेंस ऑडिट के दौरान संपत्ति गिरवी से छुड़ाने की अनुमति नहीं है।');
+                    return;
+                }
                 const cost = Math.ceil(space.price * 0.55); // 50% मूलधन + 10% ब्याज = 55%
                 if (p.cash < cost) return;
                 const before = p.cash;
@@ -8652,7 +8863,7 @@
                 addLog(`${p.name} ने 10% ब्याज सहित ${formatRupee(cost)} (55%) चुकाकर ${space.name} को गिरवी से छुड़ाया।`, 'emerald');
             }
             renderAll();
-            if (! document.getElementById('deedModal').classList.contains('hidden')) {
+            if (!document.getElementById('deedModal').classList.contains('hidden')) {
                 openDeedModal(spaceId);
             }
             if (gameState.phase === 'DEBT_SETTLEMENT') {
