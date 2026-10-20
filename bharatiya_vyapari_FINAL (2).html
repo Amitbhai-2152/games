@@ -5973,6 +5973,10 @@
         function initGameFromConfig() {
             clearAllGameTimers();
 
+            // किसी पिछले गेम से बचा ऑडिट/चेतावनी स्टेट नए गेम में न जाए।
+            gameState.rbiAuditContext = null;
+            gameState.lastAuditWarningRound = 0;
+
             gameState.started = true;
             gameState.round = 1;
             gameState.currentPlayerIndex = 0;
@@ -6392,11 +6396,13 @@
                 const pr = gameState.ownership[spaceId];
                 if (!sp || !pr) return;
                 if (sp.type === 'city' && pr.houses > 0) {
-                    const costs = [...(pr.buildCosts || [])];
-                    while (costs.length < pr.houses) costs.push(sp.houseCost || 0);
-                    for (let h = 0; h < pr.houses; h++) {
-                        const c = costs[costs.length - 1 - h] || sp.houseCost || 0;
-                        structureRefund += Math.floor(c / 2);
+                    // वास्तविक बिक्री की तरह अतिरिक्त पुराने रिकॉर्ड काटें और शून्य लागत सुरक्षित रखें।
+                    const houseCount = Math.max(0, Number(pr.houses) || 0);
+                    const costs = Array.isArray(pr.buildCosts) ? pr.buildCosts.slice(0, houseCount) : [];
+                    while (costs.length < houseCount) costs.push(sp.houseCost || 0);
+                    for (let h = 0; h < houseCount; h++) {
+                        const c = costs[costs.length - 1 - h];
+                        structureRefund += Math.floor((Number.isFinite(Number(c)) ? Number(c) : (sp.houseCost || 0)) / 2);
                     }
                 }
                 if (!pr.mortgaged) {
@@ -6658,8 +6664,10 @@
                     const pr = gameState.ownership[spaceId];
                     if (sp.type === 'city' && pr.houses > 0) {
                         const sellCheck = canSellEvenlyOnSpace(player.id, spaceId);
-                        const costs = [...(pr.buildCosts || [])];
-                        while (costs.length < pr.houses) costs.push(sp.houseCost || 0);
+                        // वही normalized history दिखाएं जिसे popStructureCost वास्तविक बिक्री में उपयोग करता है।
+                        const houseCount = Math.max(0, Number(pr.houses) || 0);
+                        const costs = Array.isArray(pr.buildCosts) ? pr.buildCosts.slice(0, houseCount) : [];
+                        while (costs.length < houseCount) costs.push(sp.houseCost || 0);
                         const lastCost = costs.length ? costs[costs.length - 1] : (sp.houseCost || 0);
                         const refund = Math.floor(lastCost / 2);
                         hasActions = true;
@@ -6913,6 +6921,8 @@
             const hearingSurcharge = p.rbiHearingPending ? 500 : 0;
             const totalAuditFee = ctx.licenseFee + hearingSurcharge;
             const remainingDue = Math.max(0, totalAuditFee - p.cash);
+            // संपत्तियां/नकदी बदलने से पहले वास्तविक ऑडिट-पूर्व नेट वर्थ सुरक्षित रखें।
+            const nwBefore = getNetWorthBreakdown(p.id).total;
 
             // 1. यदि खिलाड़ी के पास पहले से ही पर्याप्त नकदी है:
             if (remainingDue <= 0) {
@@ -6948,7 +6958,7 @@
             ctx.eliminatedByDefaultNames.push(p.name);
             ctx.reportRows.push({
                 player: p,
-                nwBefore: getNetWorthBreakdown(p.id).total,
+                nwBefore,
                 autoLiquidated: ctx.liquidatedByPlayer[p.id] || 0,
                 baseLicenseFee: ctx.licenseFee,
                 paidFee: 0,
