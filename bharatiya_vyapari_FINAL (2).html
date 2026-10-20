@@ -6219,8 +6219,8 @@
             const infEl = document.getElementById('rbiInflationMultiplierLabel');
             const dangerEl = document.getElementById('rbiDangerPlayerLabel');
 
-            const curPlayer = gameState.players[gameState.currentPlayerIndex];
-            const hearingExtra = (curPlayer && curPlayer.rbiHearingPending) ? 500 : 0;
+            // ऑडिट सभी खिलाड़ियों पर लागू होगा; सुनवाई अधिभार प्रत्येक खिलाड़ी की स्थिति पर निर्भर है।
+            // एक टर्न-प्लेयर का अधिभार पूरे ऑडिट शुल्क के रूप में न दिखाएं।
 
             if (countdownEl) {
                 if (roundsRemaining === 0) {
@@ -6233,7 +6233,7 @@
             }
 
             if (feeEl) {
-                feeEl.textContent = hearingExtra > 0 ? `${formatRupee(nextFee)} (+₹500 सुनवाई)` : formatRupee(nextFee);
+                feeEl.textContent = `${formatRupee(nextFee)} (+₹500 यदि सुनवाई लंबित)`;
             }
 
             if (infEl) {
@@ -6306,10 +6306,15 @@
         function executeSmartAILiquidation(aiPlayer, targetAmount) {
             let totalLiquidated = 0;
 
-            // 1. समान बिक्री नियम का पालन करते हुए सबसे कम आधार मूल्य वाले शहरों के निर्माण पहले बेचें
-            let guard = 0;
-            while (aiPlayer.cash < targetAmount && guard < 60) {
-                guard++;
+            // 1. समान बिक्री नियम का पालन करते हुए निर्माण बेचें।
+            // कोई मनमाना 60-स्टेप कैप नहीं: वैध घर/होटल बिक्री इससे अधिक हो सकती है।
+            let remainingStructureSales = Object.keys(gameState.ownership).reduce((count, id) => {
+                const prop = gameState.ownership[id];
+                return prop && prop.ownerId === aiPlayer.id
+                    ? count + Math.max(0, Number(prop.houses) || 0)
+                    : count;
+            }, 0);
+            while (aiPlayer.cash < targetAmount && remainingStructureSales > 0) {
                 const sellableIds = Object.keys(gameState.ownership)
                     .map(Number)
                     .filter(id => canSellEvenlyOnSpace(aiPlayer.id, id).allowed);
@@ -6324,6 +6329,7 @@
                 const refund = Math.floor(actualBuildCost / 2);
                 const beforeCash = aiPlayer.cash;
                 prop.houses -= 1;
+                remainingStructureSales -= 1;
                 aiPlayer.cash += refund;
                 totalLiquidated += refund;
                 recordLedgerEntry(aiPlayer.id, `RBI तरलीकरण: ${sp.name} का 1 निर्माण बेचा (50%)`, refund, beforeCash, aiPlayer.cash, 'भारतीय रिज़र्व बैंक');
@@ -6341,10 +6347,9 @@
                 addLog(`🛟 <strong>${aiPlayer.name}</strong> ने RBI ऑडिट शुल्क हेतु ₹2,000 बचाव ऋण लिया।`, 'amber');
             }
 
-            // 3. बिना घर वाले शहर/सेवाएं गिरवी रखें: स्टैंडअलोन और सेवाएं पहले, पूरे एकाधिकार अंतिम विकल्प
-            guard = 0;
-            while (aiPlayer.cash < targetAmount && guard < 40) {
-                guard++;
+            // 3. बिना घर वाले शहर/सेवाएं गिरवी रखें: स्टैंडअलोन और सेवाएं पहले, पूरे एकाधिकार अंतिम विकल्प।
+            // हर चक्र एक नई संपत्ति को गिरवी रखता है, इसलिए उपलब्ध संपत्तियां खत्म होने पर लूप रुकता है।
+            while (aiPlayer.cash < targetAmount) {
                 const mortgageableIds = Object.keys(gameState.ownership)
                     .map(Number)
                     .filter(id => canMortgageSpace(aiPlayer.id, id));
@@ -8343,7 +8348,10 @@
 
         function popStructureCost(prop, space) {
             const costs = ensureBuildCostHistory(prop, space);
-            return costs.length ? costs.pop() : (space?.houseCost || 0);
+            const rawCost = costs.length ? costs.pop() : (space?.houseCost || 0);
+            const numericCost = Number(rawCost);
+            // पुराने/दूषित रिकॉर्ड में NaN से player.cash दूषित न हो; शून्य वैध लागत है।
+            return Number.isFinite(numericCost) ? numericCost : (space?.houseCost || 0);
         }
 
         function handleBuyProperty() {
