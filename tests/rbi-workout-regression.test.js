@@ -7,7 +7,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'bharatiya_vyapari_FINAL
 function extract(startMarker, endMarker) {
   const start = html.indexOf(startMarker);
   assert.notEqual(start, -1, 'missing: ' + startMarker);
-  const end = html.indexOf(endMarker, start);
+  const end = html.indexOf(endMarker, start + startMarker.length);
   assert.notEqual(end, -1, 'missing end marker: ' + endMarker);
   return html.slice(start, end).trim();
 }
