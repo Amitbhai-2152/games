@@ -4003,6 +4003,23 @@
         @keyframes marketPanelEnter{from{opacity:0;transform:translateY(18px) scale(.975);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
         @keyframes marketOrbFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
         @media(prefers-reduced-motion:reduce){.market-prediction-shell,.market-signal-orb,.market-prediction-option{animation:none!important;transition:none!important}}
+
+        /* Sealed auction motion design; respects system reduced-motion preference */
+        .sealed-auction-shell{animation:sealedPanelEnter .4s cubic-bezier(.16,1,.3,1) both}
+        .auction-gavel-icon{animation:gavelReady .9s ease-out both;transform-origin:65% 80%}
+        .auction-envelope-flash{animation:auctionEnvelopeOverlay .62s ease-out both}
+        .auction-envelope-flash>div{animation:auctionEnvelopeFly .62s cubic-bezier(.16,1,.3,1) both}
+        .auction-envelope{display:inline-block;filter:drop-shadow(0 0 16px rgba(250,204,21,.25));animation:envelopeReveal 1.1s cubic-bezier(.16,1,.3,1) both}
+        .auction-reveal-row{animation:auctionRowReveal .38s cubic-bezier(.16,1,.3,1) both}
+        .auction-reveal-row:nth-child(2){animation-delay:.08s}.auction-reveal-row:nth-child(3){animation-delay:.16s}.auction-reveal-row:nth-child(4){animation-delay:.24s}.auction-reveal-row:nth-child(5){animation-delay:.32s}
+        .auction-reveal-winner{box-shadow:0 0 24px rgba(52,211,153,.16),inset 0 0 15px rgba(52,211,153,.07)}
+        @keyframes sealedPanelEnter{from{opacity:0;transform:translateY(18px) scale(.975);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+        @keyframes gavelReady{0%{transform:rotate(-16deg) scale(.85)}65%{transform:rotate(8deg) scale(1.06)}100%{transform:rotate(0) scale(1)}}
+        @keyframes auctionEnvelopeOverlay{0%{opacity:0;background:rgba(5,10,25,0)}25%{opacity:1;background:rgba(5,10,25,.6)}80%{opacity:1;background:rgba(5,10,25,.35)}100%{opacity:0;background:rgba(5,10,25,0)}}
+        @keyframes auctionEnvelopeFly{0%{opacity:0;transform:translateY(60px) scale(.55) rotate(-14deg)}30%{opacity:1;transform:translateY(0) scale(1.15) rotate(8deg)}65%{transform:translateY(-8px) scale(1) rotate(0)}100%{opacity:0;transform:translateY(-40px) scale(.75)}}
+        @keyframes envelopeReveal{0%{opacity:0;transform:rotateY(80deg) scale(.6)}45%{opacity:1;transform:rotateY(-12deg) scale(1.1)}100%{opacity:1;transform:rotateY(0) scale(1)}}
+        @keyframes auctionRowReveal{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+        @media(prefers-reduced-motion:reduce){.sealed-auction-shell,.auction-gavel-icon,.auction-envelope-flash,.auction-envelope-flash>div,.auction-envelope,.auction-reveal-row{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
@@ -4482,54 +4499,42 @@
         </div>
     </div>
 
-    <div id="auctionModal"    <div id="auctionModal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
-        <div class="bg-wood-900 border-2 border-gold-400 rounded-3xl max-w-lg w-full p-5 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-gold-500/30 pb-3 mb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-wood-950 flex items-center justify-center text-lg font-black shadow">
-                        <i class="fa-solid fa-gavel"></i>
-                    </div>
-                    <div>
-                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-gold-400">सार्वजनिक खुली नीलामी</span>
-                        <h3 id="auctionPropertyTitle" class="font-royal text-xl text-white leading-none">जयपुर (मूल्य ₹900)</h3>
-                    </div>
+    <!-- सीलबंद रणनीतिक नीलामी: सभी बोलियाँ एक साथ खुलेंगी -->
+    <div id="auctionModal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-xl flex items-center justify-center p-3 overflow-y-auto">
+        <div id="sealedAuctionPanel" class="sealed-auction-shell bg-gradient-to-br from-[#180b05] via-[#251006] to-[#090d1a] border-2 border-gold-400 rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-[0_0_55px_rgba(250,204,21,0.18)] my-auto">
+            <div class="flex items-center justify-between gap-3 border-b border-gold-500/30 pb-3 mb-4">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="auction-gavel-icon w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-300 via-yellow-500 to-orange-700 text-wood-950 flex items-center justify-center text-2xl shadow-lg shrink-0">🔨</div>
+                    <div class="min-w-0"><span class="text-[10px] font-extrabold uppercase tracking-[0.19em] text-gold-400">SEALED STRATEGY • FAIR BIDDING</span>
+                        <h3 id="auctionPropertyTitle" class="font-royal text-xl sm:text-2xl text-white leading-tight">जयपुर</h3></div>
                 </div>
-                <span class="text-xs font-bold bg-rose-600/30 border border-rose-400 text-rose-200 px-2.5 py-1 rounded-full">
-                    लाइव बोली
-                </span>
+                <span class="text-[10px] font-black bg-indigo-500/20 border border-indigo-300/60 text-indigo-100 px-2.5 py-1.5 rounded-full shrink-0">🔒 सीलबंद</span>
             </div>
-
-            <!-- उच्चतम बोली बॉक्स -->
-            <div class="grid grid-cols-2 gap-3 bg-wood-950/90 border border-gold-500/40 rounded-2xl p-3.5 mb-3 text-center">
-                <div>
-                    <div class="text-[11px] text-amber-200/70">वर्तमान उच्चतम बोली</div>
-                    <div id="auctionCurrentBid" class="text-2xl font-black text-emerald-400 mt-0.5">₹450</div>
-                </div>
-                <div>
-                    <div class="text-[11px] text-amber-200/70">उच्चतम बोलीदाता</div>
-                    <div id="auctionHighestBidder" class="text-sm sm:text-base font-extrabold text-gold-300 mt-1 truncate">कोई नहीं</div>
-                </div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="rounded-2xl border border-amber-300/35 bg-black/35 p-3 text-center"><div class="text-[10px] text-amber-200/70">सूची मूल्य</div><div id="auctionListValue" class="text-xl sm:text-2xl font-black text-white mt-1">₹1,000</div></div>
+                <div class="rounded-2xl border border-emerald-300/35 bg-emerald-950/30 p-3 text-center"><div class="text-[10px] text-emerald-200/70">न्यूनतम वैध बोली</div><div id="auctionMinimumBid" class="text-xl sm:text-2xl font-black text-emerald-300 mt-1">₹500</div></div>
             </div>
-
-            <!-- वर्तमान बोली लगाने वाले सेठ -->
-            <div id="auctionActiveBidderBox" class="bg-wood-800/90 border border-gold-400/60 rounded-2xl p-3.5 mb-3">
-                <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-xs text-amber-200">अब बोली लगाने की बारी:</span>
-                    <span id="auctionBidderCash" class="text-xs font-extrabold text-emerald-300">तिजोरी: ₹15,000</span>
+            <div id="auctionBidderArea" class="rounded-2xl border border-gold-400/45 bg-white/[0.035] p-4 mb-4">
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <div><div class="text-[10px] uppercase tracking-[0.16em] font-black text-cyan-300">PRIVATE BID WINDOW</div><div id="auctionCurrentTurnName" class="text-lg sm:text-xl font-black text-white mt-1">खिलाड़ी की बारी</div></div>
+                    <div class="rounded-xl bg-emerald-950/70 border border-emerald-400/40 px-3 py-2 text-right shrink-0"><div class="text-[9px] text-emerald-200/70">आपकी उपलब्ध नकदी</div><div id="auctionBidderCash" class="text-sm font-black text-emerald-300">₹15,000</div></div>
                 </div>
-                <div id="auctionCurrentTurnName" class="text-base font-black text-gold-300 mb-2">आर्यन सेठ</div>
-                <div id="auctionAIReasoningLine" class="text-[11px] text-indigo-300 font-semibold mb-2.5 min-h-[16px]"></div>
-
-                <div id="auctionHumanButtons" class="grid grid-cols-5 gap-1.5">
-                    <button onclick="placeAuctionBid(100)" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-wood-950 font-black text-xs shadow transition">+₹100</button>
-                    <button onclick="placeAuctionBid(250)" class="py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-wood-950 font-black text-xs shadow transition">+₹250</button>
-                    <button onclick="placeAuctionBid(500)" class="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-wood-950 font-black text-xs shadow transition">+₹500</button>
-                    <button onclick="placeAuctionBid(1000)" class="py-2.5 rounded-xl bg-gold-400 hover:bg-gold-300 text-wood-950 font-black text-xs shadow transition">+₹1,000</button>
-                    <button onclick="passAuctionTurn()" class="py-2.5 rounded-xl bg-rose-900 hover:bg-rose-800 text-rose-100 font-bold text-xs border border-rose-400/40 transition">पास (Pass)</button>
+                <p id="auctionAIReasoningLine" class="text-xs leading-relaxed text-amber-100/80 mb-3">हर खिलाड़ी अपनी अधिकतम बोली निजी रूप से जमा करेगा। कोई बोली बीच में नहीं दिखेगी।</p>
+                <label for="auctionBidInput" class="block text-xs font-bold text-amber-100 mb-1.5">आपकी गुप्त बोली (₹)</label>
+                <input id="auctionBidInput" type="number" min="0" step="100" inputmode="numeric" class="w-full rounded-xl border border-amber-300/40 bg-slate-950 text-white text-xl font-black p-3 outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" placeholder="अपनी बोली लिखें" />
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <button id="auctionSubmitBidButton" onclick="submitSealedAuctionBid()" class="py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-950 font-black text-sm shadow-lg hover:brightness-110 transition">🔒 बोली लॉक करें</button>
+                    <button id="auctionPassBidButton" onclick="submitSealedAuctionBid(0)" class="py-3 rounded-xl bg-slate-800 border border-slate-600 text-slate-100 font-bold text-sm hover:bg-slate-700 transition">₹0 — पास</button>
                 </div>
+                <div class="flex items-center justify-between gap-2 mt-3 text-[10px] text-slate-400"><span id="auctionHumanStepStatus">बोली देने वाले खिलाड़ी</span><span>टाई में नीलामी शुरू करने वाले की बारी से क्रम</span></div>
             </div>
-
-            <div id="auctionParticipantsBadges" class="flex flex-wrap gap-1.5 text-[11px]"></div>
+            <div id="auctionRevealPanel" class="hidden rounded-2xl border border-gold-300/50 bg-black/35 p-4 mb-4">
+                <div class="text-center py-2"><div class="auction-envelope text-4xl mb-2">✉️</div><div class="text-[10px] tracking-[0.2em] uppercase font-black text-cyan-300">SEALED BIDS • REVEAL</div><h4 class="font-royal text-2xl sm:text-3xl text-white mt-1">अब खुलेंगे सारे पत्ते!</h4><p class="text-xs text-amber-200/80 mt-1">सभी बोलियाँ जमा होने के बाद ही नतीजा निकाला गया है।</p></div>
+                <div id="auctionRevealRows" class="space-y-2 mt-4"></div>
+                <div id="auctionRevealWinner" class="mt-4 rounded-2xl border border-gold-300/50 bg-amber-950/40 p-4 text-center text-amber-100 font-black"></div>
+            </div>
+            <div id="auctionParticipantsBadges" class="flex flex-wrap gap-1.5 text-[10px]"></div>
+            <div class="text-[10px] leading-relaxed text-slate-400 mt-3 border-t border-white/10 pt-3">नियम: न्यूनतम बोली सूची मूल्य का लगभग आधा है। सबसे ऊँची वैध बोली जीतती है; विजेता अपनी बोली देता है, बाकी किसी से राशि नहीं ली जाती। कोई वैध बोली न आने पर संपत्ति अनबिकी रहती है। सभी पात्र खिलाड़ियों की जानकारी समान है।</div>
         </div>
     </div>
 
@@ -7759,189 +7764,161 @@
            लाइव मल्टी-प्लेयर नीलामी इंजन (TRANSPARENT LIVE AUCTION)
            ============================================================== */
         function handlePassProperty() {
-            const p = gameState.players[gameState.currentPlayerIndex];
-            const space = BOARD_SPACES[p.position];
+            const p=gameState.players[gameState.currentPlayerIndex];
+            const space=BOARD_SPACES[p.position];
             closeDeedModal();
-            addLog(`🔨 ${p.name} ने ${space.name} को सीधा नहीं खरीदा — अब सार्वजनिक खुली नीलामी प्रारंभ!`, 'amber');
+            addLog(`🔒 ${p.name} ने ${space.name} को सीधे नहीं खरीदा — अब सभी पात्र खिलाड़ी गुप्त बोली देंगे।`,'amber');
             startPropertyAuction(space);
         }
 
+        /* सीलबंद नीलामी: मानव बोलियाँ एक-एक करके लॉक होती हैं; कोई पिछली रकम नहीं दिखती। */
         function startPropertyAuction(space) {
-            const startBid = Math.max(200, Math.floor(space.price * 0.5));
-            const activeBidders = gameState.players
-                .filter(pl => !pl.bankrupt && pl.cash >= startBid)
-                .map(pl => pl.id);
-
-            if (activeBidders.length === 0) {
-                addLog(`किसी भी सेठ के पास ${space.name} की न्यूनतम बोली (${formatRupee(startBid)}) के लिए नकदी नहीं है।`, 'slate');
-                finishTurnPhase(gameState.pendingBonusTurn);
-                return;
+            const minimumBid=Math.max(200,Math.floor(space.price*0.5));
+            const n=gameState.players.length;
+            const activeBidders=gameState.players.filter(p=>!p.bankrupt&&p.cash>=minimumBid)
+                .sort((a,b)=>((a.id-gameState.currentPlayerIndex+n)%n)-((b.id-gameState.currentPlayerIndex+n)%n)).map(p=>p.id);
+            if(!activeBidders.length){
+                addLog(`किसी भी सेठ के पास ${space.name} की न्यूनतम बोली (${formatRupee(minimumBid)}) के लिए नकदी नहीं है।`,'slate');
+                finishTurnPhase(gameState.pendingBonusTurn);return;
             }
-
-            gameState.phase = 'AUCTION';
-            gameState.auction = {
-                spaceId: space.id,
-                currentBid: startBid,
-                highestBidderId: null,
-                activeBidders: activeBidders,
-                turnCursor: 0,
-                lastReason: 'नीलामी प्रारंभिक मूल्य 50% पर शुरू।'
-            };
-
+            gameState.phase='AUCTION';
+            gameState.auction={spaceId:space.id,minimumBid,activeBidders,
+                humanBidders:activeBidders.filter(id=>!gameState.players[id].isAI),humanCursor:0,
+                initiatorId:gameState.currentPlayerIndex,bidByPlayerId:{},bidReasons:{},stage:'BIDDING',
+                results:[],winnerId:null,winningBid:0};
             document.getElementById('auctionModal').classList.remove('hidden');
             renderAuctionModal();
-            checkTriggerAIAuctionBid();
+            if(!gameState.auction.humanBidders.length)scheduleGameTimeout(resolveSealedAuctionBids,720);
+        }
+
+        function getAISealedAuctionBid(bidder,space,auction) {
+            const groupSpaces=space.type==='city'?BOARD_SPACES.filter(s=>s.type==='city'&&s.group===space.group&&s.id!==space.id):[];
+            const completesOwnSet=groupSpaces.length>0&&groupSpaces.every(s=>gameState.ownership[s.id]?.ownerId===bidder.id);
+            const blocksOpponentSet=groupSpaces.length>0&&gameState.players.some(other=>other.id!==bidder.id&&!other.bankrupt&&groupSpaces.every(s=>gameState.ownership[s.id]?.ownerId===other.id));
+            let maxWilling=Math.floor(space.price*.92),ratio=.72,reason='सूची मूल्य से नीचे सुरक्षित मूल्यांकन';
+            if(completesOwnSet){maxWilling=Math.floor(space.price*1.35);ratio=1.12;reason='रंग समूह पूरा करने का रणनीतिक मूल्य';}
+            else if(blocksOpponentSet){maxWilling=Math.floor(space.price*1.2);ratio=.98;reason='प्रतिद्वंद्वी का एकाधिकार रोकने का मूल्य';}
+            const cap=Math.min(maxWilling,Math.max(0,bidder.cash-500));
+            if(cap<auction.minimumBid)return {bid:0,reason:'नकदी सुरक्षित रखने के लिए पास'};
+            let bid=Math.max(auction.minimumBid,Math.min(cap,Math.floor(space.price*ratio/100)*100));
+            if(bid>bidder.cash)bid=bidder.cash;
+            if(bid<auction.minimumBid)bid=0;
+            return {bid,reason:`${reason}; सार्वजनिक मूल्यांकन ${formatRupee(bid)}`};
         }
 
         function renderAuctionModal() {
-            const auc = gameState.auction;
-            if (!auc) return;
-            const space = BOARD_SPACES[auc.spaceId];
-            const currentBidderId = auc.activeBidders[auc.turnCursor];
-            const currentBidder = gameState.players[currentBidderId];
-            const highestBidder = auc.highestBidderId !== null ? gameState.players[auc.highestBidderId] : null;
-
-            document.getElementById('auctionPropertyTitle').textContent = `${space.name} (सूची मूल्य ${formatRupee(space.price)})`;
-            document.getElementById('auctionCurrentBid').textContent = formatRupee(auc.currentBid);
-            document.getElementById('auctionHighestBidder').textContent = highestBidder ? highestBidder.name : 'कोई बोली नहीं';
-            document.getElementById('auctionAIReasoningLine').textContent = auc.lastReason || '';
-
-            if (currentBidder) {
-                document.getElementById('auctionCurrentTurnName').textContent = `${currentBidder.name} ${currentBidder.isAI ? '(स्मार्ट AI मूल्यांकन...)' : '(आपकी बोली)'}`;
-                document.getElementById('auctionBidderCash').textContent = `तिजोरी: ${formatRupee(currentBidder.cash)}`;
-                const btnBox = document.getElementById('auctionHumanButtons');
-                btnBox.style.opacity = currentBidder.isAI ? '0.4' : '1';
-                btnBox.style.pointerEvents = currentBidder.isAI ? 'none' : 'auto';
+            const a=gameState.auction;if(!a)return;
+            const space=BOARD_SPACES[a.spaceId],reveal=a.stage==='REVEAL';
+            document.getElementById('auctionPropertyTitle').textContent=`${space.name} • रणनीतिक नीलामी`;
+            document.getElementById('auctionListValue').textContent=formatRupee(space.price);
+            document.getElementById('auctionMinimumBid').textContent=formatRupee(a.minimumBid);
+            document.getElementById('auctionBidderArea').classList.toggle('hidden',reveal);
+            document.getElementById('auctionRevealPanel').classList.toggle('hidden',!reveal);
+            if(reveal){
+                document.getElementById('auctionRevealRows').innerHTML=a.results.map((entry,i)=>{
+                    const p=gameState.players[entry.playerId],winner=a.winnerId===entry.playerId;
+                    const bidText=entry.bid>=a.minimumBid?formatRupee(entry.bid):'पास';
+                    return `<div class="auction-reveal-row ${winner?'auction-reveal-winner':''} flex items-center justify-between gap-3 rounded-xl border ${winner?'border-emerald-300/70 bg-emerald-950/60':'border-white/10 bg-slate-950/50'} p-3">
+                        <div class="min-w-0"><div class="flex items-center gap-2"><span class="text-xs font-black text-slate-400">${i+1}.</span><span>${p.icon||'👤'}</span><span class="font-bold text-sm ${winner?'text-emerald-200':'text-slate-100'} truncate">${p.name}</span>${p.isAI?'<span class="text-[9px] text-indigo-200">AI</span>':''}</div>
+                        <div class="text-[10px] text-slate-400 mt-1">${entry.reason||''}</div></div>
+                        <div class="font-black text-base ${winner?'text-emerald-300':'text-amber-100'} shrink-0">${bidText}${winner?' 🏆':''}</div></div>`;
+                }).join('');
+                document.getElementById('auctionRevealWinner').innerHTML=a.winnerId!==null
+                    ?`🏆 ${gameState.players[a.winnerId].name} की सबसे ऊँची वैध बोली: ${formatRupee(a.winningBid)}<div class="font-semibold text-xs text-amber-100/80 mt-1">विजेता अपनी बोली चुकाएगा; दूसरे खिलाड़ियों से कोई राशि नहीं ली जाएगी।</div>`
+                    :'🤝 कोई वैध बोली नहीं आई — संपत्ति फिलहाल अनबिकी रहेगी।';
+            }else{
+                while(a.humanCursor<a.humanBidders.length&&Object.prototype.hasOwnProperty.call(a.bidByPlayerId,a.humanBidders[a.humanCursor]))a.humanCursor++;
+                const id=a.humanBidders[a.humanCursor],p=id===undefined?null:gameState.players[id];
+                const name=document.getElementById('auctionCurrentTurnName'),cash=document.getElementById('auctionBidderCash'),input=document.getElementById('auctionBidInput');
+                const submit=document.getElementById('auctionSubmitBidButton'),pass=document.getElementById('auctionPassBidButton');
+                if(p){
+                    name.textContent=`${p.name} — आपकी निजी बोली`;cash.textContent=formatRupee(p.cash);
+                    input.value='';input.min=String(a.minimumBid);input.max=String(p.cash);input.disabled=false;
+                    input.placeholder=`कम से कम ${formatNumber(a.minimumBid)} • अधिकतम ${formatNumber(p.cash)}`;
+                    submit.disabled=false;pass.disabled=false;
+                    document.getElementById('auctionHumanStepStatus').textContent=`गुप्त बोली ${a.humanCursor+1} / ${a.humanBidders.length} • पिछली बोलियाँ छिपी हैं`;
+                }else{
+                    name.textContent='सभी मानव खिलाड़ी जमा कर चुके हैं';cash.textContent='बोलियाँ लॉक';
+                    input.value='';input.disabled=true;submit.disabled=true;pass.disabled=true;
+                    document.getElementById('auctionHumanStepStatus').textContent='AI बोलियाँ भी नतीजे के साथ खुलेंगी';
+                }
+                document.getElementById('auctionAIReasoningLine').textContent='🔒 अपनी वास्तविक अधिकतम बोली सोचकर भरें। किसी दूसरे खिलाड़ी की बोली या AI की बोली अभी नहीं दिखेगी।';
             }
-
-            const badges = document.getElementById('auctionParticipantsBadges');
-            badges.innerHTML = '';
-            gameState.players.filter(p => !p.bankrupt).forEach(pl => {
-                const stillIn = auc.activeBidders.includes(pl.id);
-                badges.innerHTML += `
-                    <span class="px-2 py-0.5 rounded-full border ${stillIn ? 'bg-emerald-950 border-emerald-400 text-emerald-200' : 'bg-slate-900 border-slate-700 text-slate-500 line-through'}">
-                        ${pl.name}
-                    </span>
-                `;
+            const badges=document.getElementById('auctionParticipantsBadges');badges.innerHTML='';
+            gameState.players.filter(p=>!p.bankrupt).forEach(p=>{
+                const eligible=a.activeBidders.includes(p.id),submitted=Object.prototype.hasOwnProperty.call(a.bidByPlayerId,p.id);
+                const state=!eligible?'नकदी कम':submitted?'🔒 जमा':p.isAI?'🤖 गुप्त':'बारी बाकी';
+                badges.innerHTML+=`<span class="px-2 py-1 rounded-full border ${!eligible?'bg-slate-900 border-slate-700 text-slate-500':submitted?'bg-emerald-950 border-emerald-400 text-emerald-200':'bg-indigo-950 border-indigo-400/50 text-indigo-200'}">${p.name}: ${state}</span>`;
             });
         }
 
-        function placeAuctionBid(increment) {
-            const auc = gameState.auction;
-            if (!auc) return;
-            const bidderId = auc.activeBidders[auc.turnCursor];
-            const bidder = gameState.players[bidderId];
-            const nextBid = auc.highestBidderId === null ? auc.currentBid : auc.currentBid + increment;
-
-            if (!bidder || bidder.cash < nextBid) {
-                passAuctionTurn();
-                return;
-            }
-
-            auc.currentBid = nextBid;
-            auc.highestBidderId = bidder.id;
+        function submitSealedAuctionBid(forcedBid=null) {
+            const a=gameState.auction;if(!a||a.stage!=='BIDDING')return;
+            while(a.humanCursor<a.humanBidders.length&&Object.prototype.hasOwnProperty.call(a.bidByPlayerId,a.humanBidders[a.humanCursor]))a.humanCursor++;
+            const id=a.humanBidders[a.humanCursor],p=id===undefined?null:gameState.players[id];
+            if(!p||p.isAI||p.bankrupt)return;
+            const input=document.getElementById('auctionBidInput');
+            if(forcedBid!==0&&input.value.trim()===''){setToast('अपनी बोली लिखें या ₹0 — पास चुनें।');return;}
+            const bid=forcedBid===0?0:Number(input.value);
+            if(!Number.isFinite(bid)||!Number.isInteger(bid)||bid<0){setToast('बोली में पूर्ण रुपये लिखें।');return;}
+            if(bid!==0&&bid<a.minimumBid){setToast(`वैध बोली कम से कम ${formatRupee(a.minimumBid)} होनी चाहिए।`);return;}
+            if(bid>p.cash){setToast('आप अपनी नकदी से अधिक बोली नहीं लगा सकते।');return;}
+            a.bidByPlayerId[p.id]=bid;a.bidReasons[p.id]=bid===0?'मानव खिलाड़ी ने पास किया':'गुप्त मानव बोली';
             sfxCash();
+            const fx=document.createElement('div');fx.className='auction-envelope-flash fixed inset-0 z-[97] pointer-events-none flex items-center justify-center';
+            fx.innerHTML='<div class="text-6xl sm:text-8xl drop-shadow-[0_0_25px_rgba(34,211,238,0.6)]">✉️</div>';document.body.appendChild(fx);
+            scheduleGameTimeout(()=>fx.remove(),620);
+            a.humanCursor++;
+            while(a.humanCursor<a.humanBidders.length&&Object.prototype.hasOwnProperty.call(a.bidByPlayerId,a.humanBidders[a.humanCursor]))a.humanCursor++;
+            if(a.humanCursor>=a.humanBidders.length){
+                document.getElementById('auctionBidderArea').classList.add('hidden');
+                scheduleGameTimeout(resolveSealedAuctionBids,760);
+            }else renderAuctionModal();
+        }
 
-            if (auc.activeBidders.length === 1) {
-                concludeAuction();
-                return;
-            }
-
-            auc.turnCursor = (auc.turnCursor + 1) % auc.activeBidders.length;
+        function resolveSealedAuctionBids() {
+            const a=gameState.auction;if(!a||a.stage!=='BIDDING')return;
+            const space=BOARD_SPACES[a.spaceId];
+            a.activeBidders.forEach(id=>{
+                if(Object.prototype.hasOwnProperty.call(a.bidByPlayerId,id))return;
+                const p=gameState.players[id];
+                if(!p||p.bankrupt||!p.isAI){a.bidByPlayerId[id]=0;a.bidReasons[id]='बोली नहीं दी';return;}
+                const choice=getAISealedAuctionBid(p,space,a);
+                a.bidByPlayerId[id]=choice.bid;a.bidReasons[id]=choice.reason;
+            });
+            const n=gameState.players.length,rank=id=>(id-a.initiatorId+n)%n;
+            a.results=a.activeBidders.map(id=>({playerId:id,bid:Number(a.bidByPlayerId[id]||0),reason:a.bidReasons[id]||''}))
+                .sort((x,y)=>y.bid-x.bid||rank(x.playerId)-rank(y.playerId));
+            const first=a.results.find(entry=>entry.bid>=a.minimumBid);
+            a.winnerId=first?first.playerId:null;a.winningBid=first?first.bid:0;a.stage='REVEAL';
             renderAuctionModal();
-            checkTriggerAIAuctionBid();
+            if(a.winnerId!==null){
+                sfxFanfare();const name=gameState.players[a.winnerId].name;
+                showCenterScreenBanner('🔨','सीलबंद बोलियाँ खुल गईं!',`${name} ने नीलामी जीती`,`${space.name} • ${formatRupee(a.winningBid)}`);
+            }else sfxWorldEventAlert();
+            scheduleGameTimeout(finalizeSealedAuction,1750);
         }
 
-        function passAuctionTurn() {
-            const auc = gameState.auction;
-            if (!auc) return;
-            auc.activeBidders.splice(auc.turnCursor, 1);
-
-            if (auc.activeBidders.length === 0 || (auc.activeBidders.length === 1 && auc.highestBidderId !== null)) {
-                concludeAuction();
-                return;
-            }
-
-            if (auc.turnCursor >= auc.activeBidders.length) {
-                auc.turnCursor = 0;
-            }
-            renderAuctionModal();
-            checkTriggerAIAuctionBid();
-        }
-
-        function checkTriggerAIAuctionBid() {
-            const auc = gameState.auction;
-            if (!auc || auc.activeBidders.length === 0) return;
-            const bidderId = auc.activeBidders[auc.turnCursor];
-            const bidder = gameState.players[bidderId];
-            if (!bidder || !bidder.isAI) return;
-
-            const space = BOARD_SPACES[auc.spaceId];
-            scheduleGameTimeout(() => {
-                if (!gameState.auction) return;
-                const nextBid = auc.highestBidderId === null ? auc.currentBid : auc.currentBid + 100;
-
-                const completesOwnSet = space.type === 'city' &&
-                    BOARD_SPACES.filter(s => s.group === space.group && s.id !== space.id)
-                        .every(s => gameState.ownership[s.id]?.ownerId === bidder.id);
-
-                const blocksOpponentSet = space.type === 'city' &&
-                    gameState.players.some(other => other.id !== bidder.id && !other.bankrupt &&
-                        BOARD_SPACES.filter(s => s.group === space.group && s.id !== space.id)
-                            .every(s => gameState.ownership[s.id]?.ownerId === other.id));
-
-                let maxWilling = Math.floor(space.price * 0.95);
-                let reasonTag = 'सामान्य बाजार मूल्यांकन';
-                if (completesOwnSet) {
-                    maxWilling = Math.floor(space.price * 1.35);
-                    reasonTag = 'रंग समूह पूरा करने हेतु आक्रामक बोली';
-                } else if (blocksOpponentSet) {
-                    maxWilling = Math.floor(space.price * 1.2);
-                    reasonTag = 'विरोधी का एकाधिकार रोकने हेतु बोली';
+        function finalizeSealedAuction() {
+            const a=gameState.auction;if(!a||a.stage!=='REVEAL')return;
+            document.getElementById('auctionModal').classList.add('hidden');gameState.auction=null;
+            const space=BOARD_SPACES[a.spaceId];
+            const summary=a.results.map(e=>`${gameState.players[e.playerId].name}: ${e.bid>=a.minimumBid?formatRupee(e.bid):'पास'}`).join(' • ');
+            addLog(`🔍 <strong>सीलबंद नीलामी के खुले परिणाम:</strong> ${summary}`,'amber');
+            if(a.winnerId!==null&&a.winningBid>=a.minimumBid){
+                const winner=gameState.players[a.winnerId];
+                if(!winner||winner.bankrupt||winner.cash<a.winningBid){addLog('⚠️ नीलामी भुगतान सत्यापन विफल; संपत्ति नहीं दी गई।','rose');}
+                else{
+                    const before=winner.cash;winner.cash-=a.winningBid;
+                    gameState.ownership[space.id]={ownerId:winner.id,houses:0,buildCosts:[],mortgaged:false};
+                    recordLedgerEntry(winner.id,`सीलबंद नीलामी में ${space.name} जीता`,-a.winningBid,before,winner.cash,'भारतीय रिज़र्व बैंक');
+                    addLog(`🏆 <strong>${winner.name}</strong> ने <strong>${space.name}</strong> को ${formatRupee(a.winningBid)} में खरीदा।`,'gold');
+                    setToast(`${winner.name} ने गुप्त बोली से ${space.name} जीता!`);
                 }
-
-                if (bidder.cash - nextBid >= 500 && nextBid <= maxWilling) {
-                    auc.lastReason = `🤖 ${bidder.name}: ${reasonTag} (${formatRupee(nextBid)})`;
-                    showAIReasoning(auc.lastReason);
-                    placeAuctionBid(100);
-                } else {
-                    auc.lastReason = `🤖 ${bidder.name}: नकदी सुरक्षा हेतु नीलामी से पास किया।`;
-                    showAIReasoning(auc.lastReason);
-                    passAuctionTurn();
-                }
-            }, 520);
-        }
-
-        function concludeAuction() {
-            const auc = gameState.auction;
-            document.getElementById('auctionModal').classList.add('hidden');
-            gameState.auction = null;
-
-            if (auc && auc.highestBidderId !== null) {
-                const winner = gameState.players[auc.highestBidderId];
-                const space = BOARD_SPACES[auc.spaceId];
-                const before = winner.cash;
-                winner.cash -= auc.currentBid;
-                gameState.ownership[space.id] = {
-                    ownerId: winner.id,
-                    houses: 0,
-                    buildCosts: [], // प्रत्येक वास्तविक निर्माण लागत; बिक्री/दिवालियापन में सही रिफंड के लिए
-                    mortgaged: false
-                };
-                recordLedgerEntry(winner.id, `नीलामी में ${space.name} जीता`, -auc.currentBid, before, winner.cash, 'भारतीय रिज़र्व बैंक');
-                sfxFanfare();
-                addLog(`🔨 नीलामी विजेता: <strong>${winner.name}</strong> ने <strong>${space.name}</strong> को ${formatRupee(auc.currentBid)} की बोली लगाकर खरीदा!`, 'gold');
-                setToast(`${winner.name} ने नीलामी में ${space.name} जीता!`);
-            } else {
-                addLog(`नीलामी में किसी भी सेठ ने बोली नहीं लगाई — शहर अनबिका रहा।`, 'slate');
-            }
-
+            }else{addLog('🤝 किसी ने न्यूनतम वैध बोली नहीं लगाई — संपत्ति अनबिकी रही।','slate');setToast('कोई वैध बोली नहीं आई; संपत्ति बैंक के पास है।');}
             finishTurnPhase(gameState.pendingBonusTurn);
         }
 
-        /* ==============================================================
-           आपसी व्यापार समझौता (TRANSPARENT TRADE EVALUATION)
-           ============================================================== */
         function openTradeModal() {
             const currentPlayer = gameState.players[gameState.currentPlayerIndex];
             const tradePhases = ['PRE_ROLL', 'POST_ROLL', 'ACTION_DECISION'];
