@@ -78,7 +78,7 @@ test('structure refund preview normalizes history like actual sale', () => {
 });
 test('AI liquidation continues beyond 60 structure sales when needed', () => {
   const fn = extract('function executeSmartAILiquidation(aiPlayer, targetAmount) {', 'function getPlayerRecoveryPotential(');
-  const c = { gameState: { ownership: {} }, BOARD_SPACES: {}, canSellEvenlyOnSpace() { return { allowed: true }; },
+  const c = { gameState: { ownership: {} }, BOARD_SPACES: {}, canSellEvenlyOnSpace(playerId, id) { const p = gameState.ownership[id]; return { allowed: !!p && p.ownerId === playerId && p.houses > 0 }; },
     popStructureCost(prop) { if (Array.isArray(prop.buildCosts)) prop.buildCosts.pop(); return 0; },
     canMortgageSpace() { return false; }, hasGroupMonopoly() { return false; },
     recordLedgerEntry() {}, addLog() {} };
@@ -107,10 +107,10 @@ test('actual structure-sale helper safely handles corrupted and zero-cost histor
   assert.equal(c.popCost({ buildCosts: [0] }, { houseCost: 200 }), 0);
 });
 test('all inline JavaScript parses without syntax errors', () => {
-  const blocks = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+  const blocks = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
   let checked = 0;
   for (const block of blocks) {
-    const type = (block[1].match(/\\btype=["']([^"']+)["']/i) || [])[1];
+    const type = (block[1].match(/\btype=["']([^"']+)["']/i) || [])[1];
     if (type && !/javascript|ecmascript|module/i.test(type)) continue;
     if (block[2].trim()) { new vm.Script(block[2]); checked++; }
   }
