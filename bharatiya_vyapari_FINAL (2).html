@@ -4020,6 +4020,79 @@
         @keyframes envelopeReveal{0%{opacity:0;transform:rotateY(80deg) scale(.6)}45%{opacity:1;transform:rotateY(-12deg) scale(1.1)}100%{opacity:1;transform:rotateY(0) scale(1)}}
         @keyframes auctionRowReveal{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
         @media(prefers-reduced-motion:reduce){.sealed-auction-shell,.auction-gavel-icon,.auction-envelope-flash,.auction-envelope-flash>div,.auction-envelope,.auction-reveal-row{animation:none!important;transition:none!important}}
+
+        /* Explicit visual rules for new overlays; the bundled Tailwind file is static. */
+        #marketPredictionModal, #auctionModal { position:fixed; inset:0; align-items:center; justify-content:center; overflow-y:auto; }
+        #marketPredictionModal { z-index:96; padding:1rem; background:rgba(2,6,23,.92); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+        #marketPredictionModal.hidden, #auctionModal.hidden { display:none !important; }
+        #marketPredictionModal:not(.hidden), #auctionModal:not(.hidden) { display:flex; }
+        #marketPredictionModal .market-prediction-shell {
+            box-sizing:border-box; width:100%; max-width:48rem; max-height:92vh; overflow-y:auto; margin:auto; padding:clamp(1rem,3vw,1.5rem);
+            color:#f8fafc; border:2px solid rgba(103,232,249,.78); border-radius:1.5rem;
+            background:radial-gradient(circle at 8% 0%,rgba(34,211,238,.14),transparent 36%),linear-gradient(135deg,#020617 0%,#1e1b4b 46%,#020617 100%);
+            box-shadow:0 22px 65px rgba(0,0,0,.6),0 0 48px rgba(34,211,238,.16);
+        }
+        #marketPredictionModal .market-signal-orb { width:3.2rem; height:3.2rem; display:flex; align-items:center; justify-content:center; border-radius:1rem; background:linear-gradient(145deg,#164e63,#312e81); border:1px solid rgba(103,232,249,.55); }
+        #marketPredictionModal .text-cyan-300 { color:#67e8f9 !important; }
+        #marketPredictionModal .text-cyan-200 { color:#a5f3fc !important; }
+        #marketPredictionModal .market-prediction-shell > div:nth-child(2) {
+            border:1px solid rgba(103,232,249,.42); border-radius:1rem; padding:1rem; margin-bottom:1rem;
+            background:linear-gradient(135deg,rgba(8,47,73,.88),rgba(30,27,75,.6));
+        }
+        #marketPredictionModal #marketForecastHint { color:#f8fafc; line-height:1.65; overflow-wrap:anywhere; }
+        #marketPredictionModal #marketForecastCash { color:#fde68a; }
+        #marketPredictionModal #marketPredictionOptions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; }
+        #marketPredictionModal .market-prediction-option {
+            min-width:0; padding:.9rem; border:1px solid rgba(251,191,36,.38); border-radius:1rem;
+            background:linear-gradient(145deg,rgba(15,23,42,.98),rgba(30,27,75,.9)); color:#f8fafc; text-align:left; cursor:pointer;
+        }
+        #marketPredictionModal .market-prediction-option:disabled { opacity:.42; cursor:not-allowed; }
+        #marketPredictionModal .market-prediction-option:hover:not(:disabled) { border-color:#67e8f9; background:linear-gradient(145deg,#0c4a6e,#312e81); }
+        #marketPredictionModal .market-prediction-option span { color:#fef3c7; }
+        #marketPredictionModal button[onclick="skipMarketPrediction()"] { background:#1e293b; color:#f8fafc; border:1px solid #64748b; border-radius:.8rem; padding:.7rem 1rem; cursor:pointer; }
+        #marketPredictionModal button[onclick="skipMarketPrediction()"]:hover { background:#334155; }
+        #auctionModal { z-index:50; padding:1rem; background:rgba(0,0,0,.91); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+        #sealedAuctionPanel {
+            box-sizing:border-box; width:100%; max-width:42rem; max-height:92vh; overflow-y:auto; margin:auto; padding:clamp(1rem,3vw,1.5rem);
+            border:2px solid #facc15; border-radius:1.5rem; color:#fef3c7;
+            background:radial-gradient(circle at 90% 0%,rgba(99,102,241,.16),transparent 34%),linear-gradient(140deg,#180b05 0%,#251006 45%,#090d1a 100%);
+            box-shadow:0 24px 65px rgba(0,0,0,.7),0 0 40px rgba(250,204,21,.15);
+        }
+        #sealedAuctionPanel .text-cyan-300 { color:#67e8f9 !important; }
+        #sealedAuctionPanel .text-emerald-300 { color:#6ee7b7 !important; }
+        #sealedAuctionPanel .text-emerald-200 { color:#a7f3d0 !important; }
+        #sealedAuctionPanel .text-amber-100 { color:#fef3c7 !important; }
+        #sealedAuctionPanel #auctionListValue { color:#fff; font-size:1.55rem; font-weight:900; }
+        #sealedAuctionPanel #auctionMinimumBid { color:#6ee7b7; font-size:1.55rem; font-weight:900; }
+        #sealedAuctionPanel #auctionBidderArea { padding:1rem; margin-bottom:1rem; border:1px solid rgba(250,204,21,.38); border-radius:1rem; background:rgba(255,255,255,.045); }
+        #sealedAuctionPanel #auctionRevealPanel { padding:1rem; margin-bottom:1rem; border:1px solid rgba(250,204,21,.5); border-radius:1rem; background:rgba(0,0,0,.38); }
+        #sealedAuctionPanel #auctionBidInput {
+            display:block; box-sizing:border-box; width:100%; padding:.85rem 1rem; border-radius:.8rem; color:#fff;
+            background:#020617; border:1px solid rgba(251,191,36,.5); font-size:1.2rem; font-weight:800; outline:none;
+        }
+        #sealedAuctionPanel #auctionBidInput:focus { border-color:#67e8f9; box-shadow:0 0 0 3px rgba(103,232,249,.16); }
+        #sealedAuctionPanel #auctionBidInput:disabled { opacity:.4; }
+        #sealedAuctionPanel #auctionSubmitBidButton, #sealedAuctionPanel #auctionPassBidButton {
+            display:block; width:100%; min-height:2.8rem; padding:.75rem .6rem; border-radius:.8rem; font-weight:900; cursor:pointer;
+        }
+        #sealedAuctionPanel #auctionSubmitBidButton { background:linear-gradient(100deg,#34d399,#67e8f9); color:#082f49; border:1px solid #a7f3d0; }
+        #sealedAuctionPanel #auctionPassBidButton { background:#1e293b; color:#f8fafc; border:1px solid #64748b; }
+        #sealedAuctionPanel button:disabled { opacity:.35; cursor:not-allowed; }
+        #sealedAuctionPanel #auctionRevealRows { display:flex; flex-direction:column; gap:.5rem; }
+        #sealedAuctionPanel .auction-reveal-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem; border-radius:.8rem; border:1px solid rgba(255,255,255,.13); background:rgba(15,23,42,.76); color:#f8fafc; }
+        #sealedAuctionPanel .auction-reveal-row.auction-reveal-winner { border-color:rgba(110,231,183,.8); background:linear-gradient(100deg,rgba(6,78,59,.66),rgba(6,95,70,.32)); }
+        #sealedAuctionPanel #auctionRevealWinner { padding:1rem; border:1px solid rgba(250,204,21,.52); border-radius:1rem; background:rgba(120,53,15,.3); text-align:center; color:#fef3c7; }
+        #sealedAuctionPanel #auctionParticipantsBadges { display:flex; flex-wrap:wrap; gap:.4rem; }
+        #sealedAuctionPanel #auctionParticipantsBadges span { padding:.25rem .5rem; border-radius:.5rem; font-size:.68rem; }
+        #sealedAuctionPanel .auction-envelope { font-size:2.5rem; }
+        .auction-envelope-flash { z-index:97; }
+        @media (max-width:640px) {
+            #marketPredictionModal { padding:.55rem; }
+            #marketPredictionModal .market-prediction-shell { max-height:94vh; padding:1rem; }
+            #marketPredictionModal #marketPredictionOptions { grid-template-columns:1fr; }
+            #sealedAuctionPanel { max-height:94vh; padding:1rem; }
+            #sealedAuctionPanel .grid.grid-cols-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        }
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
@@ -4493,7 +4566,7 @@
             <div class="flex items-center justify-between gap-2 mb-2"><h3 class="text-sm sm:text-base font-black text-amber-100">आप किस बाज़ार नतीजे पर दाँव लगाएंगे?</h3><span class="text-[10px] text-slate-400 shrink-0">एक चुनाव</span></div>
             <div id="marketPredictionOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4"></div>
             <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between border-t border-white/10 pt-3">
-                <p class="text-[10px] leading-relaxed text-slate-400">सही रणनीति: ₹500 दाँव लौटकर कुल ₹1,500 (₹1,000 लाभ)। गलत रणनीति: ₹500 जैकपॉट में जाएगा। दाँव वैकल्पिक है।</p>
+                <p class="text-[10px] leading-relaxed text-slate-400">सही अनुमान: ₹500 दाँव लौटकर कुल ₹1,500 (₹1,000 लाभ)। गलत अनुमान: ₹500 जैकपॉट में जाएगा। AI भी यही सार्वजनिक संकेत पढ़ता है और उसका अनुमान भी गलत हो सकता है। दाँव वैकल्पिक है।</p>
                 <button onclick="skipMarketPrediction()" class="shrink-0 px-4 py-2.5 rounded-xl border border-slate-500 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs">इस बार छोड़ो</button>
             </div>
         </div>
@@ -5676,18 +5749,32 @@
             document.getElementById('marketPredictionModal').classList.add('hidden');
             setToast('आपने इस बार कोई दाँव नहीं लगाया। आपकी नकदी सुरक्षित है।');
         }
+        function chooseAIMarketPredictionFromPublicHint(hint) {
+            // AI only sees the same public hint as players; it never reads targetEventId.
+            const bestGuess = inferMarketPredictionFromPublicHint(hint);
+            if (!bestGuess) return null;
+            // Bots can misread an ambiguous clue; this avoids guaranteed wins from a lookup table.
+            if (Math.random() < 0.72) return bestGuess;
+            const alternatives = MARKET_PREDICTION_OPTIONS.filter(option =>
+                option.id !== bestGuess && option.id !== gameState.activeWorldEvent?.id
+            );
+            return alternatives.length ? alternatives[Math.floor(Math.random() * alternatives.length)].id : bestGuess;
+        }
+
         function maybePromptMarketPrediction(p) {
-            const f=gameState.marketForecast;
-            if(!p||p.bankrupt||gameState.phase!=='PRE_ROLL'||!f||f.revealed||gameState.round>=f.targetRound||
-               Object.prototype.hasOwnProperty.call(f.predictions,p.id))return false;
-            if(p.isAI){
-                const guess=inferMarketPredictionFromPublicHint(f.hint);
-                if(p.cash>=500&&guess&&guess!==gameState.activeWorldEvent?.id)submitMarketPredictionForPlayer(p.id,guess,true);
-                else f.predictions[p.id]=null;
+            const f = gameState.marketForecast;
+            if (!p || p.bankrupt || gameState.phase !== 'PRE_ROLL' || !f || f.revealed || gameState.round >= f.targetRound ||
+                Object.prototype.hasOwnProperty.call(f.predictions, p.id)) return false;
+            if (p.isAI) {
+                const guess = chooseAIMarketPredictionFromPublicHint(f.hint);
+                if (p.cash >= 500 && guess && guess !== gameState.activeWorldEvent?.id) submitMarketPredictionForPlayer(p.id, guess, true);
+                else f.predictions[p.id] = null;
                 return false;
             }
-            openMarketPredictionModal(p);return true;
+            openMarketPredictionModal(p);
+            return true;
         }
+
         function resolveMarketPredictions(actualEvent) {
             const f=gameState.marketForecast;if(!f||f.revealed||!actualEvent)return;
             f.revealed=true;let correct=0,active=0;
@@ -7819,7 +7906,7 @@
                     const p=gameState.players[entry.playerId],winner=a.winnerId===entry.playerId;
                     const bidText=entry.bid>=a.minimumBid?formatRupee(entry.bid):'पास';
                     return `<div class="auction-reveal-row ${winner?'auction-reveal-winner':''} flex items-center justify-between gap-3 rounded-xl border ${winner?'border-emerald-300/70 bg-emerald-950/60':'border-white/10 bg-slate-950/50'} p-3">
-                        <div class="min-w-0"><div class="flex items-center gap-2"><span class="text-xs font-black text-slate-400">${i+1}.</span><span>${p.icon||'👤'}</span><span class="font-bold text-sm ${winner?'text-emerald-200':'text-slate-100'} truncate">${p.name}</span>${p.isAI?'<span class="text-[9px] text-indigo-200">AI</span>':''}</div>
+                        <div class="min-w-0"><div class="flex items-center gap-2"><span class="text-xs font-black text-slate-400">${i+1}.</span><span class="text-lg" style="color:${p.color||'#fbbf24'}"><i class="fa-solid ${p.icon||'fa-user'}"></i></span><span class="font-bold text-sm ${winner?'text-emerald-200':'text-slate-100'} truncate">${p.name}</span>${p.isAI?'<span class="text-[9px] text-indigo-200">AI</span>':''}</div>
                         <div class="text-[10px] text-slate-400 mt-1">${entry.reason||''}</div></div>
                         <div class="font-black text-base ${winner?'text-emerald-300':'text-amber-100'} shrink-0">${bidText}${winner?' 🏆':''}</div></div>`;
                 }).join('');
