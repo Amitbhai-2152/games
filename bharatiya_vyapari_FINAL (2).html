@@ -4093,6 +4093,23 @@
             #sealedAuctionPanel { max-height:94vh; padding:1rem; }
             #sealedAuctionPanel .grid.grid-cols-2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
         }
+
+        #sealedAuctionPanel > div:nth-child(2) {
+            display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin-bottom:1rem;
+        }
+        #sealedAuctionPanel > div:nth-child(2) > div {
+            min-width:0; padding:.8rem; border:1px solid rgba(251,191,36,.35); border-radius:1rem;
+            background:rgba(0,0,0,.32); text-align:center;
+        }
+        #sealedAuctionPanel > div:nth-child(2) > div:last-child {
+            border-color:rgba(52,211,153,.4); background:rgba(6,78,59,.25);
+        }
+        #sealedAuctionPanel #auctionParticipantsBadges span {
+            display:inline-flex; align-items:center; gap:.25rem; border:1px solid rgba(148,163,184,.35);
+            background:rgba(15,23,42,.78); color:#e2e8f0;
+        }
+        #sealedAuctionPanel .auction-reveal-row .text-slate-400 { color:#94a3b8 !important; }
+        #sealedAuctionPanel .auction-reveal-row .text-indigo-200 { color:#c7d2fe !important; }
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
