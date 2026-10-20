@@ -4493,7 +4493,7 @@
             <div class="flex items-center justify-between gap-2 mb-2"><h3 class="text-sm sm:text-base font-black text-amber-100">आप किस बाज़ार नतीजे पर दाँव लगाएंगे?</h3><span class="text-[10px] text-slate-400 shrink-0">एक चुनाव</span></div>
             <div id="marketPredictionOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4"></div>
             <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between border-t border-white/10 pt-3">
-                <p class="text-[10px] leading-relaxed text-slate-400">सही अनुमान: ₹500 दाँव के बदले कुल ₹2,500 वापस (₹2,000 लाभ)। गलत अनुमान: ₹500 जैकपॉट में जाएगा। अनुमान लगाना अनिवार्य नहीं है।</p>
+                <p class="text-[10px] leading-relaxed text-slate-400">सही रणनीति: ₹500 दाँव लौटकर कुल ₹1,500 (₹1,000 लाभ)। गलत रणनीति: ₹500 जैकपॉट में जाएगा। दाँव वैकल्पिक है।</p>
                 <button onclick="skipMarketPrediction()" class="shrink-0 px-4 py-2.5 rounded-xl border border-slate-500 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs">इस बार छोड़ो</button>
             </div>
         </div>
@@ -5602,13 +5602,13 @@
            रणनीतिक बाज़ार पूर्वानुमान — समान सार्वजनिक संकेत, सीलबंद दाँव
            ============================================================== */
         const MARKET_PREDICTION_OPTIONS = [
-            { id:'DIWALI_BOOM', icon:'💰', title:'वेतन / नकदी में उछाल', detail:'START पार करने पर वेतन बढ़ सकता है' },
-            { id:'COASTAL_MONSOON', icon:'🌧️', title:'तटीय शहरों पर दबाव', detail:'तटीय शहरों का किराया घट सकता है' },
-            { id:'TOURIST_PEAK', icon:'🏖️', title:'पर्यटन शहरों में उछाल', detail:'चुनिंदा पर्यटन शहरों का किराया बढ़ सकता है' },
-            { id:'IPL_FEVER', icon:'🏏', title:'क्रिकेट शहरों का बूम', detail:'चुनिंदा क्रिकेट शहरों का किराया बढ़ सकता है' },
-            { id:'STARTUP_INDIA_TECH', icon:'🚀', title:'टेक / राष्ट्रीय सेवाएँ', detail:'टेक शहरों और सेवाओं को फायदा हो सकता है' },
-            { id:'MARKET_CRASH', icon:'📉', title:'चुनिंदा शहरों में मंदी', detail:'कुछ शहरों का किराया घट सकता है' },
-            { id:'RBI_SUBSIDY', icon:'🏗️', title:'निर्माण लागत में राहत', detail:'घर और होटल बनाने की लागत घट सकती है' }
+            { id:'DIWALI_BOOM', icon:'💰', title:'नकदी रिज़र्व बचाए रखें', detail:'वेतन में उछाल की स्थिति में नकदी काम आएगी' },
+            { id:'COASTAL_MONSOON', icon:'🌧️', title:'तटीय जोखिम से दूरी', detail:'मॉनसून से तटीय शहरों की किराया-आय घट सकती है' },
+            { id:'TOURIST_PEAK', icon:'🏖️', title:'पर्यटन शहरों पर दाँव', detail:'यात्रियों की भीड़ से चुनिंदा शहरों की आय बढ़ सकती है' },
+            { id:'IPL_FEVER', icon:'🏏', title:'क्रिकेट शहरों पर दाँव', detail:'मैच वाले शहरों की आय बढ़ने की संभावना है' },
+            { id:'STARTUP_INDIA_TECH', icon:'🚀', title:'टेक / सेवाओं में निवेश', detail:'डिजिटल मांग से टेक शहर और सेवाएँ लाभ पा सकती हैं' },
+            { id:'MARKET_CRASH', icon:'📉', title:'डिफेंसिव कैश रणनीति', detail:'कुछ शहरों की किराया-आय गिर सकती है; नकदी बचाव हो सकती है' },
+            { id:'RBI_SUBSIDY', icon:'🏗️', title:'निर्माण की तैयारी', detail:'निर्माण लागत घटे तो घर / होटल बनाना सस्ता होगा' }
         ];
         const MARKET_FORECAST_HINTS = {
             DIWALI_BOOM:'बाज़ार बुलेटिन: उपभोक्ता खर्च के संकेत मजबूत हैं। असर इमारतों के किराये पर नहीं, बल्कि START से मिलने वाली नकदी पर पड़ सकता है।',
@@ -5696,9 +5696,9 @@
                 if(!p||!pick||stake<=0)return;active+=1;
                 if(p.bankrupt){gameState.jackpotPot+=stake;addLog(`🎟️ ${p.name} का पूर्वानुमान दिवालियापन के कारण रद्द; ₹500 जैकपॉट में गए।`,'slate');return;}
                 if(pick===actualEvent.id){
-                    const before=p.cash;p.cash+=2500;
-                    recordLedgerEntry(p.id,'सही बाज़ार पूर्वानुमान पुरस्कार',2500,before,p.cash,'भारतीय रिज़र्व बैंक');
-                    correct+=1;addLog(`🎯 <strong>${p.name}</strong> का अनुमान सही! ₹500 का दाँव लौटकर कुल ₹2,500 मिले (₹2,000 लाभ)।`,'emerald');
+                    const before=p.cash;p.cash+=1500;
+                    recordLedgerEntry(p.id,'सही बाज़ार पूर्वानुमान पुरस्कार',1500,before,p.cash,'भारतीय रिज़र्व बैंक');
+                    correct+=1;addLog(`🎯 <strong>${p.name}</strong> की रणनीति सही! ₹500 दाँव लौटकर कुल ₹1,500 मिले (₹1,000 लाभ)।`,'emerald');
                 }else{
                     gameState.jackpotPot+=stake;const chosen=MARKET_PREDICTION_OPTIONS.find(o=>o.id===pick);
                     addLog(`📉 ${p.name} का अनुमान गलत (${chosen?.title||'अज्ञात विकल्प'}) — ₹500 जैकपॉट में चले गए।`,'rose');
@@ -5706,7 +5706,7 @@
             });
             if(active===0)addLog('📊 इस मार्केट राउंड में कोई सक्रिय दाँव नहीं था — नकदी नहीं बदली।','slate');
             if(correct)sfxFanfare();else sfxWorldEventAlert();
-            showCenterScreenBanner(correct?'📈':'📊','मार्केट प्रेडिक्शन खुल गया!',correct?`${correct} सही पूर्वानुमान`:'किसी का अनुमान सही नहीं',`${actualEvent.name} • सही खिलाड़ी को ₹2,000 शुद्ध लाभ`);
+            addLog(correct?`📈 मार्केट पूर्वानुमान परिणाम: ${correct} खिलाड़ी सही; प्रत्येक को ₹1,000 शुद्ध लाभ।`:'📊 मार्केट पूर्वानुमान परिणाम: कोई सही नहीं; जमा दाँव जैकपॉट में जुड़ गए।','gold');
             renderAll();
         }
 
