@@ -3994,7 +3994,16 @@
             .mini-house { width: 6px; height: 6px; }
             .mini-hotel { width: 10px; height: 7px; font-size: 5px; }
         }
-    </style>
+    
+        /* Market forecast motion design with reduced-motion support */
+        .market-prediction-shell{animation:marketPanelEnter .42s cubic-bezier(.16,1,.3,1) both}
+        .market-signal-orb{filter:drop-shadow(0 0 14px rgba(34,211,238,.5));animation:marketOrbFloat 2.4s ease-in-out infinite}
+        .market-prediction-option{position:relative;overflow:hidden;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+        .market-prediction-option:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px rgba(34,211,238,.12)}
+        @keyframes marketPanelEnter{from{opacity:0;transform:translateY(18px) scale(.975);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+        @keyframes marketOrbFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+        @media(prefers-reduced-motion:reduce){.market-prediction-shell,.market-signal-orb,.market-prediction-option{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
 
@@ -4448,7 +4457,32 @@
     <!-- ==========================================
          मोडल 2: लाइव नीलामी (LIVE MULTI-PLAYER AUCTION MODAL)
          ========================================== -->
-    <div id="auctionModal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+    <!-- रणनीतिक बाज़ार पूर्वानुमान मोडल -->
+    <div id="marketPredictionModal" class="fixed inset-0 z-[96] hidden bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div class="market-prediction-shell bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 border-2 border-cyan-300/70 rounded-3xl max-w-3xl w-full p-4 sm:p-6 shadow-[0_0_55px_rgba(34,211,238,0.2)] my-auto">
+            <div class="flex items-start gap-3 mb-4">
+                <div class="market-signal-orb text-3xl sm:text-4xl shrink-0">📊</div>
+                <div class="min-w-0 flex-1"><div class="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] text-cyan-300">SECRET MARKET INTELLIGENCE</div>
+                    <h2 class="font-royal text-xl sm:text-2xl text-white mt-1">बाज़ार का दिमाग लगाओ!</h2>
+                    <div class="text-sm text-amber-200 mt-1"><span id="marketForecastPlayerName">खिलाड़ी</span>, आपकी भविष्यवाणी सीलबंद रहेगी।</div></div>
+                <div class="rounded-xl border border-amber-300/40 bg-amber-950/40 px-2.5 py-2 text-right shrink-0"><div class="text-[9px] text-amber-200/80">दाँव</div><div class="font-black text-amber-300 text-base">₹500</div></div>
+            </div>
+            <div class="rounded-2xl border border-cyan-300/40 bg-cyan-950/30 p-4 mb-4">
+                <div id="marketForecastRoundTitle" class="text-sm font-black text-cyan-200 mb-2">अगला आर्थिक इवेंट</div>
+                <div class="text-[10px] uppercase tracking-[0.16em] font-black text-slate-400 mb-1">PUBLIC CLUE • सबको यही संकेत मिलेगा</div>
+                <p id="marketForecastHint" class="text-sm sm:text-base leading-relaxed text-white">बाज़ार बुलेटिन…</p>
+                <div id="marketForecastCash" class="text-xs text-amber-200 mt-3">दाँव ₹500</div>
+            </div>
+            <div class="flex items-center justify-between gap-2 mb-2"><h3 class="text-sm sm:text-base font-black text-amber-100">आप किस बाज़ार नतीजे पर दाँव लगाएंगे?</h3><span class="text-[10px] text-slate-400 shrink-0">एक चुनाव</span></div>
+            <div id="marketPredictionOptions" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4"></div>
+            <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between border-t border-white/10 pt-3">
+                <p class="text-[10px] leading-relaxed text-slate-400">सही अनुमान: ₹500 दाँव के बदले कुल ₹2,500 वापस (₹2,000 लाभ)। गलत अनुमान: ₹500 जैकपॉट में जाएगा। अनुमान लगाना अनिवार्य नहीं है।</p>
+                <button onclick="skipMarketPrediction()" class="shrink-0 px-4 py-2.5 rounded-xl border border-slate-500 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs">इस बार छोड़ो</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auctionModal"    <div id="auctionModal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
         <div class="bg-wood-900 border-2 border-gold-400 rounded-3xl max-w-lg w-full p-5 shadow-2xl">
             <div class="flex items-center justify-between border-b border-gold-500/30 pb-3 mb-3">
                 <div class="flex items-center gap-2.5">
@@ -5286,7 +5320,7 @@
                 (target?.closest && target.closest('button, a, [role="button"], [contenteditable="true"]'))) return;
 
             const anyModalOpen = [
-                'setupModal', 'deedModal', 'auctionModal', 'tradeModal',
+                'setupModal', 'deedModal', 'auctionModal', 'marketPredictionModal', 'tradeModal',
                 'luckFortuneModal', 'rulesModal', 'debtModal', 'fairnessModal',
                 'ledgerModal', 'rbiAuditModal', 'powerCardTargetModal', 'victoryModal'
             ].some(id => {
@@ -5558,6 +5592,119 @@
         /* ==============================================================
            8 खिलाड़ियों का विन्यास (2 TO 8 PLAYERS CONFIGURATION)
            ============================================================== */
+
+        /* ==============================================================
+           रणनीतिक बाज़ार पूर्वानुमान — समान सार्वजनिक संकेत, सीलबंद दाँव
+           ============================================================== */
+        const MARKET_PREDICTION_OPTIONS = [
+            { id:'DIWALI_BOOM', icon:'💰', title:'वेतन / नकदी में उछाल', detail:'START पार करने पर वेतन बढ़ सकता है' },
+            { id:'COASTAL_MONSOON', icon:'🌧️', title:'तटीय शहरों पर दबाव', detail:'तटीय शहरों का किराया घट सकता है' },
+            { id:'TOURIST_PEAK', icon:'🏖️', title:'पर्यटन शहरों में उछाल', detail:'चुनिंदा पर्यटन शहरों का किराया बढ़ सकता है' },
+            { id:'IPL_FEVER', icon:'🏏', title:'क्रिकेट शहरों का बूम', detail:'चुनिंदा क्रिकेट शहरों का किराया बढ़ सकता है' },
+            { id:'STARTUP_INDIA_TECH', icon:'🚀', title:'टेक / राष्ट्रीय सेवाएँ', detail:'टेक शहरों और सेवाओं को फायदा हो सकता है' },
+            { id:'MARKET_CRASH', icon:'📉', title:'चुनिंदा शहरों में मंदी', detail:'कुछ शहरों का किराया घट सकता है' },
+            { id:'RBI_SUBSIDY', icon:'🏗️', title:'निर्माण लागत में राहत', detail:'घर और होटल बनाने की लागत घट सकती है' }
+        ];
+        const MARKET_FORECAST_HINTS = {
+            DIWALI_BOOM:'बाज़ार बुलेटिन: उपभोक्ता खर्च के संकेत मजबूत हैं। असर इमारतों के किराये पर नहीं, बल्कि START से मिलने वाली नकदी पर पड़ सकता है।',
+            COASTAL_MONSOON:'बाज़ार बुलेटिन: समुद्री मार्गों पर मौसम का दबाव बढ़ रहा है। तटीय कारोबार और उन शहरों की किराया-आय पर जोखिम के संकेत हैं।',
+            TOURIST_PEAK:'बाज़ार बुलेटिन: होटल बुकिंग और तीर्थ-यात्रा की मांग बढ़ने की खबर है। भीड़ बढ़ने से किन संपत्तियों की आय बदल सकती है?',
+            IPL_FEVER:'बाज़ार बुलेटिन: बड़े क्रिकेट मुकाबलों का कैलेंडर नज़दीक है। मैच वाले शहरों के स्थानीय कारोबार में बदलाव संभव है।',
+            STARTUP_INDIA_TECH:'बाज़ार बुलेटिन: डिजिटल लेन-देन और राष्ट्रीय सेवाओं की मांग में तेजी की चर्चा है। टेक और सेवा-आधारित संपत्तियों पर विचार करें।',
+            MARKET_CRASH:'बाज़ार बुलेटिन: राष्ट्रीय बाजार संकेतक लाल हैं। छह चुनिंदा शहरों पर दबाव पड़ने की आशंका है—जोखिम भरे निवेश से सावधान रहें।',
+            RBI_SUBSIDY:'बाज़ार बुलेटिन: निर्माण सामग्री और भवन लागत पर राहत की चर्चा है। निवेश से पहले निर्माण लागत पर असर सोचें।'
+        };
+        function createMarketForecast(targetRound) {
+            const currentId=gameState.activeWorldEvent?.id||'DIWALI_BOOM';
+            const candidates=WORLD_EVENTS_POOL.filter(ev=>ev.id!==currentId);
+            const target=candidates[Math.floor(Math.random()*candidates.length)]||WORLD_EVENTS_POOL[0];
+            return {targetEventId:target.id,targetRound,hint:MARKET_FORECAST_HINTS[target.id],predictions:{},stakes:{},revealed:false};
+        }
+        function inferMarketPredictionFromPublicHint(hint) {
+            const h=String(hint||'');
+            if(h.includes('START से मिलने वाली नकदी')||h.includes('उपभोक्ता खर्च'))return 'DIWALI_BOOM';
+            if(h.includes('समुद्री मार्गों')||h.includes('तटीय कारोबार'))return 'COASTAL_MONSOON';
+            if(h.includes('होटल बुकिंग')||h.includes('तीर्थ-यात्रा'))return 'TOURIST_PEAK';
+            if(h.includes('क्रिकेट मुकाबलों')||h.includes('मैच वाले शहरों'))return 'IPL_FEVER';
+            if(h.includes('डिजिटल लेन-देन')||h.includes('सेवा-आधारित'))return 'STARTUP_INDIA_TECH';
+            if(h.includes('संकेतक लाल')||h.includes('छह चुनिंदा शहरों'))return 'MARKET_CRASH';
+            if(h.includes('निर्माण सामग्री')||h.includes('भवन लागत'))return 'RBI_SUBSIDY';
+            return null;
+        }
+        function openMarketPredictionModal(player) {
+            const f=gameState.marketForecast;if(!f||f.revealed||!player)return;
+            document.getElementById('marketForecastPlayerName').textContent=player.name;
+            document.getElementById('marketForecastRoundTitle').textContent=`राउंड ${f.targetRound} का अगला मार्केट इवेंट`;
+            document.getElementById('marketForecastHint').textContent=f.hint;
+            document.getElementById('marketForecastCash').textContent=`दाँव ₹500 • उपलब्ध नकदी ${formatRupee(player.cash)}`;
+            const box=document.getElementById('marketPredictionOptions');box.innerHTML='';
+            MARKET_PREDICTION_OPTIONS.filter(o=>o.id!==gameState.activeWorldEvent?.id).forEach(o=>{
+                const b=document.createElement('button');b.type='button';b.disabled=player.cash<500;
+                b.className='market-prediction-option text-left rounded-2xl border border-amber-300/35 p-3 bg-slate-950/70 hover:bg-indigo-950/80 hover:border-cyan-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed';
+                b.innerHTML=`<div class="flex items-center gap-2 mb-1"><span class="text-2xl">${o.icon}</span><span class="font-black text-amber-100 text-sm">${o.title}</span></div><div class="text-[11px] leading-snug text-slate-300">${o.detail}</div>`;
+                b.addEventListener('click',()=>submitMarketPrediction(o.id));box.appendChild(b);
+            });
+            document.getElementById('marketPredictionModal').classList.remove('hidden');
+        }
+        function submitMarketPredictionForPlayer(playerId,optionId,isAI=false) {
+            const f=gameState.marketForecast,p=gameState.players[playerId];
+            if(!f||f.revealed||!p||Object.prototype.hasOwnProperty.call(f.predictions,playerId))return false;
+            const opt=MARKET_PREDICTION_OPTIONS.find(o=>o.id===optionId);
+            if(!opt||opt.id===gameState.activeWorldEvent?.id||p.cash<500||p.bankrupt){f.predictions[playerId]=null;return false;}
+            const before=p.cash;p.cash-=500;f.predictions[playerId]=optionId;f.stakes[playerId]=500;
+            recordLedgerEntry(p.id,`सीलबंद बाज़ार पूर्वानुमान: ${opt.title}`,-500,before,p.cash,'बाज़ार पूर्वानुमान जमा');
+            if(isAI)showAIReasoning(`🤖 ${p.name}: सार्वजनिक संकेत पढ़कर ${opt.title} पर ₹500 का गुप्त दाँव लगाया।`);
+            return true;
+        }
+        function submitMarketPrediction(optionId) {
+            const p=gameState.players[gameState.currentPlayerIndex];
+            if(!p||p.isAI||gameState.phase!=='PRE_ROLL')return;
+            if(!submitMarketPredictionForPlayer(p.id,optionId,false)){setToast('दाँव जमा नहीं हो सका। नकदी और विकल्प जाँचें।');return;}
+            document.getElementById('marketPredictionModal').classList.add('hidden');sfxPowerCard();
+            addLog(`🔒 ${p.name} ने अगले बाज़ार इवेंट पर अपना ₹500 का पूर्वानुमान सीलबंद कर दिया।`,'amber');
+            setToast('आपका मार्केट पूर्वानुमान सीलबंद है — नतीजा इवेंट खुलने पर मिलेगा।');renderAll();
+        }
+        function skipMarketPrediction() {
+            const p=gameState.players[gameState.currentPlayerIndex],f=gameState.marketForecast;
+            if(!p||p.isAI||!f||f.revealed)return;
+            if(!Object.prototype.hasOwnProperty.call(f.predictions,p.id))f.predictions[p.id]=null;
+            document.getElementById('marketPredictionModal').classList.add('hidden');
+            setToast('आपने इस बार कोई दाँव नहीं लगाया। आपकी नकदी सुरक्षित है।');
+        }
+        function maybePromptMarketPrediction(p) {
+            const f=gameState.marketForecast;
+            if(!p||p.bankrupt||gameState.phase!=='PRE_ROLL'||!f||f.revealed||gameState.round>=f.targetRound||
+               Object.prototype.hasOwnProperty.call(f.predictions,p.id))return false;
+            if(p.isAI){
+                const guess=inferMarketPredictionFromPublicHint(f.hint);
+                if(p.cash>=500&&guess&&guess!==gameState.activeWorldEvent?.id)submitMarketPredictionForPlayer(p.id,guess,true);
+                else f.predictions[p.id]=null;
+                return false;
+            }
+            openMarketPredictionModal(p);return true;
+        }
+        function resolveMarketPredictions(actualEvent) {
+            const f=gameState.marketForecast;if(!f||f.revealed||!actualEvent)return;
+            f.revealed=true;let correct=0,active=0;
+            Object.entries(f.predictions||{}).forEach(([idText,pick])=>{
+                const id=Number(idText),p=gameState.players[id],stake=Number(f.stakes?.[idText]||0);
+                if(!p||!pick||stake<=0)return;active+=1;
+                if(p.bankrupt){gameState.jackpotPot+=stake;addLog(`🎟️ ${p.name} का पूर्वानुमान दिवालियापन के कारण रद्द; ₹500 जैकपॉट में गए।`,'slate');return;}
+                if(pick===actualEvent.id){
+                    const before=p.cash;p.cash+=2500;
+                    recordLedgerEntry(p.id,'सही बाज़ार पूर्वानुमान पुरस्कार',2500,before,p.cash,'भारतीय रिज़र्व बैंक');
+                    correct+=1;addLog(`🎯 <strong>${p.name}</strong> का अनुमान सही! ₹500 का दाँव लौटकर कुल ₹2,500 मिले (₹2,000 लाभ)।`,'emerald');
+                }else{
+                    gameState.jackpotPot+=stake;const chosen=MARKET_PREDICTION_OPTIONS.find(o=>o.id===pick);
+                    addLog(`📉 ${p.name} का अनुमान गलत (${chosen?.title||'अज्ञात विकल्प'}) — ₹500 जैकपॉट में चले गए।`,'rose');
+                }
+            });
+            if(active===0)addLog('📊 इस मार्केट राउंड में कोई सक्रिय दाँव नहीं था — नकदी नहीं बदली।','slate');
+            if(correct)sfxFanfare();else sfxWorldEventAlert();
+            showCenterScreenBanner(correct?'📈':'📊','मार्केट प्रेडिक्शन खुल गया!',correct?`${correct} सही पूर्वानुमान`:'किसी का अनुमान सही नहीं',`${actualEvent.name} • सही खिलाड़ी को ₹2,000 शुद्ध लाभ`);
+            renderAll();
+        }
+
         let setupConfig = {
             playerCount: 4,
             startingCash: 15000,
@@ -5594,6 +5741,7 @@
             ledger: [],
             jackpotPot: 1000,
             activeWorldEvent: null,
+            marketForecast: null,
             lastEventRoundTriggered: 0,
             lastEliminationAuditRound: 0,
             finalShowdownAnnounced: false,
@@ -5845,6 +5993,7 @@
             gameState.ledger = [];
             gameState.jackpotPot = 1000;
             gameState.activeWorldEvent = WORLD_EVENTS_POOL[0]; // पहले राउंड से ही शुभ दीपावली या प्रारंभिक इवेंट का रोमांच
+            gameState.marketForecast = createMarketForecast(4);
             gameState.lastEventRoundTriggered = 1;
             gameState.lastEliminationAuditRound = 0;
             gameState.finalShowdownAnnounced = false;
@@ -6311,15 +6460,19 @@
         }
 
         function triggerNewWorldEvent() {
-            const currentId = gameState.activeWorldEvent?.id;
-            const candidates = WORLD_EVENTS_POOL.filter(e => e.id !== currentId);
-            const picked = candidates[Math.floor(Math.random() * candidates.length)] || WORLD_EVENTS_POOL[0];
-            gameState.activeWorldEvent = picked;
+            const currentId=gameState.activeWorldEvent?.id;
+            const candidates=WORLD_EVENTS_POOL.filter(e=>e.id!==currentId);
+            const forecastId=gameState.marketForecast?.targetEventId;
+            const picked=candidates.find(e=>e.id===forecastId)||candidates[Math.floor(Math.random()*candidates.length)]||WORLD_EVENTS_POOL[0];
+            resolveMarketPredictions(picked);
+            gameState.activeWorldEvent=picked;
             sfxWorldEventAlert();
-            showCenterScreenBanner(picked.icon, 'ब्रेकिंग न्यूज़: नया भारतीय इवेंट!', picked.name, picked.desc);
-            addLog(`🌪️ <strong>ब्रेकिंग न्यूज़ (राउंड ${gameState.round}):</strong> ${picked.name} — ${picked.desc}`, 'gold');
+            showCenterScreenBanner(picked.icon,'ब्रेकिंग न्यूज़: नया भारतीय इवेंट!',picked.name,picked.desc);
+            addLog(`🌪️ <strong>ब्रेकिंग न्यूज़ (राउंड ${gameState.round}):</strong> ${picked.name} — ${picked.desc}`,'gold');
             setToast(`नया लाइव इवेंट: ${picked.name}`);
             renderWorldEventBanner();
+            gameState.marketForecast=createMarketForecast(gameState.round+3);
+            addLog(`🔎 अगला मार्केट बुलेटिन तैयार — राउंड ${gameState.marketForecast.targetRound} से पहले प्रत्येक खिलाड़ी को एक निजी पूर्वानुमान मौका मिलेगा।`,'slate');
         }
 
         function showCenterScreenBanner(icon, tag, title, subtitle) {
@@ -8598,10 +8751,12 @@
         }
 
         function checkAndTriggerAITurn() {
-            const p = gameState.players[gameState.currentPlayerIndex];
-            if (!p || !p.isAI || p.bankrupt || gameState.phase === 'GAME_OVER') return;
+            const p=gameState.players[gameState.currentPlayerIndex];
+            if(!p||p.bankrupt||gameState.phase==='GAME_OVER')return;
+            if(maybePromptMarketPrediction(p))return;
+            if(!p.isAI)return;
 
-            gameState.aiTimer = scheduleGameTimeout(() => {
+            gameState.aiTimer=scheduleGameTimeout(()=>{
                 // स्मार्ट AI पासा फेंकने से पहले रणनीतिक रूप से अपने सीक्रेट पावर कार्ड्स का भी उपयोग करता है
                 const shieldIdx = (p.powerCards || []).findIndex(c => c.type === 'RENT_SHIELD' && !c.used);
                 if (shieldIdx !== -1 && !p.rentShieldActive && Object.keys(gameState.ownership).length >= 10) {
