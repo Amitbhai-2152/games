@@ -76,6 +76,46 @@ test('structure refund preview normalizes history like actual sale', () => {
   const modal = extract('function renderRbiWorkoutModalContent(', 'function updateRbiWorkoutModalUI()');
   assert.match(modal, /pr\.buildCosts\.slice\(0, houseCount\)/);
 });
+test('AI liquidation continues beyond 60 structure sales when needed', () => {
+  const fn = extract('function executeSmartAILiquidation(aiPlayer, targetAmount) {', 'function getPlayerRecoveryPotential(');
+  const c = { gameState: { ownership: {} }, BOARD_SPACES: {}, canSellEvenlyOnSpace() { return { allowed: true }; },
+    popStructureCost(prop) { if (Array.isArray(prop.buildCosts)) prop.buildCosts.pop(); return 0; },
+    canMortgageSpace() { return false; }, hasGroupMonopoly() { return false; },
+    recordLedgerEntry() {}, addLog() {} };
+  for (let id = 1; id <= 65; id++) {
+    c.gameState.ownership[id] = { ownerId: 7, houses: 1, buildCosts: [0], mortgaged: false };
+    c.BOARD_SPACES[id] = { type: 'city', price: id, houseCost: 0, name: 'Test ' + id, group: 'g' + id };
+  }
+  vm.createContext(c);
+  vm.runInContext(fn + '; this.liquidate = executeSmartAILiquidation;', c);
+  const player = { id: 7, cash: 0, rescueUsed: false, rescueLoanBalance: 0 };
+  c.liquidate(player, 2500);
+  assert.equal(Object.values(c.gameState.ownership).filter(p => p.houses > 0).length, 0);
+  assert.equal(player.cash, 2000);
+});
+test('audit dashboard discloses hearing surcharge per eligible player', () => {
+  const fn = extract('function renderRbiEliminationTracker() {', 'function ');
+  assert.match(fn, /\+₹500 यदि सुनवाई लंबित/);
+  assert.doesNotMatch(fn, /gameState\.currentPlayerIndex/);
+});
+test('actual structure-sale helper safely handles corrupted and zero-cost history', () => {
+  const fn = extract('function popStructureCost(prop, space) {', 'function handleBuyProperty() {');
+  const c = { ensureBuildCostHistory(prop) { return prop.buildCosts; } };
+  vm.createContext(c);
+  vm.runInContext(fn + '; this.popCost = popStructureCost;', c);
+  assert.equal(c.popCost({ buildCosts: [NaN] }, { houseCost: 200 }), 200);
+  assert.equal(c.popCost({ buildCosts: [0] }, { houseCost: 200 }), 0);
+});
+test('all inline JavaScript parses without syntax errors', () => {
+  const blocks = [...html.matchAll(/<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi)];
+  let checked = 0;
+  for (const block of blocks) {
+    const type = (block[1].match(/\\btype=["']([^"']+)["']/i) || [])[1];
+    if (type && !/javascript|ecmascript|module/i.test(type)) continue;
+    if (block[2].trim()) { new vm.Script(block[2]); checked++; }
+  }
+  assert.ok(checked > 0, 'expected at least one inline JavaScript block');
+});
 test('Market Prediction remains removed', () => {
   assert.doesNotMatch(html, /Market Prediction|market prediction|MarketPrediction/);
 });
