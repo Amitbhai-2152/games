@@ -6673,7 +6673,9 @@
                         const houseCount = Math.max(0, Number(pr.houses) || 0);
                         const costs = Array.isArray(pr.buildCosts) ? pr.buildCosts.slice(0, houseCount) : [];
                         while (costs.length < houseCount) costs.push(sp.houseCost || 0);
-                        const lastCost = costs.length ? costs[costs.length - 1] : (sp.houseCost || 0);
+                        const rawLastCost = costs.length ? costs[costs.length - 1] : (sp.houseCost || 0);
+                        const numericLastCost = Number(rawLastCost);
+                        const lastCost = Number.isFinite(numericLastCost) ? numericLastCost : (sp.houseCost || 0);
                         const refund = Math.floor(lastCost / 2);
                         hasActions = true;
                         list.innerHTML += `
