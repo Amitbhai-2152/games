@@ -1,0 +1,28 @@
+name: RBI Workout Regression Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bharatiya_vyapari_FINAL (2).html'
+      - 'tests/rbi-workout-regression.test.js'
+      - '.github/workflows/rbi-workout-regression.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'bharatiya_vyapari_FINAL (2).html'
+      - 'tests/rbi-workout-regression.test.js'
+      - '.github/workflows/rbi-workout-regression.yml'
+
+jobs:
+  rbi-workout-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run RBI workout regression tests
+        run: node tests/rbi-workout-regression.test.js
