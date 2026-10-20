@@ -46,17 +46,19 @@ test('insolvency records net worth before asset/cash mutation', () => {
 });
 test('insolvency records pre-mutation net worth in a real handler run', () => {
   const fn = extract('function handleRbiWorkoutDeclareInsolvency() {', 'function finalizeRbiAuditReport()');
+  const state = {
+    players: [{ id: 0, name: 'Player', cash: 100, bankrupt: false, rbiHearingPending: false }],
+    ownership: { 1: { ownerId: 0, houses: 0, mortgaged: false } },
+    rbiAuditContext: { currentHumanWorkoutPlayerId: 0, licenseFee: 5000, eliminatedByDefaultNames: [], reportRows: [], liquidatedByPlayer: {}, queueIdx: 0 }
+  };
+  const spaces = { 1: { name: 'Owned City', price: 1500, type: 'city', houseCost: 200 } };
   const context = {
-    gameState: {
-      players: [{ id: 0, name: 'Player', cash: 100, bankrupt: false, rbiHearingPending: false }],
-      ownership: { 1: { ownerId: 0, houses: 0, mortgaged: false } },
-      rbiAuditContext: { currentHumanWorkoutPlayerId: 0, licenseFee: 5000, eliminatedByDefaultNames: [], reportRows: [], liquidatedByPlayer: {}, queueIdx: 0 }
-    },
-    BOARD_SPACES: { 1: { name: 'Owned City', price: 1500, type: 'city', houseCost: 200 } },
+    gameState: state,
+    BOARD_SPACES: spaces,
     getNetWorthBreakdown(id) {
-      const p = this.gameState.players[id];
-      const propertyValue = Object.keys(this.gameState.ownership).reduce((sum, key) =>
-        this.gameState.ownership[key].ownerId === id ? sum + this.BOARD_SPACES[key].price : sum, 0);
+      const p = state.players[id];
+      const propertyValue = Object.keys(state.ownership).reduce((sum, key) =>
+        state.ownership[key].ownerId === id ? sum + spaces[key].price : sum, 0);
       return { total: p.cash + propertyValue };
     },
     getPlayerRecoveryPotential: () => ({ structureRefund: 0, mortgagePotential: 0, rescuePotential: 0, maxPossibleCash: 100 }),
@@ -78,10 +80,17 @@ test('structure refund preview normalizes history like actual sale', () => {
 });
 test('AI liquidation continues beyond 60 structure sales when needed', () => {
   const fn = extract('function executeSmartAILiquidation(aiPlayer, targetAmount) {', 'function getPlayerRecoveryPotential(');
-  const c = { gameState: { ownership: {} }, BOARD_SPACES: {}, canSellEvenlyOnSpace(playerId, id) { const p = gameState.ownership[id]; return { allowed: !!p && p.ownerId === playerId && p.houses > 0 }; },
-    popStructureCost(prop) { if (Array.isArray(prop.buildCosts)) prop.buildCosts.pop(); return 0; },
-    canMortgageSpace() { return false; }, hasGroupMonopoly() { return false; },
-    recordLedgerEntry() {}, addLog() {} };
+  const c = { gameState: { ownership: {} }, BOARD_SPACES: {} };
+  const ownership = c.gameState.ownership;
+  c.canSellEvenlyOnSpace = (playerId, id) => {
+    const prop = ownership[id];
+    return { allowed: !!prop && prop.ownerId === playerId && prop.houses > 0 };
+  };
+  c.popStructureCost = prop => { if (Array.isArray(prop.buildCosts)) prop.buildCosts.pop(); return 0; };
+  c.canMortgageSpace = () => false;
+  c.hasGroupMonopoly = () => false;
+  c.recordLedgerEntry = () => {};
+  c.addLog = () => {};
   for (let id = 1; id <= 65; id++) {
     c.gameState.ownership[id] = { ownerId: 7, houses: 1, buildCosts: [0], mortgaged: false };
     c.BOARD_SPACES[id] = { type: 'city', price: id, houseCost: 0, name: 'Test ' + id, group: 'g' + id };
