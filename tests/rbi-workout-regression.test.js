@@ -44,6 +44,34 @@ test('insolvency records net worth before asset/cash mutation', () => {
   assert.match(fn, /nwBefore,/);
   assert.doesNotMatch(fn, /nwBefore: getNetWorthBreakdown\(p\.id\)\.total/);
 });
+test('insolvency records pre-mutation net worth in a real handler run', () => {
+  const fn = extract('function handleRbiWorkoutDeclareInsolvency() {', 'function finalizeRbiAuditReport()');
+  const context = {
+    gameState: {
+      players: [{ id: 0, name: 'Player', cash: 100, bankrupt: false, rbiHearingPending: false }],
+      ownership: { 1: { ownerId: 0, houses: 0, mortgaged: false } },
+      rbiAuditContext: { currentHumanWorkoutPlayerId: 0, licenseFee: 5000, eliminatedByDefaultNames: [], reportRows: [], liquidatedByPlayer: {}, queueIdx: 0 }
+    },
+    BOARD_SPACES: { 1: { name: 'Owned City', price: 1500, type: 'city', houseCost: 200 } },
+    getNetWorthBreakdown(id) {
+      const p = this.gameState.players[id];
+      const propertyValue = Object.keys(this.gameState.ownership).reduce((sum, key) =>
+        this.gameState.ownership[key].ownerId === id ? sum + this.BOARD_SPACES[key].price : sum, 0);
+      return { total: p.cash + propertyValue };
+    },
+    getPlayerRecoveryPotential: () => ({ structureRefund: 0, mortgagePotential: 0, rescuePotential: 0, maxPossibleCash: 100 }),
+    setToast() {}, updateRbiWorkoutModalUI() {}, recordLedgerEntry() {}, formatRupee: value => String(value),
+    sfxJail() {}, addLog() {}, processNextRbiAuditPlayer() {},
+    document: { getElementById: () => ({ classList: { add() {}, remove() {} } }) }
+  };
+  vm.createContext(context);
+  vm.runInContext(fn + '; this.runInsolvency = handleRbiWorkoutDeclareInsolvency;', context);
+  context.runInsolvency();
+  assert.equal(context.gameState.rbiAuditContext.reportRows[0].nwBefore, 1600);
+  assert.equal(context.gameState.players[0].bankrupt, true);
+  assert.equal(context.gameState.players[0].cash, 0);
+  assert.equal(Object.keys(context.gameState.ownership).length, 0);
+});
 test('structure refund preview normalizes history like actual sale', () => {
   const modal = extract('function renderRbiWorkoutModalContent(', 'function updateRbiWorkoutModalUI()');
   assert.match(modal, /pr\.buildCosts\.slice\(0, houseCount\)/);
