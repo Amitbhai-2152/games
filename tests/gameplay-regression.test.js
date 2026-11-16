@@ -300,7 +300,10 @@ test('AI auction strategy respects reserve cash and values completing a colour s
             { id: 1, type: 'city', group: 'brown', price: 1000 },
             { id: 2, type: 'city', group: 'brown', price: 600 }
         ],
-        gameState: { ownership: {} },
+        gameState: { ownership: {}, players: [
+            { id: 0, name: 'AI', isAI: true, cash: 2000, bankrupt: false },
+            { id: 1, name: 'Opponent', isAI: false, cash: 2000, bankrupt: false }
+        ] },
         formatRupee: value => '₹' + value
     }, ['getAISealedAuctionBid']);
 
@@ -377,19 +380,19 @@ test('auction reveal finalizes winner, charges exactly once and assigns ownershi
 });
 
 test('auction reveal does not award property if winner became bankrupt or cannot pay', () => {
-    for (const mutate of [
-        player => { player.bankrupt = true; },
-        player => { player.cash = 200; }
+    for (const scenario of [
+        { mutate: player => { player.bankrupt = true; }, expectedCash: 2000 },
+        { mutate: player => { player.cash = 200; }, expectedCash: 200 }
     ]) {
         const c = auctionContext();
         c.gameState.auction = {
             spaceId: 1, minimumBid: 500, stage: 'REVEAL',
             results: [{ playerId: 0, bid: 750 }], winnerId: 0, winningBid: 750
         };
-        mutate(c.gameState.players[0]);
+        scenario.mutate(c.gameState.players[0]);
         c.finalizeSealedAuction();
         assert.equal(c.gameState.ownership[1], undefined);
-        assert.equal(c.gameState.players[0].cash < 750, true);
+        assert.equal(c.gameState.players[0].cash, scenario.expectedCash);
         assert.equal(c.ledger.length, 0);
     }
 });
