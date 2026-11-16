@@ -64,6 +64,8 @@ function createGame(options = {}) {
         }
         return nodes.get(id);
     };
+    node('tradeModal').classList.add('hidden');
+    node('tradeResponseModal').classList.add('hidden');
     const ledger = [];
     const logs = [];
     const toasts = [];
