@@ -3898,52 +3898,6 @@
             filter: drop-shadow(0 6px 10px rgba(0,0,0,0.65));
         }
 
-        /* Context-aware live dialogue: compact, readable and motion-safe. */
-        @keyframes contextDialogueEnter {
-            0% { opacity: 0; transform: translate(-50%, 18px) scale(.94); filter: blur(5px); }
-            70% { opacity: 1; transform: translate(-50%, -3px) scale(1.01); filter: blur(0); }
-            100% { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0); }
-        }
-        .context-dialogue-bubble {
-            position: fixed;
-            left: 50%;
-            bottom: 12%;
-            z-index: 88;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: min(560px, 92vw);
-            padding: 13px 16px;
-            border: 1px solid rgba(250, 204, 21, .78);
-            border-radius: 18px;
-            color: #fff7d6;
-            background: linear-gradient(120deg, rgba(31, 15, 8, .98), rgba(49, 25, 14, .96) 55%, rgba(30, 27, 75, .96));
-            box-shadow: 0 18px 48px rgba(0,0,0,.62), 0 0 24px rgba(250,204,21,.18);
-            pointer-events: none;
-            animation: contextDialogueEnter .42s cubic-bezier(.2,.85,.25,1) both;
-            backdrop-filter: blur(12px);
-        }
-        .context-dialogue-bubble.tone-green { border-color: rgba(52, 211, 153, .8); }
-        .context-dialogue-bubble.tone-blue { border-color: rgba(96, 165, 250, .8); }
-        .context-dialogue-bubble.tone-rose { border-color: rgba(251, 113, 133, .85); }
-        .context-dialogue-icon { flex: 0 0 auto; font-size: 2rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
-        .context-dialogue-content { min-width: 0; text-align: left; }
-        .context-dialogue-header { margin-bottom: 3px; color: #fcd34d; font-size: 9px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
-        .context-dialogue-line { color: #fff; font-size: clamp(12px, 2.2vw, 15px); font-weight: 900; line-height: 1.38; }
-        .context-dialogue-sub { margin-top: 4px; color: rgba(255, 237, 195, .82); font-size: 11px; line-height: 1.35; }
-        .auto-dialogue-sr-only {
-            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-        }
-        @media (max-width: 520px) {
-            .context-dialogue-bubble { bottom: 9%; gap: 9px; padding: 11px 12px; border-radius: 15px; }
-            .context-dialogue-icon { font-size: 1.65rem; }
-            .context-dialogue-sub { font-size: 10px; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .context-dialogue-bubble { animation: none !important; }
-        }
-
         /* Dynamic World Event Breaking News Glow */
         @keyframes eventPulseBorder {
             0%, 100% { box-shadow: 0 0 12px rgba(250, 204, 21, 0.35), inset 0 0 10px rgba(250, 204, 21, 0.15); }
@@ -4490,7 +4444,7 @@
                     <span class="text-[10.5px] font-extrabold text-gold-300 flex items-center gap-1 shrink-0">
                         <i class="fa-solid fa-masks-theater text-amber-400"></i> लाइव डायलॉग:
                     </span>
-                    <button id="autoDialogueToggle" type="button" onclick="toggleAutoDialogue()" aria-pressed="true"
+                    <button id="autoTauntsToggle" type="button" onclick="toggleAutoTaunts()" aria-pressed="true"
                         class="px-2.5 py-1 rounded-lg bg-emerald-950 border border-emerald-400 text-emerald-200 text-[9px] font-black tracking-wide">
                         ⚡ AUTO ON
                     </button>
@@ -5199,9 +5153,7 @@
     </div>
 
     <!-- फुल-स्क्रीन एनिमेटेड इवेंट एवं इमोजी कंटेनर -->
-    <div id="floatingTauntLayer" class="fixed inset-0 pointer-events-none z-[85] overflow-hidden">
-        <span id="autoDialogueLiveRegion" class="auto-dialogue-sr-only" aria-live="polite" aria-atomic="true"></span>
-    </div>
+    <div id="floatingTauntLayer" class="fixed inset-0 pointer-events-none z-[85] overflow-hidden"></div>
 
     <!-- ==========================================
          मोडल 8: ऋण संकट समाधान (DEBT SETTLEMENT MODAL)
@@ -5761,361 +5713,70 @@
         ];
 
 
-        /* SITUATIONAL DIALOGUE ENGINE START
-           Prewritten, context-aware lines only. This feature never changes game rules or RNG. */
-        const SITUATIONAL_DIALOGUES = {
-            game_start: {
-                emoji: '🏁', tone: 'gold', priority: 4, cooldownMs: 1000,
-                lines: [
-                    { text: 'भारत की मंडी खुल चुकी है! अब हर चाल आपकी व्यापार-कुशलता की परीक्षा लेगी।', sub: 'शहर खरीदें, समझदारी से निवेश करें और बाज़ार के सम्राट बनें।' },
-                    { text: 'सेठों, अपनी तिजोरियाँ संभाल लीजिए—शाही मुकाबला शुरू होता है!', sub: 'किस्मत मौका देगी, लेकिन जीत रणनीति से मिलेगी।' }
-                ]
-            },
-            doubles: {
-                emoji: '🎲', tone: 'gold', priority: 2, cooldownMs: 2500,
-                lines: [
-                    { text: 'वाह! पासे पर जोड़ा आया है—एक और मौका मिल सकता है!', sub: 'इस अतिरिक्त चाल का सही इस्तेमाल कीजिए।' },
-                    { text: 'दोनों पासे एक जैसे! आज आपकी चाल में दम दिखाई दे रहा है।', sub: 'लेकिन अगला कदम सोच-समझकर उठाइए।' }
-                ]
-            },
-            start_bonus: {
-                emoji: '💵', tone: 'green', priority: 2, cooldownMs: 4500,
-                lines: [
-                    { text: 'प्रारंभ पार और तिजोरी में वेतन! कारोबार को आगे बढ़ाइए।', sub: 'समझदार सेठ कमाई का सही निवेश करते हैं।' },
-                    { text: 'RBI से वेतन मिल गया—अब अगली रणनीति क्या होगी?', sub: 'नकदी बचाना भी उतना ही ज़रूरी है जितना कमाना।' }
-                ]
-            },
-            jackpot: {
-                emoji: '💰', tone: 'gold', priority: 4, cooldownMs: 4500,
-                lines: [
-                    { text: 'किस्मत ने आज तिजोरी का दरवाज़ा खोल दिया!', sub: '{amount} का जैकपॉट—इसे समझदारी से संभालिए।' },
-                    { text: 'वाह सेठ जी! पूरा बाज़ार आपकी जीत देख रहा है।', sub: 'जैकपॉट में {amount} मिले—शाही जश्न का मौका!' }
-                ]
-            },
-            property_opportunity: {
-                emoji: '🏙️', tone: 'blue', priority: 2, cooldownMs: 3500,
-                lines: [
-                    { text: '{space} बाज़ार में उपलब्ध है—कीमत {amount}। क्या यह आपके साम्राज्य का अगला हिस्सा बनेगा?', sub: 'खरीदें या नीलामी का जोखिम लें।' },
-                    { text: 'नया निवेश सामने है: {space}!', sub: '{amount} की कीमत पर फैसला आपका है, सेठ जी।' }
-                ]
-            },
-            property_bought: {
-                emoji: '🏛️', tone: 'green', priority: 2, cooldownMs: 3500,
-                lines: [
-                    { text: '{space} अब आपके व्यापारिक साम्राज्य का हिस्सा है!', sub: 'संपत्ति बढ़ी है—अब नकदी और किराये का संतुलन बनाए रखें।' },
-                    { text: 'एक और शहर आपके नाम! {space} से कारोबार को नई दिशा मिलेगी।', sub: 'अगला लक्ष्य: निवेश को लाभ में बदलना।' }
-                ]
-            },
-            monopoly: {
-                emoji: '👑', tone: 'gold', priority: 3, cooldownMs: 3500,
-                lines: [
-                    { text: 'पूरा {group} समूह आपके नियंत्रण में! यह बड़ी व्यापारिक बढ़त है।', sub: 'अब निर्माण और किराये की रणनीति पर ध्यान दीजिए।' },
-                    { text: 'वाह! आपने {group} रंग समूह पर एकाधिकार बना लिया।', sub: 'प्रतिद्वंद्वियों के लिए मुकाबला अब कठिन होगा।' }
-                ]
-            },
-            rent_due: {
-                emoji: '🧾', tone: 'rose', priority: 3, cooldownMs: 5500,
-                lines: [
-                    { text: 'अरे! {space} का {amount} किराया देना होगा—नकदी पर नज़र रखिए।', sub: 'मालिक: {other} • खर्च का हिसाब रखिए।' },
-                    { text: '{amount} का किराया! {space} पर रुकना महँगा पड़ गया।', sub: 'अगली चाल में खर्च की भरपाई करने की कोशिश कीजिए।' }
-                ]
-            },
-            fortune_gain: {
-                emoji: '✨', tone: 'green', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: 'आज भाग्य ने आपका साथ दिया!', sub: '{amount} का फायदा मिला—इसे सही जगह लगाइए।' },
-                    { text: 'शुभ संकेत! बाज़ार में आपके लिए अच्छी खबर आई है।', sub: '{amount} का लाभ आपकी तिजोरी में जुड़ा।' }
-                ]
-            },
-            fortune_loss: {
-                emoji: '📉', tone: 'rose', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: 'उफ़! इस बार भाग्य ने थोड़ी परीक्षा ली है।', sub: '{amount} का खर्च—अब वापसी की रणनीति बनाइए।' },
-                    { text: 'हर कारोबार में उतार-चढ़ाव आता है।', sub: '{amount} का नुकसान हुआ, लेकिन खेल अभी बाकी है।' }
-                ]
-            },
-            auction_win: {
-                emoji: '🔨', tone: 'gold', priority: 3, cooldownMs: 3500,
-                lines: [
-                    { text: 'सबसे ऊँची वैध बोली आपकी! {space} अब आपके नाम है।', sub: 'हथौड़ा गिर चुका है—{amount} में सौदा पक्का।' },
-                    { text: 'नीलामी में शानदार चाल! आपने {space} हासिल कर लिया।', sub: 'जीत की कीमत {amount} रही।' }
-                ]
-            },
-            auction_empty: {
-                emoji: '🤝', tone: 'blue', priority: 2, cooldownMs: 3500,
-                lines: [
-                    { text: 'इस बार किसी ने वैध बोली नहीं लगाई।', sub: '{space} फिलहाल बैंक के पास ही रहेगा।' },
-                    { text: 'नीलामी शांत रही—कोई सौदा तय नहीं हुआ।', sub: 'अगली बार बोली लगाने से पहले अपनी सीमा तय करें।' }
-                ]
-            },
-            jail: {
-                emoji: '🚔', tone: 'rose', priority: 3, cooldownMs: 3500,
-                lines: [
-                    { text: 'कारागार की सैर हो गई! अब बाहर निकलने की योजना बनाइए।', sub: 'जोड़ा फेंकें या नियम के अनुसार ज़ुर्माना दें।' },
-                    { text: 'अरे सेठ जी, कारोबार से सीधा कारागार!', sub: 'घबराइए नहीं—अगली चाल में वापसी का मौका है।' }
-                ]
-            },
-            bail_paid: {
-                emoji: '🔓', tone: 'green', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: 'ज़ुर्माना भरकर रिहाई मिल गई—अब फिर से व्यापार की राह पर!', sub: 'अगली चाल सोच-समझकर चलिए।' },
-                    { text: 'कारागार के दरवाज़े खुल गए!', sub: 'नकदी गई है, लेकिन खेल में आपकी वापसी हो चुकी है।' }
-                ]
-            },
-            debt_crisis: {
-                emoji: '⚠️', tone: 'rose', priority: 4, cooldownMs: 3500,
-                lines: [
-                    { text: 'तिजोरी में नकदी कम पड़ गई है—अब फैसला बहुत सोचकर लेना होगा।', sub: '{amount} का भुगतान बाकी है। संपत्ति बेचने, गिरवी रखने या बचाव विकल्प देखें।' },
-                    { text: 'यह कारोबार का कठिन मोड़ है।', sub: '{amount} का कर्ज़ चुकाने के लिए उपलब्ध विकल्प जाँचिए।' }
-                ]
-            },
-            bankruptcy: {
-                emoji: '📉', tone: 'rose', priority: 4, cooldownMs: 2500,
-                lines: [
-                    { text: 'एक सेठ का सफ़र यहीं थम गया—बाज़ार में अब मुकाबला और कड़ा होगा।', sub: 'दिवालियापन के बाद संपत्तियों का निपटारा नियमों के अनुसार हुआ।' },
-                    { text: 'व्यापार में जोखिम बड़ा होता है।', sub: 'एक खिलाड़ी बाहर हुआ—बाकी सेठों के लिए मुकाबला जारी है।' }
-                ]
-            },
-            build: {
-                emoji: '🏗️', tone: 'green', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: '{space} में नया निर्माण! आपकी संपत्ति अब और मजबूत हो रही है।', sub: 'निवेश बढ़ा है—भविष्य के किराये पर नज़र रखिए।' },
-                    { text: 'ईंट पर ईंट—व्यापारिक साम्राज्य आकार ले रहा है!', sub: '{space} में निर्माण पूरा हुआ।' }
-                ]
-            },
-            building_sold: {
-                emoji: '🏠', tone: 'blue', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: '{space} का निर्माण बेचकर नकदी जुटाई गई।', sub: 'कभी-कभी कारोबार बचाने के लिए संपत्ति समायोजित करनी पड़ती है।' }
-                ]
-            },
-            mortgage_on: {
-                emoji: '🏦', tone: 'blue', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: '{space} को गिरवी रखकर नकदी जुटाई गई।', sub: 'यह अस्थायी राहत है—ब्याज और छुड़ाने की लागत याद रखें।' },
-                    { text: 'तिजोरी में नकदी आई, लेकिन एक संपत्ति गिरवी है।', sub: '{space} को छुड़ाने की योजना बनाकर रखें।' }
-                ]
-            },
-            mortgage_off: {
-                emoji: '✅', tone: 'green', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: '{space} अब गिरवी से मुक्त है!', sub: 'संपत्ति फिर से सामान्य किराया कमा सकती है।' }
-                ]
-            },
-            trade_success: {
-                emoji: '🤝', tone: 'green', priority: 3, cooldownMs: 3000,
-                lines: [
-                    { text: 'सौदा मंज़ूर! दोनों सेठों ने सहमति से व्यापार पूरा किया।', sub: 'अच्छा व्यापार वही है जिसमें शर्तें साफ़ हों।' },
-                    { text: 'हाथ मिल गया—संपत्ति और नकदी का लेन-देन पूरा हुआ।', sub: 'अब नई रणनीति के साथ आगे बढ़िए।' }
-                ]
-            },
-            trade_rejected: {
-                emoji: '✋', tone: 'rose', priority: 2, cooldownMs: 3000,
-                lines: [
-                    { text: 'प्रस्ताव स्वीकार नहीं हुआ—इस बार सौदा नहीं बनेगा।', sub: 'किसी की संपत्ति या नकदी नहीं बदली।' },
-                    { text: 'व्यापार में सहमति ज़रूरी है।', sub: 'प्रस्ताव अस्वीकार हुआ और खेल सामान्य रूप से जारी है।' }
-                ]
-            },
-            world_event: {
-                emoji: '📢', tone: 'gold', priority: 3, cooldownMs: 3500,
-                lines: [
-                    { text: 'बाज़ार में नया माहौल बन गया है: {event}', sub: 'नए इवेंट के नियमों को समझकर अपनी रणनीति बदलिए।' },
-                    { text: 'ब्रेकिंग न्यूज़! भारतीय बाज़ार में बदलाव आ गया है।', sub: '{event} — अब हर निवेश पर नज़र रखिए।' }
-                ]
-            },
-            showdown: {
-                emoji: '⚔️', tone: 'gold', priority: 4, cooldownMs: 1000,
-                lines: [
-                    { text: 'अब सिर्फ़ दो सेठ मैदान में हैं—अंतिम मुकाबला शुरू!', sub: 'हर किराया और हर निवेश अब निर्णायक हो सकता है।' },
-                    { text: 'शाही बाज़ार का फैसला अब दो खिलाड़ियों के बीच होगा।', sub: 'धैर्य, नकदी और रणनीति—तीनों की परीक्षा है।' }
-                ]
-            },
-            victory: {
-                emoji: '🏆', tone: 'gold', priority: 4, cooldownMs: 1000,
-                lines: [
-                    { text: 'शाही विजय! आपने पूरे भारतीय बाज़ार पर अपना नाम दर्ज कर दिया।', sub: 'बधाई हो—आज के व्यापार सम्राट आप हैं।' },
-                    { text: 'क्या शानदार मुकाबला था! ताज अब आपके सिर पर है।', sub: 'आपने अपनी रणनीति से बाज़ार जीत लिया।' }
-                ]
-            },
-            game_draw: {
-                emoji: '⚖️', tone: 'blue', priority: 4, cooldownMs: 1000,
-                lines: [
-                    { text: 'आज बाज़ार में कोई सम्राट नहीं बना—मुकाबला बराबरी पर समाप्त हुआ।', sub: 'अगली बाज़ी में नई रणनीति के साथ लौटिए।' }
-                ]
-            }
-        };
+        /* SITUATIONAL DIALOGUE ENGINE END */
 
-        let liveDialogueState = {
-            enabled: true,
-            queue: [],
-            active: false,
-            timer: null,
-            activeNode: null,
-            lastShownAt: null,
-            lastByEvent: Object.create(null),
-            rotations: Object.create(null),
-            generation: 0
-        };
 
-        function resetSituationalDialogueQueue() {
-            liveDialogueState.generation += 1;
-            liveDialogueState.queue.length = 0;
-            liveDialogueState.active = false;
-            liveDialogueState.timer = null;
-            liveDialogueState.lastShownAt = null;
-            liveDialogueState.lastByEvent = Object.create(null);
-            liveDialogueState.rotations = Object.create(null);
-            if (liveDialogueState.activeNode) {
-                liveDialogueState.activeNode.remove();
-                liveDialogueState.activeNode = null;
-            }
-            const liveRegion = document.getElementById('autoDialogueLiveRegion');
-            if (liveRegion) liveRegion.textContent = '';
+        /* AUTOMATIC EXISTING TAUNTS START
+           Selects only the six original HINDI_TAUNTS; their original bubbles, audio and particles are reused. */
+        let autoTauntsEnabled = true;
+        let lastAutoTauntAt = 0;
+        let pendingAutoTauntTimer = null;
+        const autoTauntEventTimes = Object.create(null);
+
+        function resetAutomaticTauntCooldowns() {
+            lastAutoTauntAt = 0;
+            pendingAutoTauntTimer = null;
+            Object.keys(autoTauntEventTimes).forEach(key => delete autoTauntEventTimes[key]);
         }
 
-        function setAutoDialogueEnabled(enabled) {
-            liveDialogueState.enabled = Boolean(enabled);
-            if (!liveDialogueState.enabled) {
-                if (liveDialogueState.timer !== null) {
-                    clearTimeout(liveDialogueState.timer);
-                    if (Array.isArray(gameState.activeTimers)) {
-                        gameState.activeTimers = gameState.activeTimers.filter(id => id !== liveDialogueState.timer);
-                    }
+        function setAutoTauntsEnabled(enabled) {
+            autoTauntsEnabled = Boolean(enabled);
+            if (!autoTauntsEnabled && pendingAutoTauntTimer !== null) {
+                clearTimeout(pendingAutoTauntTimer);
+                if (Array.isArray(gameState.activeTimers)) {
+                    gameState.activeTimers = gameState.activeTimers.filter(id => id !== pendingAutoTauntTimer);
                 }
-                resetSituationalDialogueQueue();
+                pendingAutoTauntTimer = null;
             }
-            const toggle = document.getElementById('autoDialogueToggle');
+            const toggle = document.getElementById('autoTauntsToggle');
             if (toggle) {
-                toggle.setAttribute('aria-pressed', String(liveDialogueState.enabled));
-                toggle.textContent = liveDialogueState.enabled ? '⚡ AUTO ON' : '⚡ AUTO OFF';
-                toggle.className = liveDialogueState.enabled
+                toggle.setAttribute('aria-pressed', String(autoTauntsEnabled));
+                toggle.textContent = autoTauntsEnabled ? '⚡ AUTO ON' : '⚡ AUTO OFF';
+                toggle.className = autoTauntsEnabled
                     ? 'px-2.5 py-1 rounded-lg bg-emerald-950 border border-emerald-400 text-emerald-200 text-[9px] font-black tracking-wide'
                     : 'px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-500 text-slate-300 text-[9px] font-black tracking-wide';
             }
-            return liveDialogueState.enabled;
+            return autoTauntsEnabled;
         }
 
-        function toggleAutoDialogue() {
-            return setAutoDialogueEnabled(!liveDialogueState.enabled);
+        function toggleAutoTaunts() {
+            return setAutoTauntsEnabled(!autoTauntsEnabled);
         }
 
-        function queueSituationalDialogue(eventKey, actor = null, meta = {}) {
-            if (!liveDialogueState.enabled || !gameState.started) return false;
-            const definition = SITUATIONAL_DIALOGUES[eventKey];
-            if (!definition || !Array.isArray(definition.lines) || !definition.lines.length) return false;
+        function triggerAutomaticTaunt(tauntIndex, eventKey, speakerName = null) {
+            const isFinalVictory = eventKey === 'game-victory';
+            if (!autoTauntsEnabled || !gameState.started || (gameState.phase === 'GAME_OVER' && !isFinalVictory)) return false;
+            if (!Number.isInteger(tauntIndex) || tauntIndex < 0 || tauntIndex >= HINDI_TAUNTS.length) return false;
 
             const now = Date.now();
-            const previous = liveDialogueState.lastByEvent[eventKey];
-            if (previous !== undefined && now - previous < (definition.cooldownMs || 3200)) return false;
+            const key = String(eventKey || 'general');
+            if (now - lastAutoTauntAt < 3600) return false;
+            if (autoTauntEventTimes[key] && now - autoTauntEventTimes[key] < 9000) return false;
 
-            const rotation = liveDialogueState.rotations[eventKey] || 0;
-            liveDialogueState.rotations[eventKey] = rotation + 1;
-            const selected = definition.lines[rotation % definition.lines.length];
-            const values = Object.assign({
-                space: 'इस शहर',
-                amount: 'निर्धारित रकम',
-                group: 'रंग समूह',
-                event: 'नया आयोजन',
-                other: 'प्रतिद्वंद्वी'
-            }, meta || {});
-            const interpolate = value => String(value).replace(/\{(space|amount|group|event|other)\}/g, (match, key) => String(values[key]));
-            const speaker = typeof actor === 'string'
-                ? actor
-                : (actor && typeof actor.name === 'string' ? actor.name : (definition.speaker || 'बाज़ार उद्घोषक'));
+            const layer = document.getElementById('floatingTauntLayer');
+            if (layer && typeof layer.querySelector === 'function' && layer.querySelector('.taunt-floating-pill')) return false;
 
-            const message = {
-                eventKey,
-                emoji: definition.emoji || '💬',
-                tone: definition.tone || 'gold',
-                label: 'LIVE COMMENTARY',
-                speaker,
-                text: interpolate(selected.text),
-                sub: interpolate(selected.sub || ''),
-                priority: Number(definition.priority) || 1
-            };
-
-            if (previous === undefined || now - previous >= (definition.cooldownMs || 3200)) {
-                liveDialogueState.lastByEvent[eventKey] = now;
-            }
-            if (liveDialogueState.queue.length >= 4) {
-                let lowestIndex = 0;
-                for (let i = 1; i < liveDialogueState.queue.length; i++) {
-                    if (liveDialogueState.queue[i].priority < liveDialogueState.queue[lowestIndex].priority) lowestIndex = i;
-                }
-                if (liveDialogueState.queue[lowestIndex].priority > message.priority) return false;
-                liveDialogueState.queue.splice(lowestIndex, 1);
-            }
-            liveDialogueState.queue.push(message);
-            processSituationalDialogueQueue();
+            lastAutoTauntAt = now;
+            autoTauntEventTimes[key] = now;
+            pendingAutoTauntTimer = scheduleGameTimeout(() => {
+                pendingAutoTauntTimer = null;
+                if (!autoTauntsEnabled || !gameState.started ||
+                    (gameState.phase === 'GAME_OVER' && !isFinalVictory)) return;
+                triggerTauntReaction(tauntIndex, speakerName);
+            }, 120);
             return true;
         }
-
-        function processSituationalDialogueQueue() {
-            if (!liveDialogueState.enabled || liveDialogueState.active || !liveDialogueState.queue.length) return;
-            const layer = document.getElementById('floatingTauntLayer');
-            if (!layer) return;
-
-            const wait = liveDialogueState.lastShownAt === null
-                ? 0
-                : Math.max(0, 2600 - (Date.now() - liveDialogueState.lastShownAt));
-            if (wait > 0) {
-                if (liveDialogueState.timer !== null) return;
-                const generation = liveDialogueState.generation;
-                liveDialogueState.timer = scheduleGameTimeout(() => {
-                    liveDialogueState.timer = null;
-                    if (generation !== liveDialogueState.generation) return;
-                    processSituationalDialogueQueue();
-                }, wait);
-                return;
-            }
-
-            const message = liveDialogueState.queue.shift();
-            const pill = document.createElement('div');
-            pill.className = 'context-dialogue-bubble tone-' + message.tone;
-            pill.setAttribute('role', 'status');
-            pill.setAttribute('aria-live', 'polite');
-
-            const icon = document.createElement('span');
-            icon.className = 'context-dialogue-icon';
-            icon.textContent = message.emoji;
-
-            const content = document.createElement('div');
-            content.className = 'context-dialogue-content';
-            const header = document.createElement('div');
-            header.className = 'context-dialogue-header';
-            header.textContent = message.label + ' • ' + message.speaker + ' कहते हैं';
-            const line = document.createElement('div');
-            line.className = 'context-dialogue-line';
-            line.textContent = message.text;
-            const sub = document.createElement('div');
-            sub.className = 'context-dialogue-sub';
-            sub.textContent = message.sub;
-
-            content.appendChild(header);
-            content.appendChild(line);
-            if (message.sub) content.appendChild(sub);
-            pill.appendChild(icon);
-            pill.appendChild(content);
-            layer.appendChild(pill);
-
-            const liveRegion = document.getElementById('autoDialogueLiveRegion');
-            if (liveRegion) liveRegion.textContent = message.speaker + ': ' + message.text;
-
-            liveDialogueState.active = true;
-            liveDialogueState.activeNode = pill;
-            liveDialogueState.lastShownAt = Date.now();
-            const generation = liveDialogueState.generation;
-            liveDialogueState.timer = scheduleGameTimeout(() => {
-                liveDialogueState.timer = null;
-                if (generation !== liveDialogueState.generation) return;
-                if (liveDialogueState.activeNode) liveDialogueState.activeNode.remove();
-                liveDialogueState.activeNode = null;
-                liveDialogueState.active = false;
-                if (liveRegion) liveRegion.textContent = '';
-                processSituationalDialogueQueue();
-            }, 2500);
-        }
-        /* SITUATIONAL DIALOGUE ENGINE END */
+        /* AUTOMATIC EXISTING TAUNTS END */
 
         /* ==============================================================
            फ़ीचर #7: भारतीय मौसम और त्योहार इवेंट्स (DYNAMIC WORLD EVENTS)
@@ -6285,7 +5946,7 @@
                 gameState.activeTimers.forEach(id => clearTimeout(id));
             }
             gameState.activeTimers = [];
-            resetSituationalDialogueQueue();
+            resetAutomaticTauntCooldowns();
         }
 
         /* रिज़र्व बैंक आवास भंडार गणना (अधिकतम 32 घर एवं 12 शाही होटल) */
@@ -6531,9 +6192,6 @@
 
             renderAll();
             selectSpace(0);
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('game_start', null, { players: setupConfig.playerCount });
-            }
             checkAndTriggerAITurn();
         }
 
@@ -7589,9 +7247,6 @@
             showCenterScreenBanner(picked.icon,'ब्रेकिंग न्यूज़: नया भारतीय इवेंट!',picked.name,picked.desc);
             addLog(`🌪️ <strong>ब्रेकिंग न्यूज़ (राउंड ${gameState.round}):</strong> ${picked.name} — ${picked.desc}`,'gold');
             setToast(`नया लाइव इवेंट: ${picked.name}`);
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('world_event', null, { event: picked.name });
-            }
             renderWorldEventBanner();
         }
 
@@ -7617,6 +7272,9 @@
             const taunt = HINDI_TAUNTS[tauntIndex] || HINDI_TAUNTS[0];
             const currentPlayer = gameState.players[gameState.currentPlayerIndex];
             const speaker = customSpeakerName || (currentPlayer ? currentPlayer.name : 'सेठ जी');
+            const safeSpeaker = String(speaker).replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
 
             sfxTaunt(taunt.id);
 
@@ -7629,7 +7287,7 @@
             pill.innerHTML = `
                 <div class="text-3xl sm:text-4xl drop-shadow-lg animate-bounce">${taunt.emoji}</div>
                 <div class="text-left">
-                    <div class="text-[10px] font-black uppercase tracking-wider text-gold-200 opacity-95">${speaker} कहते हैं:</div>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-gold-200 opacity-95">${safeSpeaker} कहते हैं:</div>
                     <div class="font-royal text-base sm:text-xl leading-tight drop-shadow">${taunt.text}</div>
                     <div class="text-[10.5px] text-white/90 font-semibold">${taunt.sub}</div>
                 </div>
@@ -7653,7 +7311,7 @@
                 setTimeout(() => p.remove(), 1700);
             }
 
-            addLog(`🎭 <strong>${speaker}:</strong> "${taunt.text}" ${taunt.emoji}`, 'amber');
+            addLog(`🎭 <strong>${safeSpeaker}:</strong> "${taunt.text}" ${taunt.emoji}`, 'amber');
         }
 
         function renderPowerCardsPanel() {
@@ -8513,9 +8171,6 @@
             recordLedgerEntry(p.id, 'कारागार ज़ुर्माना भुगतान (जैकपॉट तिजोरी में)', -500, before, p.cash, 'जैकपॉट तिजोरी');
             sfxPay();
             addLog(`${p.name} ने बारी के प्रारंभ में ₹500 ज़ुर्माना भरा (जैकपॉट तिजोरी में जमा) और कारागार से रिहा हो गए।`, 'amber');
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('bail_paid', p);
-            }
             setToast(`${p.name} कारागार से रिहा हो गए! अब सामान्य पासा फेंकें।`);
             renderAll();
         }
@@ -8537,9 +8192,7 @@
 
             const { d1, d2, sum, hexOutput } = rollCryptoAudited2D6(p);
             const isDoubles = d1 === d2;
-            if (isDoubles && typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('doubles', p, { amount: String(sum) });
-            }
+            if (isDoubles && !(d1 === 6 && d2 === 6) && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(5, 'doubles', p.name);
 
             scheduleGameTimeout(() => {
                 d1El.classList.remove('die-rolling');
@@ -8559,9 +8212,7 @@
                     recordLedgerEntry(p.id, 'दोहरा छक्का (6+6) महा-जैकपॉट!', wonPot, beforeCash, p.cash, 'जैकपॉट तिजोरी');
                     sfxFanfare();
                     showCenterScreenBanner('🎰', 'दोहरा छक्का (6+6) जैकपॉट!', `${p.name} ने जीती स्वर्ण तिजोरी!`, `दोहरा छक्का लाने पर ${formatRupee(wonPot)} का पूरा जैकपॉट मिला!`);
-                    if (typeof queueSituationalDialogue === 'function') {
-                        queueSituationalDialogue('jackpot', p, { amount: formatRupee(wonPot) });
-                    }
+                    if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'dice-jackpot', p.name);
                     addLog(`🎰 <strong>चमत्कार!</strong> ${p.name} ने दोहरा छक्का (6+6) फेंककर ${formatRupee(wonPot)} की जैकपॉट तिजोरी जीत ली!`, 'gold');
                 }
 
@@ -8626,9 +8277,7 @@
                         recordLedgerEntry(player.id, `प्रारंभ (START) वेतन (राउंड ${gameState.round})`, salary, before, player.cash, 'भारतीय रिज़र्व बैंक');
                         sfxCash();
                         addLog(`${player.name} ने प्रारंभ (START) पार किया और ${formatRupee(salary)} वेतन प्राप्त किया!`, 'emerald');
-                        if (typeof queueSituationalDialogue === 'function') {
-                            queueSituationalDialogue('start_bonus', player, { amount: formatRupee(salary) });
-                        }
+                        if (salary >= 2500 && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'large-start-salary', player.name);
                         setToast(`${player.name} को ${formatRupee(salary)} प्रारंभ वेतन मिला!`);
                     } else {
                         addLog(`${player.name} ने प्रारंभ (START) पार किया (उच्च मुद्रास्फीति चरण में RBI वेतन सब्सिडी ₹0 है)।`, 'amber');
@@ -8675,9 +8324,7 @@
                     sfxFanfare();
                     showCenterScreenBanner('💰', 'विश्राम गृह जैकपॉट विजेता!', `${player.name} को मिले ${formatRupee(totalReward)}!`, 'विश्राम गृह पर रुकने से पूरी स्वर्ण तिजोरी आपकी हुई!');
                     addLog(`💰 <strong>जैकपॉट धमाका!</strong> ${player.name} विश्राम गृह पर रुके और ₹150 भत्ता + ${formatRupee(jackpotWon)} जैकपॉट तिजोरी सहित कुल <strong>${formatRupee(totalReward)}</strong> जीते!`, 'gold');
-                    if (typeof queueSituationalDialogue === 'function') {
-                        queueSituationalDialogue('jackpot', player, { amount: formatRupee(totalReward) });
-                    }
+                    if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'rest-jackpot', player.name);
                     setToast(`${player.name} ने विश्राम गृह जैकपॉट (${formatRupee(totalReward)}) जीता!`);
                     finishTurnPhase(grantBonusTurn);
                 } else if (space.id === 30) {
@@ -8701,10 +8348,9 @@
                 if (activeRowEl) activeRowEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
                 addLog(`✨ ${label} (पासा योग ${diceSum}): <strong>${entry.title}</strong> — ${entry.desc}`, 'gold');
-                if (entry.type === 'cash' && typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue(entry.amount >= 0 ? 'fortune_gain' : 'fortune_loss', player, {
-                        amount: formatRupee(Math.abs(entry.amount))
-                    });
+                if (entry.type === 'cash' && Math.abs(entry.amount) >= 1200) {
+                    if (entry.amount > 0 && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'fortune-profit', player.name);
+                    else if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(player.cash < Math.abs(entry.amount) ? 3 : 1, 'fortune-loss', player.name);
                 }
                 setToast(`${label} [योग ${diceSum}]: ${entry.title}!`);
 
@@ -8768,11 +8414,6 @@
             if (space.type === 'city' || space.type === 'utility') {
                 const prop = gameState.ownership[space.id];
                 if (!prop) {
-                    if (typeof queueSituationalDialogue === 'function') {
-                        queueSituationalDialogue('property_opportunity', player, {
-                            space: space.name, amount: formatRupee(space.price)
-                        });
-                    }
                     gameState.phase = 'ACTION_DECISION';
                     gameState.pendingBonusTurn = grantBonusTurn;
                     renderAll();
@@ -8813,11 +8454,17 @@
                     const infNote = infMult > 1 ? ` [RBI मुद्रास्फीति ${infMult.toFixed(2)}x]` : '';
                     addLog(`${player.name} को ${space.name} में रुकने पर ${owner.name} को ${formatRupee(rent)}${eventNote}${infNote} किराया देना है।`, 'rose');
 
-                    // केवल उल्लेखनीय किराये पर एक संदर्भित संवाद; छोटे भुगतानों पर शोर नहीं।
-                    if (rent >= 1200 && typeof queueSituationalDialogue === 'function') {
-                        scheduleGameTimeout(() => queueSituationalDialogue('rent_due', player, {
-                            space: space.name, amount: formatRupee(rent), other: owner.name
-                        }), 350);
+                    // किराये की गंभीरता के अनुसार छह पुराने डायलॉग में से एक ही प्रतिक्रिया।
+                    if (rent >= 1200) {
+                        if (player.cash < rent) {
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(3, 'rent-shortfall', player.name);
+                        } else if (player.cash - rent <= Math.max(900, player.cash * 0.18)) {
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(2, 'rent-heavy', player.name);
+                        } else if (rent >= 2500) {
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'rent-windfall', owner.name);
+                        } else if (rent >= 1600) {
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(1, 'rent-tease', owner.name);
+                        }
                     }
 
                     requirePayment(player, rent, owner.id, `${space.name} का किराया`, () => {
@@ -8893,17 +8540,14 @@
             recordLedgerEntry(p.id, `${space.name} की खरीद`, -space.price, before, p.cash, 'भारतीय रिज़र्व बैंक');
             sfxCash();
             addLog(`🏛️ ${p.name} ने <strong>${space.name}</strong> को ${formatRupee(space.price)} में खरीद लिया!`, 'emerald');
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('property_bought', p, { space: space.name, amount: formatRupee(space.price) });
-            }
             setToast(`${p.name} अब ${space.name} के स्वामी हैं!`);
 
             if (space.type === 'city' && hasGroupMonopoly(p.id, space.group)) {
                 sfxFanfare();
                 addLog(`👑 ${p.name} ने <strong>${GROUP_COLORS[space.group].name}</strong> के सभी शहर खरीदकर एकाधिकार प्राप्त किया!`, 'gold');
-                if (typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue('monopoly', p, { group: GROUP_COLORS[space.group].name });
-                }
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(4, 'monopoly', p.name);
+            } else if (space.price >= 2500) {
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(5, 'premium-property-purchase', p.name);
             }
 
             closeDeedModal();
@@ -9063,18 +8707,11 @@
                     gameState.ownership[space.id]={ownerId:winner.id,houses:0,buildCosts:[],mortgaged:false};
                     recordLedgerEntry(winner.id,`सीलबंद नीलामी में ${space.name} जीता`,-a.winningBid,before,winner.cash,'भारतीय रिज़र्व बैंक');
                     addLog(`🏆 <strong>${winner.name}</strong> ने <strong>${space.name}</strong> को ${formatRupee(a.winningBid)} में खरीदा।`,'gold');
-                    if (typeof queueSituationalDialogue === 'function') {
-                        queueSituationalDialogue('auction_win', winner, {
-                            space: space.name, amount: formatRupee(a.winningBid)
-                        });
-                    }
+                    if (a.winningBid >= space.price && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(4, 'auction-victory', winner.name);
                     setToast(`${winner.name} ने गुप्त बोली से ${space.name} जीता!`);
                 }
             }else{
                 addLog('🤝 किसी ने न्यूनतम वैध बोली नहीं लगाई — संपत्ति अनबिकी रही।','slate');
-                if (typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue('auction_empty', null, { space: space.name });
-                }
                 setToast('कोई वैध बोली नहीं आई; संपत्ति बैंक के पास है।');
             }
             finishTurnPhase(gameState.pendingBonusTurn);
@@ -9308,9 +8945,6 @@
 
             sfxFanfare();
             addLog(`🤝 व्यापार स्वीकृत: <strong>${proposer.name}</strong> और <strong>${recipient.name}</strong> ने प्रस्तावित नकदी और संपत्तियों का आदान-प्रदान किया।`, 'emerald');
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('trade_success', recipient, { other: proposer.name });
-            }
             setToast(`${proposer.name} और ${recipient.name} के बीच व्यापार पूरा हुआ!`);
             renderAll();
             return true;
@@ -9467,9 +9101,7 @@
             gameState.phase = proposal.returnPhase;
             closeTradeResponseModal();
             addLog(`↩️ <strong>${recipient.name}</strong> ने ${gameState.players[proposal.proposerId].name} का व्यापार प्रस्ताव अस्वीकार किया।`, 'rose');
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('trade_rejected', recipient, { other: gameState.players[proposal.proposerId].name });
-            }
+            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(1, 'trade-rejected', recipient.name);
             setToast('व्यापार प्रस्ताव अस्वीकार हुआ। किसी की नकदी या संपत्ति नहीं बदली।');
             renderAll();
         }
@@ -9503,9 +9135,6 @@
             recordLedgerEntry(p.id, `${space.name} में ${label} निर्माण`, -buildCost, before, p.cash, 'भारतीय रिज़र्व बैंक');
             sfxBuild();
             addLog(`${p.name} ने समान निर्माण नियम के तहत ${space.name} में ${formatRupee(buildCost)} से ${label} बनाया!`, 'gold');
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('build', p, { space: space.name, amount: formatRupee(buildCost) });
-            }
             setToast(`${space.name} में ${label} निर्मित!`);
             renderAll();
             if (!document.getElementById('deedModal').classList.contains('hidden')) {
@@ -9553,9 +9182,6 @@
             recordLedgerEntry(p.id, `${space.name} का निर्माण बेचा (वास्तविक लागत का 50%)`, refund, before, p.cash, 'भारतीय रिज़र्व बैंक');
             sfxCash();
             addLog(`${p.name} ने ${space.name} का 1 निर्माण बेचकर ${formatRupee(refund)} प्राप्त किए।`, 'amber');
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('building_sold', p, { space: space.name, amount: formatRupee(refund) });
-            }
             renderAll();
             if (!document.getElementById('deedModal').classList.contains('hidden')) {
                 openDeedModal(spaceId);
@@ -9604,9 +9230,6 @@
                 recordLedgerEntry(p.id, `${space.name} गिरवी रखा (50%)`, val, before, p.cash, 'भारतीय रिज़र्व बैंक');
                 sfxCash();
                 addLog(`${p.name} ने ${space.name} को ${formatRupee(val)} में बैंक के पास गिरवी रखा।`, 'amber');
-                if (typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue('mortgage_on', p, { space: space.name, amount: formatRupee(val) });
-                }
             } else {
                 if (activeWorkoutPlayer) {
                     setToast('RBI लाइसेंस ऑडिट के दौरान संपत्ति गिरवी से छुड़ाने की अनुमति नहीं है।');
@@ -9620,9 +9243,6 @@
                 recordLedgerEntry(p.id, `${space.name} गिरवी छुड़ाया (55%)`, -cost, before, p.cash, 'भारतीय रिज़र्व बैंक');
                 sfxPay();
                 addLog(`${p.name} ने 10% ब्याज सहित ${formatRupee(cost)} (55%) चुकाकर ${space.name} को गिरवी से छुड़ाया।`, 'emerald');
-                if (typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue('mortgage_off', p, { space: space.name, amount: formatRupee(cost) });
-                }
             }
             renderAll();
             if (!document.getElementById('deedModal').classList.contains('hidden')) {
@@ -9642,9 +9262,7 @@
             player.jailTurns = 0;
             gameState.doublesStreak = 0;
             sfxJail();
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('jail', player);
-            }
+            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(1, 'jailed', player.name);
             setToast(`${player.name} को कारागार (जेल) भेज दिया गया!`);
             finishTurnPhase(false);
         }
@@ -9683,9 +9301,7 @@
             };
 
             addLog(`⚠️ ऋण संकट: <strong>${player.name}</strong> को ${creditorName} को ${formatRupee(amount)} (${reason}) चुकाने हैं, किंतु नकदी केवल ${formatRupee(player.cash)} है!`, 'rose');
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('debt_crisis', player, { amount: formatRupee(amount), other: creditorName });
-            }
+            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(2, 'debt-crisis', player.name);
             renderAll();
 
             if (player.isAI) {
@@ -10009,8 +9625,8 @@
             recordLedgerEntry(player.id, 'दिवालियापन घोषित', -player.cash, player.cash, 0, debt.creditorName);
             player.cash = 0;
             player.bankrupt = true;
-            if (typeof queueSituationalDialogue === 'function') {
-                queueSituationalDialogue('bankruptcy', player, { other: debt.creditorName });
+            if (gameState.players.filter(p => !p.bankrupt).length > 1) {
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(3, 'bankruptcy', player.name);
             }
             setToast(`${player.name} दिवालिया हो गए!`);
 
@@ -10058,9 +9674,6 @@
                 document.getElementById('winnerNameHeading').textContent = 'खेल बराबरी में समाप्त!';
                 document.getElementById('winnerSubtext').textContent = 'सभी सक्रिय खिलाड़ी दिवालिया या RBI ऑडिट में बाहर हो गए। कोई विजेता घोषित नहीं किया गया।';
                 document.getElementById('victoryModal').classList.remove('hidden');
-                if (typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue('game_draw');
-                }
                 return true;
             }
             if (alive.length === 1) {
@@ -10070,18 +9683,13 @@
                 document.getElementById('winnerNameHeading').textContent = `${winner.name} की शाही विजय!`;
                 document.getElementById('winnerSubtext').textContent = `कुल ${formatRupee(calculateNetWorth(winner.id))} की संपत्ति के साथ पूरे भारतीय बाज़ार के सम्राट बने!`;
                 document.getElementById('victoryModal').classList.remove('hidden');
-                if (typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue('victory', winner);
-                }
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(4, 'game-victory', winner.name);
                 return true;
             }
             if (alive.length === 2 && !gameState.finalShowdownAnnounced) {
                 gameState.finalShowdownAnnounced = true;
                 addLog('⚔️ <strong>Last Tycoon Showdown!</strong> अब केवल 2 खिलाड़ी बचे हैं; सभी शहर/सेवा किराए पर 1.25x अंतिम मुकाबला गुणक लागू है।', 'gold');
                 showCenterScreenBanner('⚔️', 'अंतिम मुकाबला', 'LAST TYCOON SHOWDOWN', 'अब केवल 2 खिलाड़ी बचे हैं — किराया 1.25x, नियम दोनों पर समान।');
-                if (typeof queueSituationalDialogue === 'function') {
-                    queueSituationalDialogue('showdown');
-                }
             }
             return false;
         }
