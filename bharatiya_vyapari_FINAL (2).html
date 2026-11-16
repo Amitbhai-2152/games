@@ -5795,7 +5795,7 @@
             property_opportunity: {
                 emoji: '🏙️', tone: 'blue', priority: 2, cooldownMs: 3500,
                 lines: [
-                    { text: '{space} बाज़ार में उपलब्ध है—क्या यह आपके साम्राज्य का अगला हिस्सा बनेगा?', sub: 'कीमत {amount} • खरीदें या नीलामी का जोखिम लें।' },
+                    { text: '{space} बाज़ार में उपलब्ध है—कीमत {amount}। क्या यह आपके साम्राज्य का अगला हिस्सा बनेगा?', sub: 'खरीदें या नीलामी का जोखिम लें।' },
                     { text: 'नया निवेश सामने है: {space}!', sub: '{amount} की कीमत पर फैसला आपका है, सेठ जी।' }
                 ]
             },
@@ -6024,6 +6024,7 @@
                 : (actor && typeof actor.name === 'string' ? actor.name : (definition.speaker || 'बाज़ार उद्घोषक'));
 
             const message = {
+                eventKey,
                 emoji: definition.emoji || '💬',
                 tone: definition.tone || 'gold',
                 label: 'LIVE COMMENTARY',
