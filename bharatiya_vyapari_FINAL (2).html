@@ -5720,15 +5720,24 @@
            Selects only the six original HINDI_TAUNTS; their original bubbles, audio and particles are reused. */
         let autoTauntsEnabled = true;
         let lastAutoTauntAt = 0;
+        let pendingAutoTauntTimer = null;
         const autoTauntEventTimes = Object.create(null);
 
         function resetAutomaticTauntCooldowns() {
             lastAutoTauntAt = 0;
+            pendingAutoTauntTimer = null;
             Object.keys(autoTauntEventTimes).forEach(key => delete autoTauntEventTimes[key]);
         }
 
         function setAutoTauntsEnabled(enabled) {
             autoTauntsEnabled = Boolean(enabled);
+            if (!autoTauntsEnabled && pendingAutoTauntTimer !== null) {
+                clearTimeout(pendingAutoTauntTimer);
+                if (Array.isArray(gameState.activeTimers)) {
+                    gameState.activeTimers = gameState.activeTimers.filter(id => id !== pendingAutoTauntTimer);
+                }
+                pendingAutoTauntTimer = null;
+            }
             const toggle = document.getElementById('autoTauntsToggle');
             if (toggle) {
                 toggle.setAttribute('aria-pressed', String(autoTauntsEnabled));
@@ -5745,7 +5754,8 @@
         }
 
         function triggerAutomaticTaunt(tauntIndex, eventKey, speakerName = null) {
-            if (!autoTauntsEnabled || !gameState.started || gameState.phase === 'GAME_OVER') return false;
+            const isFinalVictory = eventKey === 'game-victory';
+            if (!autoTauntsEnabled || !gameState.started || (gameState.phase === 'GAME_OVER' && !isFinalVictory)) return false;
             if (!Number.isInteger(tauntIndex) || tauntIndex < 0 || tauntIndex >= HINDI_TAUNTS.length) return false;
 
             const now = Date.now();
@@ -5758,8 +5768,10 @@
 
             lastAutoTauntAt = now;
             autoTauntEventTimes[key] = now;
-            scheduleGameTimeout(() => {
-                if (!autoTauntsEnabled || !gameState.started || gameState.phase === 'GAME_OVER') return;
+            pendingAutoTauntTimer = scheduleGameTimeout(() => {
+                pendingAutoTauntTimer = null;
+                if (!autoTauntsEnabled || !gameState.started ||
+                    (gameState.phase === 'GAME_OVER' && !isFinalVictory)) return;
                 triggerTauntReaction(tauntIndex, speakerName);
             }, 120);
             return true;
@@ -8448,6 +8460,8 @@
                             triggerAutomaticTaunt(3, 'rent-shortfall', player.name);
                         } else if (player.cash - rent <= Math.max(900, player.cash * 0.18)) {
                             triggerAutomaticTaunt(2, 'rent-heavy', player.name);
+                        } else if (rent >= 2500) {
+                            triggerAutomaticTaunt(0, 'rent-windfall', owner.name);
                         } else if (rent >= 1600) {
                             triggerAutomaticTaunt(1, 'rent-tease', owner.name);
                         }
@@ -8526,13 +8540,14 @@
             recordLedgerEntry(p.id, `${space.name} की खरीद`, -space.price, before, p.cash, 'भारतीय रिज़र्व बैंक');
             sfxCash();
             addLog(`🏛️ ${p.name} ने <strong>${space.name}</strong> को ${formatRupee(space.price)} में खरीद लिया!`, 'emerald');
-            if (space.price >= 2500) triggerAutomaticTaunt(5, 'premium-property-purchase', p.name);
             setToast(`${p.name} अब ${space.name} के स्वामी हैं!`);
 
             if (space.type === 'city' && hasGroupMonopoly(p.id, space.group)) {
                 sfxFanfare();
                 addLog(`👑 ${p.name} ने <strong>${GROUP_COLORS[space.group].name}</strong> के सभी शहर खरीदकर एकाधिकार प्राप्त किया!`, 'gold');
                 triggerAutomaticTaunt(4, 'monopoly', p.name);
+            } else if (space.price >= 2500) {
+                triggerAutomaticTaunt(5, 'premium-property-purchase', p.name);
             }
 
             closeDeedModal();
@@ -9610,7 +9625,9 @@
             recordLedgerEntry(player.id, 'दिवालियापन घोषित', -player.cash, player.cash, 0, debt.creditorName);
             player.cash = 0;
             player.bankrupt = true;
-            triggerAutomaticTaunt(3, 'bankruptcy', player.name);
+            if (gameState.players.filter(p => !p.bankrupt).length > 1) {
+                triggerAutomaticTaunt(3, 'bankruptcy', player.name);
+            }
             setToast(`${player.name} दिवालिया हो गए!`);
 
             renderAll();
