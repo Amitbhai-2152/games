@@ -8888,6 +8888,9 @@
 
             if (!partner.isAI) {
                 gameState.pendingTradeOffer = { ...proposal, status: 'PENDING', createdRound: gameState.round };
+                // प्रस्ताव की समीक्षा के दौरान प्राप्तकर्ता को सक्रिय खिलाड़ी बनाएं।
+                // स्वीकृति/अस्वीकृति के बाद प्रस्तावक की मूल बारी पुनः बहाल होगी।
+                gameState.currentPlayerIndex = partner.id;
                 gameState.phase = 'TRADE_RESPONSE';
                 closeTradeModal();
                 openTradeResponseModal();
@@ -8903,18 +8906,24 @@
         function acceptTradeOffer() {
             const proposal = gameState.pendingTradeOffer;
             if (gameState.phase !== 'TRADE_RESPONSE' || !proposal ||
-                gameState.currentPlayerIndex !== proposal.proposerId) return;
+                gameState.currentPlayerIndex !== proposal.recipientId) return;
 
             const recipient = gameState.players[proposal.recipientId];
             if (!recipient || recipient.isAI || recipient.bankrupt) {
-                setToast('प्राप्तकर्ता की स्थिति बदल गई है। व्यापार प्रस्ताव रद्द कर दिया गया।');
-                rejectTradeOffer();
+                gameState.pendingTradeOffer = null;
+                gameState.currentPlayerIndex = proposal.proposerId;
+                gameState.phase = proposal.returnPhase;
+                closeTradeResponseModal();
+                addLog('⚠️ प्राप्तकर्ता की स्थिति बदलने के कारण व्यापार प्रस्ताव रद्द हुआ।', 'rose');
+                setToast('प्राप्तकर्ता की स्थिति बदल गई है। प्रस्ताव रद्द कर दिया गया।');
+                renderAll();
                 return;
             }
 
             const validation = validateTradeProposal(proposal);
             if (!validation.valid) {
                 gameState.pendingTradeOffer = null;
+                gameState.currentPlayerIndex = proposal.proposerId;
                 gameState.phase = proposal.returnPhase;
                 closeTradeResponseModal();
                 addLog(`⚠️ व्यापार प्रस्ताव रद्द: ${validation.reason}`, 'rose');
@@ -8924,6 +8933,7 @@
             }
 
             gameState.pendingTradeOffer = null;
+            gameState.currentPlayerIndex = proposal.proposerId;
             gameState.phase = proposal.returnPhase;
             closeTradeResponseModal();
             if (!applyTradeProposal(proposal)) {
@@ -8935,12 +8945,13 @@
         function rejectTradeOffer() {
             const proposal = gameState.pendingTradeOffer;
             if (gameState.phase !== 'TRADE_RESPONSE' || !proposal ||
-                gameState.currentPlayerIndex !== proposal.proposerId) return;
+                gameState.currentPlayerIndex !== proposal.recipientId) return;
 
             const recipient = gameState.players[proposal.recipientId];
             if (!recipient || recipient.isAI) return;
 
             gameState.pendingTradeOffer = null;
+            gameState.currentPlayerIndex = proposal.proposerId;
             gameState.phase = proposal.returnPhase;
             closeTradeResponseModal();
             addLog(`↩️ <strong>${recipient.name}</strong> ने ${gameState.players[proposal.proposerId].name} का व्यापार प्रस्ताव अस्वीकार किया।`, 'rose');
