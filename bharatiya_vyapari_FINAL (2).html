@@ -8726,11 +8726,11 @@
                 `आपको ${proposer.name} से यह प्रस्ताव मिला है:`,
                 '',
                 `आप देंगे: ${describeProperty(proposal.requestPropId)}`,
-                `आपकी नकदी: ${formatRupee(proposal.requestCash)}`,
+                `आपकी तरफ से दी जाने वाली नकदी: ${formatRupee(proposal.requestCash)}`,
                 validation.requestTransferFee > 0 ? `आपका गिरवी हस्तांतरण शुल्क: ${formatRupee(validation.requestTransferFee)}` : 'आपकी तरफ से गिरवी हस्तांतरण शुल्क: ₹0',
                 '',
                 `${proposer.name} देंगे: ${describeProperty(proposal.offerPropId)}`,
-                `${proposer.name} की नकदी: ${formatRupee(proposal.offerCash)}`,
+                `${proposer.name} की तरफ से मिलने वाली नकदी: ${formatRupee(proposal.offerCash)}`,
                 validation.offerTransferFee > 0 ? `उनका गिरवी हस्तांतरण शुल्क: ${formatRupee(validation.offerTransferFee)}` : 'उनकी तरफ से गिरवी हस्तांतरण शुल्क: ₹0'
             ].join('\n');
             document.getElementById('tradeResponseModal').classList.remove('hidden');
