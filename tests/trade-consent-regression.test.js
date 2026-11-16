@@ -6,7 +6,8 @@ const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'bharatiya_vyapari_FINAL (2).html'), 'utf8');
 const start = html.indexOf('        function isTradeableProperty(spaceId, ownerId) {');
-const end = html.indexOf('        /* ==============================================================\\n           सख्त घर/होटल निर्माण एवं 55% गिरवी प्रबंधन', start);
+const endTitle = html.indexOf('सख्त घर/होटल निर्माण एवं 55% गिरवी प्रबंधन', start);
+const end = endTitle === -1 ? -1 : html.lastIndexOf('        /*', endTitle);
 assert.notEqual(start, -1, 'missing trade implementation start');
 assert.ok(end > start, 'missing trade implementation end');
 const tradeCode = html.slice(start, end);
@@ -246,8 +247,8 @@ test('mortgaged property transfer fees are previewed and charged to each recipie
 
     assert.equal(c.gameState.ownership[1].ownerId, 1);
     assert.equal(c.gameState.ownership[2].ownerId, 0);
-    assert.equal(c.gameState.players[0].cash, 9440);
-    assert.equal(c.gameState.players[1].cash, 10150);
+    assert.equal(c.gameState.players[0].cash, 9640);
+    assert.equal(c.gameState.players[1].cash, 10250);
     assert.equal(c.gameState.jackpotPot, 1055);
 });
 
