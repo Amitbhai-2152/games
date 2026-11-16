@@ -139,7 +139,7 @@ test('queue remains bounded and a critical moment can replace a lower-priority l
     h.context.queueSituationalDialogue('world_event', null, { event: 'मानसून' });
     h.context.queueSituationalDialogue('jackpot', { name: 'खिलाड़ी' }, { amount: '₹2,000' });
     assert.equal(h.state('liveDialogueState.queue.length'), 4);
-    assert.equal(h.state('liveDialogueState.queue.some(item => item.text.includes("जैकपॉट"))'), true);
+    assert.equal(h.state('liveDialogueState.queue.some(item => item.eventKey === "jackpot")'), true);
 });
 
 test('AUTO OFF cancels the pending animation, clears queued lines and hides the current bubble', () => {
