@@ -4575,7 +4575,7 @@
                     <h2 class="font-royal text-xl sm:text-2xl text-gold-300 flex items-center gap-2">
                         <i class="fa-solid fa-handshake text-emerald-400"></i> आपसी व्यापार और समझौता
                     </h2>
-                    <p class="text-xs text-amber-200/80">अन्य सेठ के साथ शहरों और नकदी (₹) का आदान-प्रदान प्रस्तावित करें</p>
+                    <p class="text-xs text-amber-200/80">व्यापार प्रस्ताव भेजें। मानव खिलाड़ी की स्वीकृति के बाद ही संपत्ति और नकदी बदलेंगे।</p>
                 </div>
                 <button onclick="closeTradeModal()" class="w-8 h-8 rounded-lg bg-wood-800 hover:bg-wood-700 text-amber-200 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
@@ -4632,10 +4632,36 @@
             <div class="flex justify-end gap-2">
                 <button onclick="closeTradeModal()" class="px-4 py-2 rounded-xl bg-wood-800 text-amber-200 text-xs font-bold">रद्द करें</button>
                 <button onclick="executeTradeProposal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-600 text-wood-950 font-black text-xs shadow-lg">
-                    प्रस्ताव भेजें और सौदा करें
+                    प्रस्ताव भेजें
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- मानव व्यापार प्रस्ताव समीक्षा: प्राप्तकर्ता की स्पष्ट सहमति आवश्यक -->
+    <div id="tradeResponseModal" class="fixed inset-0 z-[80] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-3">
+        <section role="dialog" aria-modal="true" aria-labelledby="tradeResponseTitle"
+            class="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl border-2 border-emerald-400/70 bg-gradient-to-br from-[#10251d] via-[#152017] to-[#101827] p-5 shadow-2xl">
+            <div class="text-center">
+                <div class="text-4xl mb-2">🤝</div>
+                <div class="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">PLAYER-TO-PLAYER TRADE</div>
+                <h2 id="tradeResponseTitle" class="font-royal text-2xl sm:text-3xl font-black text-emerald-200 mt-1">व्यापार प्रस्ताव की समीक्षा</h2>
+                <p class="text-sm text-amber-100/90 mt-2">डिवाइस संबंधित खिलाड़ी को दें। प्रस्ताव स्वीकार या अस्वीकार करने का निर्णय केवल प्राप्तकर्ता करे।</p>
+            </div>
+            <div class="mt-4 rounded-2xl border border-emerald-300/30 bg-black/30 p-3">
+                <div class="text-[10px] uppercase tracking-widest text-emerald-300/80">प्रस्ताव भेजने वाला</div>
+                <div id="tradeResponseFromName" class="text-lg font-black text-white mt-0.5"></div>
+                <div class="border-t border-white/10 my-3"></div>
+                <div class="text-[10px] uppercase tracking-widest text-emerald-300/80">प्रस्ताव पाने वाला</div>
+                <div id="tradeResponseRecipientName" class="text-lg font-black text-white mt-0.5"></div>
+            </div>
+            <pre id="tradeResponseSummary" class="whitespace-pre-wrap break-words rounded-2xl border border-amber-300/25 bg-black/35 p-4 mt-3 text-sm leading-relaxed text-amber-50 font-sans"></pre>
+            <p class="text-[11px] text-slate-300 mt-3">स्वीकृति के बाद ही नकदी, संपत्ति और लागू गिरवी-हस्तांतरण शुल्क बदलेंगे। अस्वीकार करने पर किसी खिलाड़ी की संपत्ति या नकदी नहीं बदलेगी।</p>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" onclick="rejectTradeOffer()" class="py-3 rounded-xl border border-rose-400/50 bg-rose-950/70 text-rose-100 font-black text-sm hover:bg-rose-900">अस्वीकार करें</button>
+                <button type="button" onclick="acceptTradeOffer()" class="py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black text-sm hover:brightness-110">स्वीकार करें</button>
+            </div>
+        </section>
     </div>
 
     <!-- ==========================================
@@ -4859,7 +4885,7 @@
                         <i class="fa-solid fa-handshake"></i> 5. आपसी व्यापार, गिरवी (Mortgage) और ऋण संकट
                     </h4>
                     <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-amber-100/90">
-                        <li><strong>व्यापार समझौता:</strong> आप किसी भी खिलाड़ी के साथ शहरों और नकदी की अदला-बदली कर सकते हैं।</li>
+                        <li><strong>व्यापार समझौता:</strong> आप किसी भी सक्रिय खिलाड़ी को शहरों और नकदी का प्रस्ताव भेज सकते हैं। मानव खिलाड़ी की स्पष्ट स्वीकृति के बाद ही अदला-बदली होगी; वह प्रस्ताव अस्वीकार भी कर सकता है। AI अपने निर्धारित मूल्यांकन नियमों के अनुसार निर्णय लेता है।</li>
                         <li><strong>गिरवी (Mortgage):</strong> पैसों की ज़रूरत होने पर आप अपने बिना घर वाले शहर को बैंक में <strong>50% कीमत</strong> पर गिरवी रख सकते हैं (गिरवी शहर पर किराया नहीं मिलता)। बाद में <strong>55%</strong> देकर इसे छुड़ाया जा सकता है।</li>
                         <li><strong>ऋण संकट समाधान:</strong> यदि किराया देने के लिए नकद कम पड़े, तो खेल तुरंत आपको बाहर नहीं करता—आपको घर बेचने या शहर गिरवी रखकर पैसे जुटाने का पूरा मौका मिलता है।</li>
                     </ul>
@@ -5429,7 +5455,7 @@
                 (target?.closest && target.closest('button, a, [role="button"], [contenteditable="true"]'))) return;
 
             const anyModalOpen = [
-                'setupModal', 'deedModal', 'auctionModal', 'tradeModal',
+                'setupModal', 'deedModal', 'auctionModal', 'tradeModal', 'tradeResponseModal',
                 'luckFortuneModal', 'rulesModal', 'debtModal', 'fairnessModal',
                 'ledgerModal', 'rbiAuditModal', 'rbiWorkoutModal', 'powerCardTargetModal', 'victoryModal'
             ].some(id => {
@@ -5723,7 +5749,7 @@
             started: false,
             round: 1,
             currentPlayerIndex: 0,
-            phase: 'PRE_ROLL', // PRE_ROLL, MOVING, ACTION_DECISION, AUCTION, DEBT_SETTLEMENT, POST_ROLL, GAME_OVER
+            phase: 'PRE_ROLL', // PRE_ROLL, MOVING, ACTION_DECISION, AUCTION, TRADE_RESPONSE, DEBT_SETTLEMENT, POST_ROLL, GAME_OVER
             lastDice: [1, 2],
             doublesStreak: 0,
             selectedSpaceId: 0,
@@ -5732,6 +5758,7 @@
             ownership: {},
             auction: null,
             pendingDebt: null,
+            pendingTradeOffer: null,
             rollAuditLog: [],
             rngMode: 'अभी कोई रोल नहीं',
             diceSumCounts: { 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 },
@@ -5988,6 +6015,7 @@
             gameState.ownership = {};
             gameState.auction = null;
             gameState.pendingDebt = null;
+            gameState.pendingTradeOffer = null;
             gameState.rollAuditLog = [];
             gameState.rngMode = 'अभी कोई रोल नहीं';
             gameState.diceSumCounts = { 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 };
@@ -6033,6 +6061,7 @@
             document.getElementById('auctionModal').classList.add('hidden');
             document.getElementById('powerCardTargetModal').classList.add('hidden');
             document.getElementById('rbiAuditModal').classList.add('hidden');
+            document.getElementById('tradeResponseModal').classList.add('hidden');
             addLog(`नया शाही मुकाबला प्रारंभ! कुल ${setupConfig.playerCount} सेठ मैदान में हैं, प्रत्येक को ${formatRupee(setupConfig.startingCash)} पूंजी और <strong>3 सीक्रेट पावर कार्ड्स</strong> मिले!`, 'gold');
             addLog(`🌪️ <strong>लाइव इवेंट सक्रिय:</strong> ${gameState.activeWorldEvent.name} — ${gameState.activeWorldEvent.desc}`, 'amber');
             if (setupConfig.progressiveElimination) {
@@ -8596,151 +8625,326 @@
             });
         }
 
+        function isTradeableProperty(spaceId, ownerId) {
+            if (!Number.isInteger(spaceId) || !BOARD_SPACES[spaceId]) return false;
+            const space = BOARD_SPACES[spaceId];
+            const property = gameState.ownership[spaceId];
+            if (!property || property.ownerId !== ownerId) return false;
+            if (space.type !== 'city' && space.type !== 'utility') return false;
+            if ((Number(property.houses) || 0) > 0) return false;
+            if (space.type === 'city' && groupHasAnyHouses(space.group)) return false;
+            return true;
+        }
+
+        function getTradeTransferFee(spaceId) {
+            if (spaceId === null || spaceId === undefined) return 0;
+            const property = gameState.ownership[spaceId];
+            const space = BOARD_SPACES[spaceId];
+            return property && property.mortgaged && space ? Math.ceil(space.price * 0.10) : 0;
+        }
+
+        function validateTradeProposal(proposal) {
+            const invalid = reason => ({ valid: false, reason });
+            if (!proposal || typeof proposal !== 'object') return invalid('व्यापार प्रस्ताव उपलब्ध नहीं है।');
+
+            const proposerId = proposal.proposerId;
+            const recipientId = proposal.recipientId;
+            if (!Number.isInteger(proposerId) || !Number.isInteger(recipientId) ||
+                proposerId < 0 || recipientId < 0 || proposerId === recipientId) {
+                return invalid('व्यापार के खिलाड़ी अमान्य हैं।');
+            }
+
+            const proposer = gameState.players[proposerId];
+            const recipient = gameState.players[recipientId];
+            if (!proposer || !recipient || proposer.id !== proposerId || recipient.id !== recipientId ||
+                proposer.bankrupt || recipient.bankrupt || proposer.isAI) {
+                return invalid('व्यापार के किसी खिलाड़ी की स्थिति बदल चुकी है।');
+            }
+
+            if (!['PRE_ROLL', 'POST_ROLL', 'ACTION_DECISION'].includes(proposal.returnPhase)) {
+                return invalid('इस खेल चरण में व्यापार की अनुमति नहीं है।');
+            }
+            if (!Number.isSafeInteger(proposal.offerCash) || proposal.offerCash < 0 ||
+                !Number.isSafeInteger(proposal.requestCash) || proposal.requestCash < 0) {
+                return invalid('नकदी की राशि पूर्ण और शून्य या उससे अधिक रुपये में होनी चाहिए।');
+            }
+
+            const offerPropId = proposal.offerPropId;
+            const requestPropId = proposal.requestPropId;
+            if ((offerPropId !== null && !Number.isInteger(offerPropId)) ||
+                (requestPropId !== null && !Number.isInteger(requestPropId))) {
+                return invalid('चुनी गई संपत्ति अमान्य है।');
+            }
+            if (offerPropId === null && requestPropId === null &&
+                proposal.offerCash === 0 && proposal.requestCash === 0) {
+                return invalid('कृपया कम से कम एक शहर, सेवा या नकदी चुनें।');
+            }
+            if (proposal.offerCash > proposer.cash || proposal.requestCash > recipient.cash) {
+                return invalid('किसी खिलाड़ी के पास प्रस्तावित नकदी उपलब्ध नहीं है।');
+            }
+            if (offerPropId !== null && !isTradeableProperty(offerPropId, proposerId)) {
+                return invalid('आपकी चुनी गई संपत्ति अब व्यापार योग्य नहीं है। निर्माण वाले शहर या गलत स्वामित्व वाली संपत्ति हस्तांतरित नहीं हो सकती।');
+            }
+            if (requestPropId !== null && !isTradeableProperty(requestPropId, recipientId)) {
+                return invalid('मांगी गई संपत्ति अब व्यापार योग्य नहीं है। निर्माण वाले शहर या गलत स्वामित्व वाली संपत्ति हस्तांतरित नहीं हो सकती।');
+            }
+
+            const offerTransferFee = getTradeTransferFee(offerPropId);
+            const requestTransferFee = getTradeTransferFee(requestPropId);
+            const proposerCashAfterExchange = proposer.cash - proposal.offerCash + proposal.requestCash;
+            const recipientCashAfterExchange = recipient.cash - proposal.requestCash + proposal.offerCash;
+            if (proposerCashAfterExchange < requestTransferFee) {
+                return invalid(`मांगी गई गिरवी संपत्ति का हस्तांतरण शुल्क (${formatRupee(requestTransferFee)}) चुकाने के लिए पर्याप्त नकदी नहीं बचेगी।`);
+            }
+            if (recipientCashAfterExchange < offerTransferFee) {
+                return invalid(`दी जा रही गिरवी संपत्ति का हस्तांतरण शुल्क (${formatRupee(offerTransferFee)}) चुकाने के लिए प्राप्तकर्ता के पास पर्याप्त नकदी नहीं बचेगी।`);
+            }
+
+            return { valid: true, proposer, recipient, offerTransferFee, requestTransferFee };
+        }
+
+        function openTradeResponseModal() {
+            const proposal = gameState.pendingTradeOffer;
+            if (!proposal || gameState.phase !== 'TRADE_RESPONSE') return;
+            const proposer = gameState.players[proposal.proposerId];
+            const recipient = gameState.players[proposal.recipientId];
+            if (!proposer || !recipient || recipient.isAI || recipient.bankrupt) return;
+
+            const validation = validateTradeProposal(proposal);
+            if (!validation.valid) return;
+            const describeProperty = spaceId => {
+                if (spaceId === null) return 'कोई संपत्ति नहीं';
+                const space = BOARD_SPACES[spaceId];
+                const property = gameState.ownership[spaceId];
+                return `${space.name} (${formatRupee(space.price)})${property.mortgaged ? ' — गिरवी' : ''}`;
+            };
+
+            document.getElementById('tradeResponseFromName').textContent = proposer.name;
+            document.getElementById('tradeResponseRecipientName').textContent = recipient.name;
+            document.getElementById('tradeResponseTitle').textContent = `${recipient.name}, व्यापार प्रस्ताव की समीक्षा करें`;
+            document.getElementById('tradeResponseSummary').textContent = [
+                `आपको ${proposer.name} से यह प्रस्ताव मिला है:`,
+                '',
+                `आप देंगे: ${describeProperty(proposal.requestPropId)}`,
+                `आपकी नकदी: ${formatRupee(proposal.requestCash)}`,
+                validation.requestTransferFee > 0 ? `आपका गिरवी हस्तांतरण शुल्क: ${formatRupee(validation.requestTransferFee)}` : 'आपकी तरफ से गिरवी हस्तांतरण शुल्क: ₹0',
+                '',
+                `${proposer.name} देंगे: ${describeProperty(proposal.offerPropId)}`,
+                `${proposer.name} की नकदी: ${formatRupee(proposal.offerCash)}`,
+                validation.offerTransferFee > 0 ? `उनका गिरवी हस्तांतरण शुल्क: ${formatRupee(validation.offerTransferFee)}` : 'उनकी तरफ से गिरवी हस्तांतरण शुल्क: ₹0'
+            ].join('\n');
+            document.getElementById('tradeResponseModal').classList.remove('hidden');
+        }
+
+        function closeTradeResponseModal() {
+            document.getElementById('tradeResponseModal').classList.add('hidden');
+        }
+
+        function applyTradeProposal(proposal) {
+            const check = validateTradeProposal(proposal);
+            if (!check.valid) {
+                setToast(check.reason);
+                return false;
+            }
+
+            const { proposer, recipient, offerTransferFee, requestTransferFee } = check;
+            const offerPropId = proposal.offerPropId;
+            const requestPropId = proposal.requestPropId;
+            const offerCash = proposal.offerCash;
+            const requestCash = proposal.requestCash;
+
+            if (offerCash > 0) {
+                const before = proposer.cash;
+                proposer.cash -= offerCash;
+                recordLedgerEntry(proposer.id, `व्यापार नकदी दी (${recipient.name})`, -offerCash, before, proposer.cash, recipient.name);
+                const recipientBefore = recipient.cash;
+                recipient.cash += offerCash;
+                recordLedgerEntry(recipient.id, `व्यापार नकदी मिली (${proposer.name})`, offerCash, recipientBefore, recipient.cash, proposer.name);
+            }
+            if (requestCash > 0) {
+                const before = recipient.cash;
+                recipient.cash -= requestCash;
+                recordLedgerEntry(recipient.id, `व्यापार नकदी दी (${proposer.name})`, -requestCash, before, recipient.cash, proposer.name);
+                const proposerBefore = proposer.cash;
+                proposer.cash += requestCash;
+                recordLedgerEntry(proposer.id, `व्यापार नकदी मिली (${recipient.name})`, requestCash, proposerBefore, proposer.cash, recipient.name);
+            }
+
+            // The recipient of each mortgaged property pays its 10% transfer fee.
+            if (requestTransferFee > 0) {
+                const before = proposer.cash;
+                proposer.cash -= requestTransferFee;
+                gameState.jackpotPot += Math.round(requestTransferFee * 0.5);
+                recordLedgerEntry(proposer.id, 'व्यापार: गिरवी संपत्ति 10% हस्तांतरण शुल्क', -requestTransferFee, before, proposer.cash, 'भारतीय रिज़र्व बैंक');
+            }
+            if (offerTransferFee > 0) {
+                const before = recipient.cash;
+                recipient.cash -= offerTransferFee;
+                gameState.jackpotPot += Math.round(offerTransferFee * 0.5);
+                recordLedgerEntry(recipient.id, 'व्यापार: गिरवी संपत्ति 10% हस्तांतरण शुल्क', -offerTransferFee, before, recipient.cash, 'भारतीय रिज़र्व बैंक');
+            }
+
+            if (offerPropId !== null) {
+                const space = BOARD_SPACES[offerPropId];
+                recordLedgerEntry(proposer.id, `व्यापार में ${space.name} का स्वामित्व हस्तांतरित`, 0, proposer.cash, proposer.cash, recipient.name);
+                recordLedgerEntry(recipient.id, `${proposer.name} से ${space.name} प्राप्त`, 0, recipient.cash, recipient.cash, proposer.name);
+                gameState.ownership[offerPropId].ownerId = recipient.id;
+            }
+            if (requestPropId !== null) {
+                const space = BOARD_SPACES[requestPropId];
+                recordLedgerEntry(recipient.id, `व्यापार में ${space.name} का स्वामित्व हस्तांतरित`, 0, recipient.cash, recipient.cash, proposer.name);
+                recordLedgerEntry(proposer.id, `${recipient.name} से ${space.name} प्राप्त`, 0, proposer.cash, proposer.cash, recipient.name);
+                gameState.ownership[requestPropId].ownerId = proposer.id;
+            }
+
+            sfxFanfare();
+            addLog(`🤝 व्यापार स्वीकृत: <strong>${proposer.name}</strong> और <strong>${recipient.name}</strong> ने प्रस्तावित नकदी और संपत्तियों का आदान-प्रदान किया।`, 'emerald');
+            setToast(`${proposer.name} और ${recipient.name} के बीच व्यापार पूरा हुआ!`);
+            renderAll();
+            return true;
+        }
+
         function executeTradeProposal() {
             const currentPlayer = gameState.players[gameState.currentPlayerIndex];
             const tradePhases = ['PRE_ROLL', 'POST_ROLL', 'ACTION_DECISION'];
-            if (!currentPlayer || currentPlayer.bankrupt || currentPlayer.isAI || !tradePhases.includes(gameState.phase) || gameState.pendingDebt || gameState.auction || gameState.phase === 'GAME_OVER') {
-                setToast('यह चाल व्यापार के लिए उपलब्ध नहीं है।');
+            if (!currentPlayer || currentPlayer.bankrupt || currentPlayer.isAI ||
+                !tradePhases.includes(gameState.phase) || gameState.pendingDebt ||
+                gameState.auction || gameState.pendingTradeOffer) {
+                setToast('यह चाल व्यापार प्रस्ताव भेजने के लिए उपलब्ध नहीं है।');
                 return;
             }
+
             const partnerId = Number(document.getElementById('tradePartnerSelect').value);
             const partner = gameState.players[partnerId];
-            if (!currentPlayer || !partner || partner.id === currentPlayer.id || currentPlayer.bankrupt || partner.bankrupt || gameState.phase === 'GAME_OVER') return;
+            if (!partner || partner.id === currentPlayer.id || partner.bankrupt) {
+                setToast('कृपया किसी दूसरे सक्रिय खिलाड़ी को चुनें।');
+                return;
+            }
 
-            const offerPropId = document.getElementById('tradeOfferPropSelect').value ? Number(document.getElementById('tradeOfferPropSelect').value) : null;
-            const reqPropId = document.getElementById('tradeRequestPropSelect').value ? Number(document.getElementById('tradeRequestPropSelect').value) : null;
-            const offerCash = Math.max(0, Number(document.getElementById('tradeOfferCashInput').value) || 0);
-            const reqCash = Math.max(0, Number(document.getElementById('tradeRequestCashInput').value) || 0);
-
+            const offerPropValue = document.getElementById('tradeOfferPropSelect').value;
+            const requestPropValue = document.getElementById('tradeRequestPropSelect').value;
+            const offerPropId = offerPropValue === '' ? null : Number(offerPropValue);
+            const requestPropId = requestPropValue === '' ? null : Number(requestPropValue);
+            const offerCash = Number(document.getElementById('tradeOfferCashInput').value);
+            const requestCash = Number(document.getElementById('tradeRequestCashInput').value);
             const banner = document.getElementById('tradeFeedbackBanner');
             banner.classList.remove('hidden');
 
-            if (!offerPropId && !reqPropId && offerCash === 0 && reqCash === 0) {
+            const proposal = {
+                proposerId: currentPlayer.id,
+                recipientId: partner.id,
+                offerPropId,
+                requestPropId,
+                offerCash,
+                requestCash,
+                returnPhase: gameState.phase
+            };
+            const validation = validateTradeProposal(proposal);
+            if (!validation.valid) {
                 banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                banner.textContent = 'कृपया व्यापार के लिए कम से कम एक शहर या नकदी चुनें!';
+                banner.textContent = validation.reason;
                 return;
             }
 
-            if (offerCash > currentPlayer.cash || reqCash > partner.cash) {
-                banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                banner.textContent = 'तिजोरी में पर्याप्त नकदी उपलब्ध नहीं है!';
-                return;
-            }
-            if ((offerPropId !== null && gameState.ownership[offerPropId]?.ownerId !== currentPlayer.id) ||
-                (reqPropId !== null && gameState.ownership[reqPropId]?.ownerId !== partner.id)) {
-                banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                banner.textContent = 'व्यापार रद्द: चुनी गई संपत्ति का स्वामित्व बदल चुका है।';
-                return;
-            }
-
-            // 10% बंधक हस्तांतरण शुल्क (Mortgage Transfer Fee Rule) की जांच
-            const offerTransferFee = (offerPropId && gameState.ownership[offerPropId]?.mortgaged)
-                ? Math.ceil(BOARD_SPACES[offerPropId].price * 0.10) : 0;
-            const reqTransferFee = (reqPropId && gameState.ownership[reqPropId]?.mortgaged)
-                ? Math.ceil(BOARD_SPACES[reqPropId].price * 0.10) : 0;
-
-            if (currentPlayer.cash - offerCash + reqCash < reqTransferFee) {
-                banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                banner.textContent = `गिरवी शहर लेने पर 10% हस्तांतरण शुल्क (${formatRupee(reqTransferFee)}) चुकाने के लिए पर्याप्त नकदी नहीं है!`;
-                return;
-            }
-            if (partner.cash - reqCash + offerCash < offerTransferFee) {
-                banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                banner.textContent = `${partner.name} के पास गिरवी शहर का 10% हस्तांतरण शुल्क (${formatRupee(offerTransferFee)}) चुकाने के लिए नकदी नहीं है!`;
-                return;
-            }
-
-            const offerPropAdjusted = offerPropId
-                ? (gameState.ownership[offerPropId]?.mortgaged ? Math.floor(BOARD_SPACES[offerPropId].price * 0.45) : BOARD_SPACES[offerPropId].price)
-                : 0;
-            const reqPropAdjusted = reqPropId
-                ? (gameState.ownership[reqPropId]?.mortgaged ? Math.floor(BOARD_SPACES[reqPropId].price * 0.45) : BOARD_SPACES[reqPropId].price)
-                : 0;
-
-            const offerValue = offerPropAdjusted + offerCash;
-            let requestValue = reqPropAdjusted + reqCash;
-
-            // यदि मांगा गया शहर पहले से AI के पूर्ण एकाधिकार (Monopoly) में है, तो AI उसे नहीं बेचेगा
-            if (partner.isAI && reqPropId) {
-                const reqSpace = BOARD_SPACES[reqPropId];
+            // AI valuation remains immediate as before. Human recipients always decide explicitly.
+            if (partner.isAI && requestPropId !== null) {
+                const reqSpace = BOARD_SPACES[requestPropId];
                 if (reqSpace.type === 'city' && hasGroupMonopoly(partner.id, reqSpace.group)) {
                     sfxPay();
                     banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
                     banner.textContent = `व्यापार अस्वीकृत (${partner.name}): वे अपना पूर्ण रंग एकाधिकार (${GROUP_COLORS[reqSpace.group].name}) नहीं तोड़ेंगे!`;
                     return;
                 }
+
+                const requestPropertyValue = gameState.ownership[requestPropId].mortgaged
+                    ? Math.floor(reqSpace.price * 0.45)
+                    : reqSpace.price;
+                const offerPropertyValue = offerPropId !== null
+                    ? (gameState.ownership[offerPropId].mortgaged
+                        ? Math.floor(BOARD_SPACES[offerPropId].price * 0.45)
+                        : BOARD_SPACES[offerPropId].price)
+                    : 0;
+                let requestValue = requestPropertyValue + requestCash;
+                const offerValue = offerPropertyValue + offerCash;
+
                 if (reqSpace.type === 'city') {
                     const givesCallerMonopoly = BOARD_SPACES.filter(s => s.group === reqSpace.group && s.id !== reqSpace.id)
                         .every(s => gameState.ownership[s.id]?.ownerId === currentPlayer.id);
-                    const givesAIMonopoly = offerPropId && BOARD_SPACES[offerPropId].type === 'city' &&
+                    const givesAIMonopoly = offerPropId !== null && BOARD_SPACES[offerPropId].type === 'city' &&
                         BOARD_SPACES.filter(s => s.group === BOARD_SPACES[offerPropId].group && s.id !== offerPropId)
                             .every(s => gameState.ownership[s.id]?.ownerId === partner.id);
-                    if (givesCallerMonopoly && !givesAIMonopoly) {
-                        requestValue = Math.ceil(requestValue * 1.35);
-                    }
+                    if (givesCallerMonopoly && !givesAIMonopoly) requestValue = Math.ceil(requestValue * 1.35);
+                }
+
+                if (offerValue < requestValue) {
+                    const diff = requestValue - offerValue;
+                    sfxPay();
+                    banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
+                    banner.textContent = `व्यापार अस्वीकृत (${partner.name}): प्रस्ताव मूल्य अंतर ${formatRupee(diff)} कम है (अपेक्षित मूल्य: ${formatRupee(requestValue)})।`;
+                    addLog(`🤖 AI व्यापार तर्क (${partner.name}): प्रस्ताव अस्वीकृत क्योंकि संपत्ति मूल्य अंतर ${formatRupee(diff)} कम था।`, 'amber');
+                    return;
                 }
             }
 
-            if (partner.isAI && offerValue < requestValue) {
-                const diff = requestValue - offerValue;
-                sfxPay();
-                banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                banner.textContent = `व्यापार अस्वीकृत (${partner.name}): प्रस्ताव मूल्य अंतर ${formatRupee(diff)} कम है (अपेक्षित मूल्य: ${formatRupee(requestValue)})।`;
-                addLog(`🤖 AI व्यापार तर्क (${partner.name}): प्रस्ताव अस्वीकृत क्योंकि संपत्ति मूल्य अंतर ${formatRupee(diff)} कम था।`, 'amber');
+            if (!partner.isAI) {
+                gameState.pendingTradeOffer = { ...proposal, status: 'PENDING', createdRound: gameState.round };
+                gameState.phase = 'TRADE_RESPONSE';
+                closeTradeModal();
+                openTradeResponseModal();
+                addLog(`🤝 <strong>${currentPlayer.name}</strong> ने <strong>${partner.name}</strong> को व्यापार प्रस्ताव भेजा है। स्वीकृति मिलने तक कोई संपत्ति या नकदी नहीं बदलेगी।`, 'amber');
+                renderAll();
                 return;
             }
 
-            // नकदी के हर प्रवाह को अलग दर्ज करें ताकि trade राशि और RBI शुल्क आपस में छिप न जाएँ।
-            if (offerCash > 0) {
-                const cBefore = currentPlayer.cash;
-                currentPlayer.cash -= offerCash;
-                recordLedgerEntry(currentPlayer.id, `व्यापार नकदी दी (${partner.name})`, -offerCash, cBefore, currentPlayer.cash, partner.name);
-                const pBefore = partner.cash;
-                partner.cash += offerCash;
-                recordLedgerEntry(partner.id, `व्यापार नकदी मिली (${currentPlayer.name})`, offerCash, pBefore, partner.cash, currentPlayer.name);
-            }
-            if (reqCash > 0) {
-                const pBefore = partner.cash;
-                partner.cash -= reqCash;
-                recordLedgerEntry(partner.id, `व्यापार नकदी दी (${currentPlayer.name})`, -reqCash, pBefore, partner.cash, currentPlayer.name);
-                const cBefore = currentPlayer.cash;
-                currentPlayer.cash += reqCash;
-                recordLedgerEntry(currentPlayer.id, `व्यापार नकदी मिली (${partner.name})`, reqCash, cBefore, currentPlayer.cash, partner.name);
-            }
-
-            // गिरवी संपत्ति का हस्तांतरण शुल्क प्राप्तकर्ता देता है; 50% बैंक-शुल्क नियम के अनुसार जैकपॉट में जाता है।
-            if (reqTransferFee > 0) {
-                const before = currentPlayer.cash;
-                currentPlayer.cash -= reqTransferFee;
-                const after = currentPlayer.cash;
-                gameState.jackpotPot += Math.round(reqTransferFee * 0.5);
-                recordLedgerEntry(currentPlayer.id, 'व्यापार: गिरवी संपत्ति 10% हस्तांतरण शुल्क', -reqTransferFee, before, after, 'भारतीय रिज़र्व बैंक');
-            }
-            if (offerTransferFee > 0) {
-                const before = partner.cash;
-                partner.cash -= offerTransferFee;
-                const after = partner.cash;
-                gameState.jackpotPot += Math.round(offerTransferFee * 0.5);
-                recordLedgerEntry(partner.id, 'व्यापार: गिरवी संपत्ति 10% हस्तांतरण शुल्क', -offerTransferFee, before, after, 'भारतीय रिज़र्व बैंक');
-            }
-
-            if (offerPropId !== null) {
-                const space = BOARD_SPACES[offerPropId];
-                recordLedgerEntry(currentPlayer.id, `व्यापार में ${space.name} का स्वामित्व हस्तांतरित`, 0, currentPlayer.cash, currentPlayer.cash, partner.name);
-                recordLedgerEntry(partner.id, `${currentPlayer.name} से ${space.name} प्राप्त`, 0, partner.cash, partner.cash, currentPlayer.name);
-                gameState.ownership[offerPropId].ownerId = partner.id;
-            }
-            if (reqPropId !== null) {
-                const space = BOARD_SPACES[reqPropId];
-                recordLedgerEntry(partner.id, `व्यापार में ${space.name} का स्वामित्व हस्तांतरित`, 0, partner.cash, partner.cash, currentPlayer.name);
-                recordLedgerEntry(currentPlayer.id, `${partner.name} से ${space.name} प्राप्त`, 0, currentPlayer.cash, currentPlayer.cash, partner.name);
-                gameState.ownership[reqPropId].ownerId = currentPlayer.id;
-            }
-
-            sfxFanfare();
-            addLog(`🤝 व्यापार समझौता संपन्न: <strong>${currentPlayer.name}</strong> और <strong>${partner.name}</strong> ने पारदर्शी मूल्यांकन पर सौदा किया!`, 'emerald');
-            setToast(`${currentPlayer.name} और ${partner.name} के बीच व्यापार सफल!`);
             closeTradeModal();
+            applyTradeProposal(proposal);
+        }
+
+        function acceptTradeOffer() {
+            const proposal = gameState.pendingTradeOffer;
+            if (gameState.phase !== 'TRADE_RESPONSE' || !proposal ||
+                gameState.currentPlayerIndex !== proposal.proposerId) return;
+
+            const recipient = gameState.players[proposal.recipientId];
+            if (!recipient || recipient.isAI || recipient.bankrupt) {
+                setToast('प्राप्तकर्ता की स्थिति बदल गई है। व्यापार प्रस्ताव रद्द कर दिया गया।');
+                rejectTradeOffer();
+                return;
+            }
+
+            const validation = validateTradeProposal(proposal);
+            if (!validation.valid) {
+                gameState.pendingTradeOffer = null;
+                gameState.phase = proposal.returnPhase;
+                closeTradeResponseModal();
+                addLog(`⚠️ व्यापार प्रस्ताव रद्द: ${validation.reason}`, 'rose');
+                setToast(`प्रस्ताव रद्द: ${validation.reason}`);
+                renderAll();
+                return;
+            }
+
+            gameState.pendingTradeOffer = null;
+            gameState.phase = proposal.returnPhase;
+            closeTradeResponseModal();
+            if (!applyTradeProposal(proposal)) {
+                setToast('व्यापार लागू नहीं हुआ। कोई संपत्ति या नकदी नहीं बदली।');
+                renderAll();
+            }
+        }
+
+        function rejectTradeOffer() {
+            const proposal = gameState.pendingTradeOffer;
+            if (gameState.phase !== 'TRADE_RESPONSE' || !proposal ||
+                gameState.currentPlayerIndex !== proposal.proposerId) return;
+
+            const recipient = gameState.players[proposal.recipientId];
+            if (!recipient || recipient.isAI) return;
+
+            gameState.pendingTradeOffer = null;
+            gameState.phase = proposal.returnPhase;
+            closeTradeResponseModal();
+            addLog(`↩️ <strong>${recipient.name}</strong> ने ${gameState.players[proposal.proposerId].name} का व्यापार प्रस्ताव अस्वीकार किया।`, 'rose');
+            setToast('व्यापार प्रस्ताव अस्वीकार हुआ। किसी की नकदी या संपत्ति नहीं बदली।');
             renderAll();
         }
 
