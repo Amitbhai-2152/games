@@ -204,18 +204,20 @@ test('six original manual buttons and taunt texts remain present; duplicate dial
 });
 
 test('all six original taunts are mapped to matching gameplay events', () => {
-    assert.match(html, /triggerAutomaticTaunt\\(0, 'dice-jackpot'/);
-    assert.match(html, /triggerAutomaticTaunt\\(0, 'rest-jackpot'/);
-    assert.match(html, /triggerAutomaticTaunt\\(1, 'jailed'/);
-    assert.match(html, /triggerAutomaticTaunt\\(1, 'rent-tease'/);
-    assert.match(html, /triggerAutomaticTaunt\\(2, 'rent-heavy'/);
-    assert.match(html, /triggerAutomaticTaunt\\(2, 'debt-crisis'/);
-    assert.match(html, /triggerAutomaticTaunt\\(3, 'rent-shortfall'/);
-    assert.match(html, /triggerAutomaticTaunt\\(3, 'bankruptcy'/);
-    assert.match(html, /triggerAutomaticTaunt\\(4, 'monopoly'/);
-    assert.match(html, /triggerAutomaticTaunt\\(4, 'auction-victory'/);
-    assert.match(html, /triggerAutomaticTaunt\\(4, 'game-victory'/);
-    assert.match(html, /triggerAutomaticTaunt\\(5, 'doubles'/);
+    for (const hook of [
+        "triggerAutomaticTaunt(0, 'dice-jackpot'",
+        "triggerAutomaticTaunt(0, 'rest-jackpot'",
+        "triggerAutomaticTaunt(1, 'jailed'",
+        "triggerAutomaticTaunt(1, 'rent-tease'",
+        "triggerAutomaticTaunt(2, 'rent-heavy'",
+        "triggerAutomaticTaunt(2, 'debt-crisis'",
+        "triggerAutomaticTaunt(3, 'rent-shortfall'",
+        "triggerAutomaticTaunt(3, 'bankruptcy'",
+        "triggerAutomaticTaunt(4, 'monopoly'",
+        "triggerAutomaticTaunt(4, 'auction-victory'",
+        "triggerAutomaticTaunt(4, 'game-victory'",
+        "triggerAutomaticTaunt(5, 'doubles'"
+    ]) assert.ok(html.includes(hook), 'missing situation hook: ' + hook);
 });
 
 console.log('RESULT ' + passed + ' automatic existing-taunt regression tests passed');
