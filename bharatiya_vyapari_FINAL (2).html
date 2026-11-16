@@ -8192,7 +8192,7 @@
 
             const { d1, d2, sum, hexOutput } = rollCryptoAudited2D6(p);
             const isDoubles = d1 === d2;
-            if (isDoubles && !(d1 === 6 && d2 === 6)) triggerAutomaticTaunt(5, 'doubles', p.name);
+            if (isDoubles && !(d1 === 6 && d2 === 6) && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(5, 'doubles', p.name);
 
             scheduleGameTimeout(() => {
                 d1El.classList.remove('die-rolling');
@@ -8212,7 +8212,7 @@
                     recordLedgerEntry(p.id, 'दोहरा छक्का (6+6) महा-जैकपॉट!', wonPot, beforeCash, p.cash, 'जैकपॉट तिजोरी');
                     sfxFanfare();
                     showCenterScreenBanner('🎰', 'दोहरा छक्का (6+6) जैकपॉट!', `${p.name} ने जीती स्वर्ण तिजोरी!`, `दोहरा छक्का लाने पर ${formatRupee(wonPot)} का पूरा जैकपॉट मिला!`);
-                    triggerAutomaticTaunt(0, 'dice-jackpot', p.name);
+                    if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'dice-jackpot', p.name);
                     addLog(`🎰 <strong>चमत्कार!</strong> ${p.name} ने दोहरा छक्का (6+6) फेंककर ${formatRupee(wonPot)} की जैकपॉट तिजोरी जीत ली!`, 'gold');
                 }
 
@@ -8277,7 +8277,7 @@
                         recordLedgerEntry(player.id, `प्रारंभ (START) वेतन (राउंड ${gameState.round})`, salary, before, player.cash, 'भारतीय रिज़र्व बैंक');
                         sfxCash();
                         addLog(`${player.name} ने प्रारंभ (START) पार किया और ${formatRupee(salary)} वेतन प्राप्त किया!`, 'emerald');
-                        if (salary >= 2500) triggerAutomaticTaunt(0, 'large-start-salary', player.name);
+                        if (salary >= 2500 && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'large-start-salary', player.name);
                         setToast(`${player.name} को ${formatRupee(salary)} प्रारंभ वेतन मिला!`);
                     } else {
                         addLog(`${player.name} ने प्रारंभ (START) पार किया (उच्च मुद्रास्फीति चरण में RBI वेतन सब्सिडी ₹0 है)।`, 'amber');
@@ -8324,7 +8324,7 @@
                     sfxFanfare();
                     showCenterScreenBanner('💰', 'विश्राम गृह जैकपॉट विजेता!', `${player.name} को मिले ${formatRupee(totalReward)}!`, 'विश्राम गृह पर रुकने से पूरी स्वर्ण तिजोरी आपकी हुई!');
                     addLog(`💰 <strong>जैकपॉट धमाका!</strong> ${player.name} विश्राम गृह पर रुके और ₹150 भत्ता + ${formatRupee(jackpotWon)} जैकपॉट तिजोरी सहित कुल <strong>${formatRupee(totalReward)}</strong> जीते!`, 'gold');
-                    triggerAutomaticTaunt(0, 'rest-jackpot', player.name);
+                    if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'rest-jackpot', player.name);
                     setToast(`${player.name} ने विश्राम गृह जैकपॉट (${formatRupee(totalReward)}) जीता!`);
                     finishTurnPhase(grantBonusTurn);
                 } else if (space.id === 30) {
@@ -8349,8 +8349,8 @@
 
                 addLog(`✨ ${label} (पासा योग ${diceSum}): <strong>${entry.title}</strong> — ${entry.desc}`, 'gold');
                 if (entry.type === 'cash' && Math.abs(entry.amount) >= 1200) {
-                    if (entry.amount > 0) triggerAutomaticTaunt(0, 'fortune-profit', player.name);
-                    else triggerAutomaticTaunt(player.cash < Math.abs(entry.amount) ? 3 : 1, 'fortune-loss', player.name);
+                    if (entry.amount > 0 && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'fortune-profit', player.name);
+                    else if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(player.cash < Math.abs(entry.amount) ? 3 : 1, 'fortune-loss', player.name);
                 }
                 setToast(`${label} [योग ${diceSum}]: ${entry.title}!`);
 
@@ -8457,13 +8457,13 @@
                     // किराये की गंभीरता के अनुसार छह पुराने डायलॉग में से एक ही प्रतिक्रिया।
                     if (rent >= 1200) {
                         if (player.cash < rent) {
-                            triggerAutomaticTaunt(3, 'rent-shortfall', player.name);
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(3, 'rent-shortfall', player.name);
                         } else if (player.cash - rent <= Math.max(900, player.cash * 0.18)) {
-                            triggerAutomaticTaunt(2, 'rent-heavy', player.name);
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(2, 'rent-heavy', player.name);
                         } else if (rent >= 2500) {
-                            triggerAutomaticTaunt(0, 'rent-windfall', owner.name);
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(0, 'rent-windfall', owner.name);
                         } else if (rent >= 1600) {
-                            triggerAutomaticTaunt(1, 'rent-tease', owner.name);
+                            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(1, 'rent-tease', owner.name);
                         }
                     }
 
@@ -8545,9 +8545,9 @@
             if (space.type === 'city' && hasGroupMonopoly(p.id, space.group)) {
                 sfxFanfare();
                 addLog(`👑 ${p.name} ने <strong>${GROUP_COLORS[space.group].name}</strong> के सभी शहर खरीदकर एकाधिकार प्राप्त किया!`, 'gold');
-                triggerAutomaticTaunt(4, 'monopoly', p.name);
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(4, 'monopoly', p.name);
             } else if (space.price >= 2500) {
-                triggerAutomaticTaunt(5, 'premium-property-purchase', p.name);
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(5, 'premium-property-purchase', p.name);
             }
 
             closeDeedModal();
@@ -8707,7 +8707,7 @@
                     gameState.ownership[space.id]={ownerId:winner.id,houses:0,buildCosts:[],mortgaged:false};
                     recordLedgerEntry(winner.id,`सीलबंद नीलामी में ${space.name} जीता`,-a.winningBid,before,winner.cash,'भारतीय रिज़र्व बैंक');
                     addLog(`🏆 <strong>${winner.name}</strong> ने <strong>${space.name}</strong> को ${formatRupee(a.winningBid)} में खरीदा।`,'gold');
-                    if (a.winningBid >= space.price) triggerAutomaticTaunt(4, 'auction-victory', winner.name);
+                    if (a.winningBid >= space.price && typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(4, 'auction-victory', winner.name);
                     setToast(`${winner.name} ने गुप्त बोली से ${space.name} जीता!`);
                 }
             }else{
@@ -9101,7 +9101,7 @@
             gameState.phase = proposal.returnPhase;
             closeTradeResponseModal();
             addLog(`↩️ <strong>${recipient.name}</strong> ने ${gameState.players[proposal.proposerId].name} का व्यापार प्रस्ताव अस्वीकार किया।`, 'rose');
-            triggerAutomaticTaunt(1, 'trade-rejected', recipient.name);
+            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(1, 'trade-rejected', recipient.name);
             setToast('व्यापार प्रस्ताव अस्वीकार हुआ। किसी की नकदी या संपत्ति नहीं बदली।');
             renderAll();
         }
@@ -9262,7 +9262,7 @@
             player.jailTurns = 0;
             gameState.doublesStreak = 0;
             sfxJail();
-            triggerAutomaticTaunt(1, 'jailed', player.name);
+            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(1, 'jailed', player.name);
             setToast(`${player.name} को कारागार (जेल) भेज दिया गया!`);
             finishTurnPhase(false);
         }
@@ -9301,7 +9301,7 @@
             };
 
             addLog(`⚠️ ऋण संकट: <strong>${player.name}</strong> को ${creditorName} को ${formatRupee(amount)} (${reason}) चुकाने हैं, किंतु नकदी केवल ${formatRupee(player.cash)} है!`, 'rose');
-            triggerAutomaticTaunt(2, 'debt-crisis', player.name);
+            if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(2, 'debt-crisis', player.name);
             renderAll();
 
             if (player.isAI) {
@@ -9626,7 +9626,7 @@
             player.cash = 0;
             player.bankrupt = true;
             if (gameState.players.filter(p => !p.bankrupt).length > 1) {
-                triggerAutomaticTaunt(3, 'bankruptcy', player.name);
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(3, 'bankruptcy', player.name);
             }
             setToast(`${player.name} दिवालिया हो गए!`);
 
@@ -9683,7 +9683,7 @@
                 document.getElementById('winnerNameHeading').textContent = `${winner.name} की शाही विजय!`;
                 document.getElementById('winnerSubtext').textContent = `कुल ${formatRupee(calculateNetWorth(winner.id))} की संपत्ति के साथ पूरे भारतीय बाज़ार के सम्राट बने!`;
                 document.getElementById('victoryModal').classList.remove('hidden');
-                triggerAutomaticTaunt(4, 'game-victory', winner.name);
+                if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(4, 'game-victory', winner.name);
                 return true;
             }
             if (alive.length === 2 && !gameState.finalShowdownAnnounced) {
