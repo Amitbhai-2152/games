@@ -142,11 +142,31 @@ test('human property cannot be transferred before recipient approval', () => {
     sendHumanOffer(c, { requestPropId: 2 });
 
     assert.equal(c.gameState.phase, 'TRADE_RESPONSE');
+    assert.equal(c.gameState.currentPlayerIndex, 1);
     assert.equal(c.gameState.pendingTradeOffer.status, 'PENDING');
     assert.equal(c.gameState.ownership[2].ownerId, 1);
     assert.equal(c.gameState.players[0].cash, beforeA);
     assert.equal(c.gameState.players[1].cash, beforeB);
     assert.equal(c.document.getElementById('tradeResponseModal').classList.contains('hidden'), false);
+});
+
+test('only the recipient turn context can approve or reject a pending offer', () => {
+    const c = createGame();
+    sendHumanOffer(c, { requestPropId: 2 });
+    assert.equal(c.gameState.currentPlayerIndex, 1);
+
+    // Returning the turn context to the proposer must not allow the proposer-side handler to approve.
+    c.gameState.currentPlayerIndex = 0;
+    c.acceptTradeOffer();
+    assert.equal(c.gameState.pendingTradeOffer.status, 'PENDING');
+    assert.equal(c.gameState.ownership[2].ownerId, 1);
+
+    // The recipient context can complete the explicit approval.
+    c.gameState.currentPlayerIndex = 1;
+    c.acceptTradeOffer();
+    assert.equal(c.gameState.pendingTradeOffer, null);
+    assert.equal(c.gameState.currentPlayerIndex, 0);
+    assert.equal(c.gameState.ownership[2].ownerId, 0);
 });
 
 test('recipient rejection leaves all assets and balances unchanged and restores phase', () => {
@@ -159,6 +179,7 @@ test('recipient rejection leaves all assets and balances unchanged and restores 
 
     assert.equal(c.gameState.pendingTradeOffer, null);
     assert.equal(c.gameState.phase, 'PRE_ROLL');
+    assert.equal(c.gameState.currentPlayerIndex, 0);
     assert.deepEqual(c.gameState.players.map(player => player.cash), before);
     assert.deepEqual(Object.fromEntries(Object.entries(c.gameState.ownership).map(([id, prop]) => [id, prop.ownerId])), owners);
 });
@@ -173,6 +194,7 @@ test('recipient approval atomically exchanges agreed properties and cash', () =>
 
     assert.equal(c.gameState.pendingTradeOffer, null);
     assert.equal(c.gameState.phase, 'PRE_ROLL');
+    assert.equal(c.gameState.currentPlayerIndex, 0);
     assert.equal(c.gameState.ownership[1].ownerId, 1);
     assert.equal(c.gameState.ownership[2].ownerId, 0);
     assert.equal(c.gameState.players[0].cash, 9500);
@@ -190,6 +212,7 @@ test('stale property ownership cancels approval without transferring anything', 
 
     assert.equal(c.gameState.pendingTradeOffer, null);
     assert.equal(c.gameState.phase, 'PRE_ROLL');
+    assert.equal(c.gameState.currentPlayerIndex, 0);
     assert.equal(c.gameState.ownership[1].ownerId, 0);
     assert.equal(c.gameState.ownership[2].ownerId, 2);
     assert.deepEqual(c.gameState.players.map(player => player.cash), cash);
@@ -205,6 +228,7 @@ test('stale cash balance cancels approval rather than overdrawing recipient', ()
 
     assert.equal(c.gameState.pendingTradeOffer, null);
     assert.equal(c.gameState.phase, 'PRE_ROLL');
+    assert.equal(c.gameState.currentPlayerIndex, 0);
     assert.equal(c.gameState.players[0].cash, proposerCash);
     assert.equal(c.gameState.players[1].cash, 100);
 });
