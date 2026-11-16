@@ -28,13 +28,15 @@ function createGame(options = {}) {
         { id: 1, name: 'Player B', isAI: false, cash: 10000, bankrupt: false },
         { id: 2, name: 'AI Player', isAI: true, cash: 10000, bankrupt: false }
     ];
-    const spaces = {
-        1: { id: 1, name: 'Patna', type: 'city', group: 'brown', price: 500, houseCost: 200 },
-        2: { id: 2, name: 'Ranchi', type: 'city', group: 'brown', price: 600, houseCost: 200 },
-        3: { id: 3, name: 'Bhopal', type: 'city', group: 'teal', price: 800, houseCost: 300 },
-        4: { id: 4, name: 'Varanasi', type: 'city', group: 'teal', price: 850, houseCost: 300 },
-        5: { id: 5, name: 'Indian Railways', type: 'utility', group: 'utility', price: 1000 }
-    };
+    // BOARD_SPACES is indexed by each space ID in the real game; keep the same shape here.
+    const spaces = [
+        { id: 0, name: 'Start', type: 'corner', price: 0 },
+        { id: 1, name: 'Patna', type: 'city', group: 'brown', price: 500, houseCost: 200 },
+        { id: 2, name: 'Ranchi', type: 'city', group: 'brown', price: 600, houseCost: 200 },
+        { id: 3, name: 'Bhopal', type: 'city', group: 'teal', price: 800, houseCost: 300 },
+        { id: 4, name: 'Varanasi', type: 'city', group: 'teal', price: 850, houseCost: 300 },
+        { id: 5, name: 'Indian Railways', type: 'utility', group: 'utility', price: 1000 }
+    ];
     const ownership = options.ownership || {
         1: { ownerId: 0, houses: 0, buildCosts: [], mortgaged: false },
         2: { ownerId: 1, houses: 0, buildCosts: [], mortgaged: false }
@@ -81,7 +83,7 @@ function createGame(options = {}) {
             auction: null,
             jackpotPot: 1000
         },
-        BOARD_SPACES: Object.values(spaces),
+        BOARD_SPACES: spaces,
         GROUP_COLORS: { brown: { name: 'Brown' }, teal: { name: 'Teal' } },
         formatRupee: value => '₹' + Number(value).toLocaleString('en-IN'),
         groupHasAnyHouses(group) {
