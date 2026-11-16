@@ -6,6 +6,7 @@ on:
     paths:
       - 'bharatiya_vyapari_FINAL (2).html'
       - 'tests/rbi-workout-regression.test.js'
+      - 'tests/trade-consent-regression.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
   pull_request:
     branches: [main]
@@ -26,3 +27,5 @@ jobs:
           node-version: 22
       - name: Run RBI workout regression tests
         run: node tests/rbi-workout-regression.test.js
+      - name: Run human trade-consent regression tests
+        run: node tests/trade-consent-regression.test.js
