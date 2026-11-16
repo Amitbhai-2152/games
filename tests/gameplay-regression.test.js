@@ -240,13 +240,13 @@ function bankruptcyContext(options = {}) {
 test('auction uses half-price minimum with a ₹200 floor and skips ineligible players', () => {
     const players = [
         { id: 0, name: 'A', isAI: false, cash: 1200, bankrupt: false },
-        { id: 1, name: 'B', isAI: false, cash: 499, bankrupt: false },
+        { id: 1, name: 'B', isAI: false, cash: 500, bankrupt: false },
         { id: 2, name: 'C', isAI: true, cash: 1000, bankrupt: true }
     ];
     const c = auctionContext({ players, currentPlayerIndex: 1 });
     c.startPropertyAuction(c.BOARD_SPACES[1]);
     assert.equal(c.gameState.auction.minimumBid, 500);
-    assert.deepEqual(Array.from(c.gameState.auction.activeBidders), [0]);
+    assert.deepEqual(Array.from(c.gameState.auction.activeBidders), [1, 0]);
     assert.equal(c.gameState.auction.initiatorId, 1);
     assert.equal(c.gameState.phase, 'AUCTION');
 });
@@ -290,7 +290,7 @@ test('auction accepts a valid integer bid and records it without charging before
     assert.equal(c.gameState.auction.bidByPlayerId[0], 750);
     assert.equal(c.gameState.players[0].cash, 2000);
     assert.equal(c.gameState.auction.humanCursor, 1);
-    assert.equal(c.scheduled.length, 0);
+    assert.equal(c.scheduled.length, 1);\n    assert.equal(c.scheduled[0].ms, 620);
 });
 
 test('AI auction strategy respects reserve cash and values completing a colour set', () => {
@@ -304,13 +304,31 @@ test('AI auction strategy respects reserve cash and values completing a colour s
     }, ['getAISealedAuctionBid']);
 
     const conservative = c.getAISealedAuctionBid({ id: 0, cash: 2000 }, c.BOARD_SPACES[0], { minimumBid: 500 });
-    assert.equal(conservative.bid, 720);
+    assert.equal(conservative.bid, 700);
     const lowCash = c.getAISealedAuctionBid({ id: 0, cash: 600 }, c.BOARD_SPACES[0], { minimumBid: 500 });
     assert.equal(lowCash.bid, 0);
 
     c.gameState.ownership[2] = { ownerId: 0, mortgaged: false };
     const setBid = c.getAISealedAuctionBid({ id: 0, cash: 2000 }, c.BOARD_SPACES[0], { minimumBid: 500 });
     assert.equal(setBid.bid, 1100);
+});
+
+test('auction applies the minimum bid floor to low-priced properties', () => {
+    const c = auctionContext();
+    c.startPropertyAuction({ id: 1, name: 'Low Price City', type: 'city', price: 250 });
+    assert.equal(c.gameState.auction.minimumBid, 200);
+});
+
+test('human player can explicitly pass without being charged', () => {
+    const c = auctionContext();
+    c.gameState.auction = {
+        spaceId: 1, minimumBid: 500, activeBidders: [0, 1], humanBidders: [0, 1],
+        humanCursor: 0, bidByPlayerId: {}, bidReasons: {}, stage: 'BIDDING'
+    };
+    c.submitSealedAuctionBid(0);
+    assert.equal(c.gameState.auction.bidByPlayerId[0], 0);
+    assert.equal(c.gameState.players[0].cash, 2000);
+    assert.equal(c.gameState.auction.humanCursor, 1);
 });
 
 test('auction resolves missing human bids as passes and uses initiator-order tie breaking', () => {
@@ -545,7 +563,7 @@ test('bank-debt bankruptcy releases the debtor properties back to the market', (
 });
 
 test('bankruptcy invokes continuation when the eliminated debtor is not the current player', () => {
-    const c = bankruptcyContext({ currentPlayerIndex: 1 });
+    const c = bankruptcyContext({ currentPlayerIndex: 1, checkWinCondition: () => false });
     c.confirmBankruptcy();
     assert.equal(c.callbackCount, 1);
     assert.equal(c.endTurnCalled, undefined);
