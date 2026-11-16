@@ -4072,6 +4072,57 @@
         }
         #sealedAuctionPanel .auction-reveal-row .text-slate-400 { color:#94a3b8 !important; }
         #sealedAuctionPanel .auction-reveal-row .text-indigo-200 { color:#c7d2fe !important; }
+
+        /* Human trade review: restrained motion, clear hierarchy, and keyboard-visible focus. */
+        @keyframes tradeResponseBackdropIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes tradeResponsePanelIn {
+            0% { opacity: 0; transform: translateY(18px) scale(.975); filter: blur(3px); }
+            70% { opacity: 1; transform: translateY(-2px) scale(1.004); filter: blur(0); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+        #tradeResponseModal:not(.hidden) { animation: tradeResponseBackdropIn 180ms ease-out both; }
+        #tradeResponseModal:not(.hidden) .trade-response-panel {
+            animation: tradeResponsePanelIn 320ms cubic-bezier(.2,.8,.2,1) both;
+            border-color: rgba(52,211,153,.85);
+            box-shadow: 0 24px 70px rgba(0,0,0,.58), 0 0 34px rgba(52,211,153,.12);
+        }
+        .trade-response-summary {
+            line-height: 1.75;
+            overflow-wrap: anywhere;
+            border-color: rgba(252,211,77,.32);
+            background: linear-gradient(145deg, rgba(10,16,18,.92), rgba(9,20,16,.88));
+        }
+        .trade-response-action {
+            min-height: 48px;
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease, background-color 160ms ease;
+            touch-action: manipulation;
+        }
+        .trade-response-action:focus-visible {
+            outline: 3px solid rgba(253,230,138,.95);
+            outline-offset: 3px;
+        }
+        @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+            .trade-response-accept:hover,
+            .trade-response-reject:hover { transform: translateY(-2px); }
+            .trade-response-accept:hover { box-shadow: 0 8px 22px rgba(16,185,129,.22); }
+            .trade-response-reject:hover { box-shadow: 0 8px 22px rgba(244,63,94,.16); }
+        }
+        .trade-response-action:active { transform: translateY(1px) scale(.99); }
+        @media (prefers-reduced-motion: reduce) {
+            #tradeResponseModal:not(.hidden),
+            #tradeResponseModal:not(.hidden) .trade-response-panel {
+                animation: none !important;
+            }
+            .trade-response-action { transition: none !important; }
+        }
+        @media (max-width: 480px) {
+            #tradeResponseModal { padding: max(.75rem, env(safe-area-inset-top)) .75rem max(.75rem, env(safe-area-inset-bottom)); }
+            #tradeResponseModal .trade-response-panel { padding: 1rem; }
+            .trade-response-summary { font-size: .82rem; }
+        }
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
@@ -4639,9 +4690,9 @@
     </div>
 
     <!-- मानव व्यापार प्रस्ताव समीक्षा: प्राप्तकर्ता की स्पष्ट सहमति आवश्यक -->
-    <div id="tradeResponseModal" style="z-index:80;" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-3">
+    <div id="tradeResponseModal" style="z-index:80;" class="trade-response-overlay fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-3">
         <section role="dialog" aria-modal="true" aria-labelledby="tradeResponseTitle"
-            style="max-height:92vh; overflow-y:auto;" class="w-full max-w-lg rounded-3xl border-2 border-emerald-400/70 bg-wood-900 p-5 shadow-2xl">
+            style="max-height:92vh; overflow-y:auto;" class="trade-response-panel w-full max-w-lg rounded-3xl border-2 border-emerald-400/70 bg-wood-900 p-5 shadow-2xl">
             <div class="text-center">
                 <div class="text-4xl mb-2">🤝</div>
                 <div class="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">PLAYER-TO-PLAYER TRADE</div>
@@ -4655,11 +4706,11 @@
                 <div class="text-[10px] uppercase tracking-widest text-emerald-300/80">प्रस्ताव पाने वाला</div>
                 <div id="tradeResponseRecipientName" class="text-lg font-black text-white mt-0.5"></div>
             </div>
-            <pre id="tradeResponseSummary" class="whitespace-pre-wrap break-words rounded-2xl border border-amber-300/25 bg-black/35 p-4 mt-3 text-sm leading-relaxed text-amber-50 font-sans"></pre>
+            <pre id="tradeResponseSummary" class="trade-response-summary whitespace-pre-wrap break-words rounded-2xl border border-amber-300/25 bg-black/35 p-4 mt-3 text-sm leading-relaxed text-amber-50 font-sans"></pre>
             <p class="text-[11px] text-slate-300 mt-3">स्वीकृति के बाद ही नकदी, संपत्ति और लागू गिरवी-हस्तांतरण शुल्क बदलेंगे। अस्वीकार करने पर किसी खिलाड़ी की संपत्ति या नकदी नहीं बदलेगी।</p>
             <div class="grid grid-cols-2 gap-2 mt-4">
-                <button type="button" onclick="rejectTradeOffer()" class="py-3 rounded-xl border border-rose-400/50 bg-rose-950/70 text-rose-100 font-black text-sm hover:bg-rose-900">अस्वीकार करें</button>
-                <button type="button" onclick="acceptTradeOffer()" class="py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black text-sm hover:brightness-110">स्वीकार करें</button>
+                <button type="button" onclick="rejectTradeOffer()" class="trade-response-action trade-response-reject py-3 rounded-xl border border-rose-400/50 bg-rose-950/70 text-rose-100 font-black text-sm hover:bg-rose-900">अस्वीकार करें</button>
+                <button type="button" onclick="acceptTradeOffer()" class="trade-response-action trade-response-accept py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 font-black text-sm hover:brightness-110">स्वीकार करें</button>
             </div>
         </section>
     </div>
