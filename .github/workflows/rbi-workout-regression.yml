@@ -8,6 +8,7 @@ on:
       - 'tests/rbi-workout-regression.test.js'
       - 'tests/trade-consent-regression.test.js'
       - 'tests/gameplay-regression.test.js'
+      - 'tests/situational-dialogue-regression.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
   pull_request:
     branches: [main]
@@ -16,6 +17,7 @@ on:
       - 'tests/rbi-workout-regression.test.js'
       - 'tests/trade-consent-regression.test.js'
       - 'tests/gameplay-regression.test.js'
+      - 'tests/situational-dialogue-regression.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
 
 jobs:
@@ -34,3 +36,5 @@ jobs:
         run: node tests/trade-consent-regression.test.js
       - name: Run auction, rent, payment and bankruptcy regressions
         run: node tests/gameplay-regression.test.js
+      - name: Run situational live-dialogue regression tests
+        run: node tests/situational-dialogue-regression.test.js
