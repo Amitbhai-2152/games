@@ -290,7 +290,8 @@ test('auction accepts a valid integer bid and records it without charging before
     assert.equal(c.gameState.auction.bidByPlayerId[0], 750);
     assert.equal(c.gameState.players[0].cash, 2000);
     assert.equal(c.gameState.auction.humanCursor, 1);
-    assert.equal(c.scheduled.length, 1);\n    assert.equal(c.scheduled[0].ms, 620);
+    assert.equal(c.scheduled.length, 1);
+    assert.equal(c.scheduled[0].ms, 620);
 });
 
 test('AI auction strategy respects reserve cash and values completing a colour set', () => {
