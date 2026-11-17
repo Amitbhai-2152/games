@@ -7272,7 +7272,7 @@
                 if (!sellableIds.length) break;
 
                 // कम मूल्य के शहरों के निर्माण पहले बेचें ताकि महंगे एकाधिकार बचे रहें
-                sellableIds.sort((a, b) => getAIStructureSalePriority(aiPlayer, a) - getAIStructureSalePriority(aiPlayer, b));
+                sellableIds.sort((a, b) => typeof getAIStructureSalePriority === 'function' ? getAIStructureSalePriority(aiPlayer, a) - getAIStructureSalePriority(aiPlayer, b) : BOARD_SPACES[a].price - BOARD_SPACES[b].price);
                 const chosenId = sellableIds[0];
                 const sp = BOARD_SPACES[chosenId];
                 const prop = gameState.ownership[chosenId];
@@ -7306,7 +7306,7 @@
                     .filter(id => canMortgageSpace(aiPlayer.id, id));
                 if (!mortgageableIds.length) break;
 
-                mortgageableIds.sort((a, b) => getAIMortgageLiquidationPriority(aiPlayer, a) - getAIMortgageLiquidationPriority(aiPlayer, b));
+                mortgageableIds.sort((a, b) => typeof getAIMortgageLiquidationPriority === 'function' ? getAIMortgageLiquidationPriority(aiPlayer, a) - getAIMortgageLiquidationPriority(aiPlayer, b) : BOARD_SPACES[a].price - BOARD_SPACES[b].price);
 
                 const chosenId = mortgageableIds[0];
                 const sp = BOARD_SPACES[chosenId];
@@ -10331,7 +10331,7 @@
                     .map(Number)
                     .filter(id => canSellEvenlyOnSpace(aiPlayer.id, id).allowed);
                 if (!sellableSpaces.length) break;
-                sellableSpaces.sort((a, b) => getAIStructureSalePriority(aiPlayer, a) - getAIStructureSalePriority(aiPlayer, b));
+                sellableSpaces.sort((a, b) => typeof getAIStructureSalePriority === 'function' ? getAIStructureSalePriority(aiPlayer, a) - getAIStructureSalePriority(aiPlayer, b) : BOARD_SPACES[a].price - BOARD_SPACES[b].price);
                 handleSellStructure(sellableSpaces[0]);
             }
 
@@ -10355,7 +10355,7 @@
                     .filter(id => canMortgageSpace(aiPlayer.id, id));
                 if (!mortgageable.length) break;
 
-                mortgageable.sort((a, b) => getAIMortgageLiquidationPriority(aiPlayer, a) - getAIMortgageLiquidationPriority(aiPlayer, b));
+                mortgageable.sort((a, b) => typeof getAIMortgageLiquidationPriority === 'function' ? getAIMortgageLiquidationPriority(aiPlayer, a) - getAIMortgageLiquidationPriority(aiPlayer, b) : BOARD_SPACES[a].price - BOARD_SPACES[b].price);
 
                 handleToggleMortgage(mortgageable[0]);
             }
