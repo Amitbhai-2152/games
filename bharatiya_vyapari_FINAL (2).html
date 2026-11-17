@@ -10883,7 +10883,7 @@
 
             const netGain = valueOfferedToAI - valueRequestedFromAI;
             const cashAfterTrade = aiPlayer.cash + proposal.offerCash - proposal.requestCash - transferFee;
-            const minimumCash = Math.min(getAIReserveCash(aiPlayer), Math.max(250, Math.round(aiPlayer.cash * 0.08)));
+            const minimumCash = Math.max(getAIReserveCash(aiPlayer), Math.max(250, Math.round(aiPlayer.cash * 0.08)));
             const minimumEdge = Math.max(100, valueRequestedFromAI * 0.04);
             const cashSafe = cashAfterTrade >= minimumCash;
             const accepted = cashSafe && netGain >= minimumEdge;
