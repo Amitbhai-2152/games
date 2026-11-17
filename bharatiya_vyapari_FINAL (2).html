@@ -9411,6 +9411,28 @@
 
 
         function getAISealedAuctionBid(bidder, space, auction) {
+            if (typeof getAIPropertyValuation !== 'function' || typeof getAIReserveCash !== 'function') {
+                // Compatibility fallback for isolated regression harnesses and legacy embedders.
+                const groupSpaces = space.type === 'city'
+                    ? BOARD_SPACES.filter(item => item.type === 'city' && item.group === space.group && item.id !== space.id)
+                    : [];
+                const completesGroup = groupSpaces.length > 0 && groupSpaces.every(item =>
+                    gameState.ownership[item.id]?.ownerId === bidder.id
+                );
+                const blocksOpponentSet = groupSpaces.length > 0 && gameState.players.some(other =>
+                    other.id !== bidder.id && !other.bankrupt &&
+                    groupSpaces.every(item => gameState.ownership[item.id]?.ownerId === other.id)
+                );
+                const maxWilling = Math.floor(space.price * (completesGroup ? 1.35 : blocksOpponentSet ? 1.2 : 0.92));
+                const preferredRatio = completesGroup ? 1.12 : blocksOpponentSet ? 0.98 : 0.72;
+                const cap = Math.min(maxWilling, Math.max(0, bidder.cash - 500));
+                if (cap < auction.minimumBid) return { bid: 0, reason: 'नकदी सुरक्षित रखने के लिए पास' };
+                const bid = Math.max(auction.minimumBid, Math.min(cap, Math.floor(space.price * preferredRatio / 100) * 100));
+                return {
+                    bid: bid >= auction.minimumBid ? bid : 0,
+                    reason: 'संगतता मोड: ' + (completesGroup ? 'रंग समूह पूरा करने का रणनीतिक मूल्य' : 'सूची मूल्य से नीचे सुरक्षित मूल्यांकन')
+                };
+            }
             const valuation = getAIPropertyValuation(bidder, space);
             const reserve = getAIReserveCash(bidder);
             const protectedReserve = valuation.completesGroup
