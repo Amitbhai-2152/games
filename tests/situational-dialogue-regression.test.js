@@ -185,12 +185,19 @@ test('cooldown reset clears event history but preserves the Auto preference', ()
     assert.equal(h.state('Object.keys(autoTauntEventTimes).length'), 0);
 });
 
-test('game-over blocks ordinary reactions but still allows the winner taunt', () => {
-    const h = createHarness({ phase: 'GAME_OVER' });
+test('game-over blocks ordinary reactions but the final winner taunt bypasses cooldowns', () => {
+    const h = createHarness();
+    assert.equal(h.context.triggerAutomaticTaunt(3, 'bankruptcy', 'आर्यन'), true);
+    h.runNext();
+    h.gameState.phase = 'GAME_OVER';
+    h.advance(1000);
     assert.equal(h.context.triggerAutomaticTaunt(1, 'jailed', 'आर्यन'), false);
     assert.equal(h.context.triggerAutomaticTaunt(4, 'game-victory', 'दिव्या'), true);
     h.runNext();
-    assert.deepEqual(h.reactions, [{ index: 4, speaker: 'दिव्या' }]);
+    assert.deepEqual(h.reactions, [
+        { index: 3, speaker: 'आर्यन' },
+        { index: 4, speaker: 'दिव्या' }
+    ]);
 });
 
 test('inactive game and invalid taunt indexes are ignored', () => {
