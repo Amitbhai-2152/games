@@ -4968,7 +4968,7 @@
                     </h4>
                     <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-amber-100/90">
                         <li><strong>व्यापार समझौता:</strong> आप किसी भी सक्रिय खिलाड़ी को शहरों और नकदी का प्रस्ताव भेज सकते हैं। मानव खिलाड़ी की स्पष्ट स्वीकृति के बाद ही अदला-बदली होगी; वह प्रस्ताव अस्वीकार भी कर सकता है। AI अपने निर्धारित मूल्यांकन नियमों के अनुसार निर्णय लेता है।</li>
-                        <li><strong>गिरवी (Mortgage):</strong> बिना निर्माण वाले शहर/सेवा को बैंक में <strong>सूची मूल्य के 50%</strong> पर गिरवी रखकर नकदी लें; गिरवी संपत्ति पर किराया नहीं मिलता। सामान्य छुड़ाने की लागत मूलधन + मूलधन का <strong>10% ब्याज</strong> (लगभग सूची मूल्य का 55%) है। यदि गिरवी संपत्ति व्यापार में नए मालिक को मिलती है, तो नया मालिक हस्तांतरण पर बैंक को <strong>गिरवी मूलधन का 10% ब्याज</strong> (लगभग सूची मूल्य का 5%) देगा; इसके बाद छुड़ाने में केवल 50% मूलधन देना होगा। दिवालियापन हस्तांतरण में यह ब्याज नकदी अपर्याप्त होने पर स्थगित हो सकता है; तब सामान्य ब्याज सहित छुड़ाने की लागत लागू होगी।</li>
+                        <li><strong>गिरवी (Mortgage):</strong> बिना निर्माण वाले शहर/सेवा को बैंक में <strong>सूची मूल्य के 50%</strong> पर गिरवी रखकर नकदी लें; गिरवी संपत्ति पर किराया नहीं मिलता। सामान्य मालिक इसे <strong>मूलधन + 10% ब्याज</strong> (लगभग सूची मूल्य का 55%) देकर छुड़ाता है। व्यापार या दिवालियापन में गिरवी संपत्ति पाने वाला नया मालिक, यदि गिरवी तुरंत नहीं छुड़ाता, तो अधिग्रहण के समय बैंक को <strong>मूलधन का 10% ब्याज</strong> देगा; बाद में छुड़ाते समय मूलधन के साथ <strong>एक अतिरिक्त 10% ब्याज</strong> भी देना होगा (लगभग सूची मूल्य का 55%)। यदि दिवालियापन हस्तांतरण पर तत्काल ब्याज नकदी की कमी से स्थगित हो, तो वह बकाया ब्याज बाद में छुड़ाने की रकम में भी जोड़ा जाएगा।</li>
                         <li><strong>ऋण संकट समाधान:</strong> यदि किराया देने के लिए नकद कम पड़े, तो खेल तुरंत आपको बाहर नहीं करता—आपको घर बेचने या शहर गिरवी रखकर पैसे जुटाने का पूरा मौका मिलता है।</li>
                     </ul>
                 </div>
@@ -9307,7 +9307,10 @@
                 if (!space || !property || !property.mortgaged) return;
                 const principal = getMortgagePrincipal(space);
                 const interest = getMortgageTransferInterest(space);
-                lines.push(`${receiver.name} को ${space.name} मिलेगी: अभी बैंक ब्याज ${formatRupee(interest)} (गिरवी मूलधन ${formatRupee(principal)} का 10%) देना होगा; बाद में छुड़ाने का शेष भुगतान ${formatRupee(principal)} होगा।`);
+                const deferred = Math.max(0, Math.floor(Number(property.mortgageTransferInterestDue) || 0));
+                const totalDueNow = interest + deferred;
+                const laterRedemption = principal + interest;
+                lines.push(`${receiver.name} को ${space.name} मिलेगी: अभी बैंक हस्तांतरण ब्याज ${formatRupee(totalDueNow)} देना होगा (नया 10% ब्याज ${formatRupee(interest)}${deferred ? ` + पुराना स्थगित ब्याज ${formatRupee(deferred)}` : ''})। संपत्ति गिरवी रखने पर बाद में छुड़ाने की लागत ${formatRupee(laterRedemption)} होगी (मूलधन + अतिरिक्त 10% ब्याज)।`);
             };
             addPreview(document.getElementById("tradeOfferPropSelect").value, recipient);
             addPreview(document.getElementById("tradeRequestPropSelect").value, proposer);
@@ -9319,7 +9322,9 @@
             if (spaceId === null || spaceId === undefined) return 0;
             const property = gameState.ownership[spaceId];
             const space = BOARD_SPACES[spaceId];
-            return property && property.mortgaged && space ? getMortgageTransferInterest(space) : 0;
+            return property && property.mortgaged && space
+                ? getMortgageTransferInterest(space) + Math.max(0, Math.floor(Number(property.mortgageTransferInterestDue) || 0))
+                : 0;
         }
 
         function validateTradeProposal(proposal) {
@@ -9406,11 +9411,11 @@
                 '',
                 `आप देंगे: ${describeProperty(proposal.requestPropId)}`,
                 `आपकी तरफ से दी जाने वाली नकदी: ${formatRupee(proposal.requestCash)}`,
-                validation.requestTransferFee > 0 ? `आपका हस्तांतरण ब्याज (मूलधन का 10%): ${formatRupee(validation.requestTransferFee)}; बाद में छुड़ाने का शेष मूलधन: ${formatRupee(getMortgagePrincipal(BOARD_SPACES[proposal.requestPropId]))}` : "आपका गिरवी हस्तांतरण ब्याज: ₹0",
+                validation.requestTransferFee > 0 ? `आपका अभी देय हस्तांतरण ब्याज: ${formatRupee(validation.requestTransferFee)}; बाद में गिरवी छुड़ाने की लागत (मूलधन + अतिरिक्त 10% ब्याज): ${formatRupee(getMortgageRedemptionCost(BOARD_SPACES[proposal.requestPropId], { mortgaged: true }))}` : "आपका गिरवी हस्तांतरण ब्याज: ₹0",
                 '',
                 `${proposer.name} देंगे: ${describeProperty(proposal.offerPropId)}`,
                 `${proposer.name} की तरफ से मिलने वाली नकदी: ${formatRupee(proposal.offerCash)}`,
-                validation.offerTransferFee > 0 ? `प्राप्तकर्ता का हस्तांतरण ब्याज (मूलधन का 10%): ${formatRupee(validation.offerTransferFee)}; बाद में छुड़ाने का शेष मूलधन: ${formatRupee(getMortgagePrincipal(BOARD_SPACES[proposal.offerPropId]))}` : "प्राप्तकर्ता का गिरवी हस्तांतरण ब्याज: ₹0"
+                validation.offerTransferFee > 0 ? `प्राप्तकर्ता का अभी देय हस्तांतरण ब्याज: ${formatRupee(validation.offerTransferFee)}; बाद में गिरवी छुड़ाने की लागत (मूलधन + अतिरिक्त 10% ब्याज): ${formatRupee(getMortgageRedemptionCost(BOARD_SPACES[proposal.offerPropId], { mortgaged: true }))}` : "प्राप्तकर्ता का गिरवी हस्तांतरण ब्याज: ₹0"
             ].join('\n');
             document.getElementById('tradeResponseModal').classList.remove('hidden');
         }
@@ -9469,6 +9474,7 @@
                 recordLedgerEntry(recipient.id, `${proposer.name} से ${space.name} प्राप्त`, 0, recipient.cash, recipient.cash, proposer.name);
                 gameState.ownership[offerPropId].ownerId = recipient.id;
                 gameState.ownership[offerPropId].mortgageInterestPaid = gameState.ownership[offerPropId].mortgaged === true;
+                gameState.ownership[offerPropId].mortgageTransferInterestDue = 0;
             }
             if (requestPropId !== null) {
                 const space = BOARD_SPACES[requestPropId];
@@ -9476,6 +9482,7 @@
                 recordLedgerEntry(proposer.id, `${recipient.name} से ${space.name} प्राप्त`, 0, proposer.cash, proposer.cash, recipient.name);
                 gameState.ownership[requestPropId].ownerId = proposer.id;
                 gameState.ownership[requestPropId].mortgageInterestPaid = gameState.ownership[requestPropId].mortgaged === true;
+                gameState.ownership[requestPropId].mortgageTransferInterestDue = 0;
             }
 
             sfxFanfare();
@@ -9759,6 +9766,7 @@
                 const before = p.cash;
                 prop.mortgaged = true;
                 prop.mortgageInterestPaid = false;
+                prop.mortgageTransferInterestDue = 0;
                 p.cash += val;
                 if (activeWorkoutPlayer && gameState.rbiAuditContext) {
                     gameState.rbiAuditContext.liquidatedByPlayer[p.id] = (gameState.rbiAuditContext.liquidatedByPlayer[p.id] || 0) + val;
@@ -9777,8 +9785,10 @@
                 const before = p.cash;
                 prop.mortgaged = false;
                 prop.mortgageInterestPaid = false;
+                prop.mortgageTransferInterestDue = 0;
                 p.cash -= cost;
-                const redemptionLabel = interestWasPaid ? "50% मूलधन (हस्तांतरण ब्याज पहले चुका)" : "50% मूलधन + 10% ब्याज";
+                const deferredAmount = Math.max(0, Math.floor(Number(prop.mortgageTransferInterestDue) || 0));
+                const redemptionLabel = deferredAmount > 0 ? "मूलधन + छुड़ाने का अतिरिक्त 10% + स्थगित हस्तांतरण ब्याज" : (interestWasPaid ? "मूलधन + छुड़ाने का अतिरिक्त 10% ब्याज" : "मूलधन + 10% ब्याज");
                 recordLedgerEntry(p.id, `${space.name} गिरवी छुड़ाया (${redemptionLabel})`, -cost, before, p.cash, 'भारतीय रिज़र्व बैंक');
                 sfxPay();
                 addLog(`${p.name} ने ${redemptionLabel} के अनुसार ${formatRupee(cost)} चुकाकर ${space.name} को गिरवी से छुड़ाया।`, 'emerald');
@@ -10137,8 +10147,9 @@
                         transferredProps++;
                         if (propObj.mortgaged) {
                             propObj.mortgageInterestPaid = false;
+                            propObj.mortgageTransferInterestDue = Math.max(0, Math.floor(Number(propObj.mortgageTransferInterestDue) || 0)) + getMortgageTransferInterest(transferredSpace);
                             transferredMortgages.push(propObj);
-                            totalTransferFee += getMortgageTransferInterest(transferredSpace);
+                            totalTransferFee += propObj.mortgageTransferInterestDue;
                         }
                     }
                 });
@@ -10148,9 +10159,12 @@
                         creditor.cash -= totalTransferFee;
                         gameState.jackpotPot += Math.round(totalTransferFee * 0.5);
                         recordLedgerEntry(creditor.id, 'दिवालियापन: गिरवी हस्तांतरण ब्याज (मूलधन का 10%)', -totalTransferFee, cbBefore, creditor.cash, 'भारतीय रिज़र्व बैंक');
-                        transferredMortgages.forEach(property => { property.mortgageInterestPaid = true; });
+                        transferredMortgages.forEach(property => {
+                            property.mortgageInterestPaid = true;
+                            property.mortgageTransferInterestDue = 0;
+                        });
                     } else {
-                        addLog(`⚠️ ${creditor.name} के पास ${formatRupee(totalTransferFee)} का पूरा गिरवी हस्तांतरण ब्याज देने हेतु नकदी नहीं थी। ब्याज स्थगित है; छुड़ाने पर मूलधन + ब्याज (सामान्य 55% लागत) देना होगा।`, "amber");
+                        addLog(`⚠️ ${creditor.name} के पास ${formatRupee(totalTransferFee)} का पूरा गिरवी हस्तांतरण ब्याज देने हेतु नकदी नहीं थी। पूरा शुल्क स्थगित है और संपत्ति छुड़ाते समय मूलधन + छुड़ाने का अतिरिक्त 10% ब्याज + स्थगित हस्तांतरण ब्याज देना होगा।`, "amber");
                     }
                 }
                 addLog(`💥 <strong>${player.name}</strong> दिवालिया घोषित! उनकी शेष ${formatRupee(transferredCash)} नकदी और ${transferredProps} शहर लेनदार <strong>${creditor.name}</strong> को हस्तांतरित किए गए!`, 'rose');
