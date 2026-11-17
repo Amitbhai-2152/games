@@ -342,13 +342,13 @@ async function test(name, fn) {
         assert.match(h.getElement('gameSaveStatus').textContent, /ऋण/);
     });
 
-    console.log('RESULT ' + passed + ' IndexedDB save/resume regression tests passed');
-    if (passed !== 10) process.exitCode = 1;
-
     await test('rendering schedules autosave and the header exposes manual save', () => {
         assert.match(html, /function renderAll\(\)[\s\S]*?queueGameSave\(\);/);
         assert.match(html, /id="saveGameNowBtn"[^>]*onclick="saveGameNow\(\)"/);
         assert.match(html, /window\.onload = function \(\)[\s\S]*?initializeGamePersistence\(\);/);
         assert.match(html, /id="resumeGameModal"/);
     });
+
+    console.log('RESULT ' + passed + ' IndexedDB save/resume regression tests passed');
+    if (passed !== 11) process.exitCode = 1;
 })();
