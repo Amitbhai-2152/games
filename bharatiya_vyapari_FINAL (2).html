@@ -9411,11 +9411,11 @@
                 '',
                 `आप देंगे: ${describeProperty(proposal.requestPropId)}`,
                 `आपकी तरफ से दी जाने वाली नकदी: ${formatRupee(proposal.requestCash)}`,
-                validation.requestTransferFee > 0 ? `आपका अभी देय हस्तांतरण ब्याज: ${formatRupee(validation.requestTransferFee)}; बाद में गिरवी छुड़ाने की लागत (मूलधन + अतिरिक्त 10% ब्याज): ${formatRupee(getMortgageRedemptionCost(BOARD_SPACES[proposal.requestPropId], { mortgaged: true }))}` : "आपका गिरवी हस्तांतरण ब्याज: ₹0",
+                validation.requestTransferFee > 0 ? `${proposer.name} का अभी देय हस्तांतरण ब्याज: ${formatRupee(validation.requestTransferFee)}; बाद में गिरवी छुड़ाने की लागत (मूलधन + अतिरिक्त 10% ब्याज): ${formatRupee(getMortgageRedemptionCost(BOARD_SPACES[proposal.requestPropId], { mortgaged: true }))}` : `${proposer.name} का गिरवी हस्तांतरण ब्याज: ₹0`,
                 '',
                 `${proposer.name} देंगे: ${describeProperty(proposal.offerPropId)}`,
                 `${proposer.name} की तरफ से मिलने वाली नकदी: ${formatRupee(proposal.offerCash)}`,
-                validation.offerTransferFee > 0 ? `प्राप्तकर्ता का अभी देय हस्तांतरण ब्याज: ${formatRupee(validation.offerTransferFee)}; बाद में गिरवी छुड़ाने की लागत (मूलधन + अतिरिक्त 10% ब्याज): ${formatRupee(getMortgageRedemptionCost(BOARD_SPACES[proposal.offerPropId], { mortgaged: true }))}` : "प्राप्तकर्ता का गिरवी हस्तांतरण ब्याज: ₹0"
+                validation.offerTransferFee > 0 ? `आपका अभी देय हस्तांतरण ब्याज: ${formatRupee(validation.offerTransferFee)}; बाद में गिरवी छुड़ाने की लागत (मूलधन + अतिरिक्त 10% ब्याज): ${formatRupee(getMortgageRedemptionCost(BOARD_SPACES[proposal.offerPropId], { mortgaged: true }))}` : "आपका गिरवी हस्तांतरण ब्याज: ₹0"
             ].join('\n');
             document.getElementById('tradeResponseModal').classList.remove('hidden');
         }
