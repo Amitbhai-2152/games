@@ -180,8 +180,8 @@ test('cooldown reset clears event history but preserves the Auto preference', ()
     h.context.setAutoTauntsEnabled(false);
     h.context.resetAutomaticTauntCooldowns();
     assert.equal(h.state('autoTauntsEnabled'), false);
-    assert.equal(h.state('lastAutoTauntAt'), 0);
-    assert.equal(h.state('lastAutoDiceTauntAt'), 0);
+    assert.equal(h.state('lastAutoTauntAt'), null);
+    assert.equal(h.state('lastAutoDiceTauntAt'), null);
     assert.equal(h.state('Object.keys(autoTauntEventTimes).length'), 0);
 });
 
