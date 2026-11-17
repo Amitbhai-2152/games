@@ -222,12 +222,15 @@ async function test(name, fn) {
 
     await test('snapshot preserves game data but excludes live timers and event functions', () => {
         const h = createHarness();
+        h.gameState.ownership['3'] = { ownerId: 0, houses: 0, buildCosts: [], mortgaged: true, mortgageInterestPaid: false, mortgageTransferInterestDue: 25 };
         const record = h.context.buildGameSaveRecord();
         assert.ok(record);
         assert.equal(record.schemaVersion, 1);
         assert.equal(record.gameState.round, 3);
         assert.deepEqual(Array.from(record.gameState.lastDice), [3, 4]);
         assert.equal(record.gameState.activeWorldEventId, 'TEST_FESTIVAL');
+        assert.equal(record.gameState.ownership['3'].mortgageInterestPaid, false);
+        assert.equal(record.gameState.ownership['3'].mortgageTransferInterestDue, 25);
         assert.equal(Object.hasOwn(record.gameState, 'aiTimer'), false);
         assert.equal(Object.hasOwn(record.gameState, 'activeTimers'), false);
         assert.equal(Object.hasOwn(record.gameState, 'activeWorldEvent'), false);
@@ -250,6 +253,18 @@ async function test(name, fn) {
         const invalidOwner = structuredClone(valid);
         invalidOwner.gameState.ownership['3'] = { ownerId: 9, houses: 0, mortgaged: false, buildCosts: [] };
         assert.equal(h.context.validateGameSaveRecord(invalidOwner), false);
+
+        const legacyMortgage = structuredClone(valid);
+        legacyMortgage.gameState.ownership['3'] = { ownerId: 0, houses: 0, mortgaged: true, buildCosts: [] };
+        assert.equal(h.context.validateGameSaveRecord(legacyMortgage), true, 'older saves without transfer-interest fields remain valid');
+
+        const invalidDeferredInterest = structuredClone(valid);
+        invalidDeferredInterest.gameState.ownership['3'] = { ownerId: 0, houses: 0, mortgaged: true, mortgageTransferInterestDue: -1, buildCosts: [] };
+        assert.equal(h.context.validateGameSaveRecord(invalidDeferredInterest), false);
+
+        const fractionalDeferredInterest = structuredClone(valid);
+        fractionalDeferredInterest.gameState.ownership['3'] = { ownerId: 0, houses: 0, mortgaged: true, mortgageTransferInterestDue: 2.5, buildCosts: [] };
+        assert.equal(h.context.validateGameSaveRecord(fractionalDeferredInterest), false);
 
         const invalidDecision = structuredClone(valid);
         invalidDecision.gameState.phase = 'ACTION_DECISION';

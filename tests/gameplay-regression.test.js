@@ -232,7 +232,9 @@ function bankruptcyContext(options = {}) {
         get callbackCount() { return callbackCount; },
         ledger, logs, toasts
     };
-    return install(context, ['confirmBankruptcy']);
+    context.getMortgagePrincipal = space => Math.floor(space.price / 2);
+context.getMortgageTransferInterest = space => Math.ceil(context.getMortgagePrincipal(space) * 0.10);
+return install(context, ['confirmBankruptcy']);
 }
 
 // ---------- Auctions ----------
@@ -542,14 +544,38 @@ test('creditor bankruptcy transfers remaining cash and properties and applies mo
     c.confirmBankruptcy();
     assert.equal(c.gameState.players[0].bankrupt, true);
     assert.equal(c.gameState.players[0].cash, 0);
-    assert.equal(c.gameState.players[1].cash, 1250);
+    assert.equal(c.gameState.players[1].cash, 1275);
     assert.equal(c.gameState.ownership[1].ownerId, 1);
     assert.equal(c.gameState.ownership[1].houses, 0);
     assert.equal(c.gameState.ownership[2].ownerId, 1);
-    assert.equal(c.gameState.jackpotPot, 125);
+    assert.equal(c.gameState.jackpotPot, 113);
     assert.equal(c.gameState.pendingDebt, null);
     assert.equal(c.ledger.some(row => String(row[1]).includes('निर्माण') && row[2] === 200), true);
-    assert.equal(c.ledger.some(row => String(row[1]).includes('हस्तांतरण शुल्क') && row[2] === -50), true);
+    assert.equal(c.ledger.some(row => String(row[1]).includes('हस्तांतरण ब्याज') && row[2] === -25), true);
+    assert.equal(c.gameState.ownership[1].mortgageInterestPaid, true);
+    assert.equal(c.gameState.ownership[1].mortgageTransferInterestDue, 0);
+});
+
+test('bankruptcy defers full transfer interest when the creditor cannot pay it', () => {
+    const c = bankruptcyContext({
+        players: [
+            { id: 0, name: 'Debtor', cash: 0, bankrupt: false },
+            { id: 1, name: 'Creditor', cash: 0, bankrupt: false }
+        ],
+        ownership: {
+            1: { ownerId: 0, houses: 0, buildCosts: [], mortgaged: true, mortgageInterestPaid: false }
+        },
+        pendingDebt: { playerId: 0, amount: 1, creditorId: 1, creditorName: 'Creditor', onComplete: null }
+    });
+    c.confirmBankruptcy();
+    assert.equal(c.gameState.ownership[1].ownerId, 1);
+    assert.equal(c.gameState.ownership[1].mortgageInterestPaid, false);
+    assert.equal(c.gameState.ownership[1].mortgageTransferInterestDue, 25);
+    assert.equal(c.gameState.players[1].cash, 0, 'creditor cannot afford transfer interest');
+    assert.equal(c.gameState.players[1].cash, 0, 'do not take a partial interest payment');
+    assert.equal(c.gameState.jackpotPot, 100);
+    assert.equal(c.ledger.some(row => String(row[1]).includes('हस्तांतरण ब्याज')), false);
+    assert.match(c.logs.join(' '), /पूरा शुल्क स्थगित है/);
 });
 
 test('bank-debt bankruptcy releases the debtor properties back to the market', () => {
