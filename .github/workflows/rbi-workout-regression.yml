@@ -12,6 +12,7 @@ on:
       - 'tests/indexeddb-save-resume.test.js'
       - 'tests/victory-celebration-regression.test.js'
       - 'tests/mobile-layout-regression.test.js'
+      - 'tests/ai-strategy-regression.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
   pull_request:
     branches: [main]
@@ -24,6 +25,7 @@ on:
       - 'tests/indexeddb-save-resume.test.js'
       - 'tests/victory-celebration-regression.test.js'
       - 'tests/mobile-layout-regression.test.js'
+      - 'tests/ai-strategy-regression.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
 
 jobs:
@@ -50,3 +52,5 @@ jobs:
         run: node tests/victory-celebration-regression.test.js
       - name: Run mobile and tablet layout regression tests
         run: node tests/mobile-layout-regression.test.js
+      - name: Run strategic AI decision regression tests
+        run: node tests/ai-strategy-regression.test.js
