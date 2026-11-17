@@ -4728,7 +4728,7 @@
     <!-- ==========================================
          मोडल 4: नया खेल एवं 2–8 खिलाड़ी सेटअप (2–8 PLAYER SETUP MODAL)
          ========================================== -->
-    <div id="resumeGameModal" class="fixed inset-0 z-[95] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="resumeGameTitle">
+    <div id="resumeGameModal" class="fixed inset-0 z-[92] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="resumeGameTitle">
         <div class="w-full max-w-md rounded-3xl border-2 border-teal-400/70 bg-wood-900 p-5 sm:p-6 shadow-2xl">
             <div class="text-center mb-4">
                 <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-500/15 text-teal-300 text-3xl border border-teal-400/40"><i class="fa-solid fa-floppy-disk"></i></div>
@@ -6038,6 +6038,7 @@
         let pendingGameSaveTimer = null;
         let pendingGameSaveRecord = null;
         let gameSaveWriteInProgress = false;
+        let gameSaveQueuedWhileWriting = false;
 
         function updateGameSaveStatus(message, state = 'neutral') {
             const label = document.getElementById('gameSaveStatus');
@@ -6283,7 +6284,12 @@
         }
 
         async function persistCurrentGameSave(manual = false) {
-            if (!gamePersistenceEnabled || gameSaveWriteInProgress) return false;
+            if (!gamePersistenceEnabled) return false;
+            if (gameSaveWriteInProgress) {
+                gameSaveQueuedWhileWriting = true;
+                if (manual) updateGameSaveStatus('सेव जारी है; नवीनतम स्थिति अगली सेव में सुरक्षित होगी।', 'pending');
+                return false;
+            }
             const eligibility = getGameSaveEligibility();
             if (!eligibility.allowed) {
                 if (manual) updateGameSaveStatus(eligibility.reason, 'pending');
@@ -6305,6 +6311,10 @@
                 return false;
             } finally {
                 gameSaveWriteInProgress = false;
+                if (gameSaveQueuedWhileWriting) {
+                    gameSaveQueuedWhileWriting = false;
+                    queueGameSave();
+                }
             }
         }
 
