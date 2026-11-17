@@ -5720,7 +5720,8 @@
            Selects only the six original HINDI_TAUNTS; their original bubbles, audio and particles are reused. */
         const AUTO_TAUNT_GLOBAL_COOLDOWN_MS = 10000;
         const AUTO_TAUNT_EVENT_COOLDOWN_MS = 30000;
-        const AUTO_TAUNT_DICE_COOLDOWN_MS = 20000;
+        // Dice-triggered reactions need a noticeable pause so ordinary turn flow stays quiet.
+        const AUTO_TAUNT_DICE_COOLDOWN_MS = 45000;
 
         let autoTauntsEnabled = true;
         let lastAutoTauntAt = null;

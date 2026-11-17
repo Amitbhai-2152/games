@@ -140,7 +140,7 @@ test('the same situation cannot repeat until its longer event cooldown expires',
     h.runNext();
     h.advance(12000);
     assert.equal(h.context.triggerAutomaticTaunt(5, 'doubles', 'आर्यन'), false);
-    h.advance(19000);
+    h.advance(34000);
     assert.equal(h.context.triggerAutomaticTaunt(5, 'doubles', 'आर्यन'), true);
 });
 
@@ -151,7 +151,7 @@ test('doubles and 6+6 share a separate cooldown so dice reactions stay spaced ap
     h.advance(10000);
     assert.equal(h.context.triggerAutomaticTaunt(0, 'dice-jackpot', 'दिव्या'), false);
     assert.equal(h.scheduled.length, 0);
-    h.advance(10000);
+    h.advance(35000);
     assert.equal(h.context.triggerAutomaticTaunt(0, 'dice-jackpot', 'दिव्या'), true);
 });
 
