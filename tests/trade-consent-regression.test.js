@@ -282,8 +282,8 @@ test('mortgaged property transfer fees are previewed and charged to each recipie
     assert.match(previewNode.textContent, /बाद में छुड़ाने की लागत ₹330 होगी/);
     sendHumanOffer(c, { offerPropId: 1, requestPropId: 2, offerCash: 500, requestCash: 200 });
     const summary = c.document.getElementById('tradeResponseSummary').textContent;
-    assert.match(summary, /आपका अभी देय हस्तांतरण ब्याज: ₹30/);
-    assert.match(summary, /प्राप्तकर्ता का अभी देय हस्तांतरण ब्याज: ₹25/);
+    assert.match(summary, /Player A का अभी देय हस्तांतरण ब्याज: ₹30/);
+    assert.match(summary, /आपका अभी देय हस्तांतरण ब्याज: ₹25/);
     assert.match(summary, /बाद में गिरवी छुड़ाने की लागत \(मूलधन \+ अतिरिक्त 10% ब्याज\): ₹330/);
     c.acceptTradeOffer();
 
