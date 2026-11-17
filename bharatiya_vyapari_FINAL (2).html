@@ -5723,14 +5723,14 @@
         const AUTO_TAUNT_DICE_COOLDOWN_MS = 20000;
 
         let autoTauntsEnabled = true;
-        let lastAutoTauntAt = 0;
-        let lastAutoDiceTauntAt = 0;
+        let lastAutoTauntAt = null;
+        let lastAutoDiceTauntAt = null;
         let pendingAutoTauntTimer = null;
         const autoTauntEventTimes = Object.create(null);
 
         function resetAutomaticTauntCooldowns() {
-            lastAutoTauntAt = 0;
-            lastAutoDiceTauntAt = 0;
+            lastAutoTauntAt = null;
+            lastAutoDiceTauntAt = null;
             pendingAutoTauntTimer = null;
             Object.keys(autoTauntEventTimes).forEach(key => delete autoTauntEventTimes[key]);
         }
@@ -5770,9 +5770,9 @@
             const previousEventAt = autoTauntEventTimes[key];
             // A final victory is a one-time priority event; cooldowns must not hide the winner reaction.
             if (!isFinalVictory) {
-                if (now - lastAutoTauntAt < AUTO_TAUNT_GLOBAL_COOLDOWN_MS) return false;
+                if (lastAutoTauntAt !== null && now - lastAutoTauntAt < AUTO_TAUNT_GLOBAL_COOLDOWN_MS) return false;
                 if (previousEventAt !== undefined && now - previousEventAt < AUTO_TAUNT_EVENT_COOLDOWN_MS) return false;
-                if (isDiceRollTaunt && now - lastAutoDiceTauntAt < AUTO_TAUNT_DICE_COOLDOWN_MS) return false;
+                if (isDiceRollTaunt && lastAutoDiceTauntAt !== null && now - lastAutoDiceTauntAt < AUTO_TAUNT_DICE_COOLDOWN_MS) return false;
             }
 
             const layer = document.getElementById('floatingTauntLayer');
