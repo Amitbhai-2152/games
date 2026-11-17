@@ -331,6 +331,25 @@ async function test(name, fn) {
         assert.equal(h.evaluate('gamePersistenceEnabled'), true);
     });
 
+    await test('autosave requested during an active IndexedDB write is queued after it completes', async () => {
+        const h = createHarness();
+        h.evaluate('gamePersistenceEnabled = true');
+        let finishWrite;
+        h.context.__fakeWrite = () => new Promise(resolve => { finishWrite = resolve; });
+        h.evaluate('writeStoredGameSave = __fakeWrite');
+
+        const firstWrite = h.context.persistCurrentGameSave(false);
+        assert.equal(h.evaluate('gameSaveWriteInProgress'), true);
+        h.gameState.round = 4;
+        assert.equal(await h.context.persistCurrentGameSave(false), false);
+        assert.equal(h.evaluate('gameSaveQueuedWhileWriting'), true);
+
+        finishWrite(true);
+        assert.equal(await firstWrite, true);
+        assert.equal(h.evaluate('gameSaveQueuedWhileWriting'), false);
+        assert.equal(h.evaluate('pendingGameSaveTimer.ms'), 500);
+    });
+
     await test('manual save refuses unstable phases without overwriting the last checkpoint', async () => {
         const h = createHarness();
         h.evaluate('gamePersistenceEnabled = true');
@@ -352,5 +371,5 @@ async function test(name, fn) {
     });
 
     console.log('RESULT ' + passed + ' IndexedDB save/resume regression tests passed');
-    if (passed !== 11) process.exitCode = 1;
+    if (passed !== 12) process.exitCode = 1;
 })();
