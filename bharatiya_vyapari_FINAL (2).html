@@ -8339,6 +8339,7 @@
                 const mortgagePrincipal = getMortgagePrincipal(space);
                 const mortgageInterest = getMortgageTransferInterest(space);
                 const transferInterestPaid = Boolean(propState?.mortgaged && propState.mortgageInterestPaid === true);
+                const deferredTransferInterest = Math.max(0, Math.floor(Number(propState?.mortgageTransferInterestDue) || 0));
                 const unmCost = getMortgageRedemptionCost(space, propState?.mortgaged ? propState : null);
 
                 return `
@@ -8358,7 +8359,8 @@
                         <div>घर लागत: <strong>${formatRupee(space.houseCost)}</strong></div>
                         <div>गिरवी मूलधन (50%): <strong>${formatRupee(mortgagePrincipal)}</strong></div>
                         <div>हस्तांतरण ब्याज (मूलधन का 10%): <strong>${formatRupee(mortgageInterest)}</strong></div>
-                        <div class="col-span-2 text-amber-300">${transferInterestPaid ? "हस्तांतरण ब्याज पहले चुकाया गया; शेष मूलधन" : "सामान्य छुड़ाने की लागत (मूलधन + ब्याज)"}: <strong>${formatRupee(unmCost)}</strong></div>
+                        <div class="col-span-2 text-amber-300">${transferInterestPaid ? "हस्तांतरण ब्याज पहले चुका; बाद में अतिरिक्त 10% सहित छुड़ाना" : "सामान्य छुड़ाने की लागत (मूलधन + 10% ब्याज)"}: <strong>${formatRupee(unmCost)}</strong></div>
+                        ${deferredTransferInterest > 0 ? `<div class="col-span-2 text-rose-300">स्थगित हस्तांतरण ब्याज: <strong>${formatRupee(deferredTransferInterest)}</strong></div>` : ""}
                     </div>
                 `;
             } else if (space.type === 'utility') {
@@ -8368,6 +8370,7 @@
                 const mortgagePrincipal = getMortgagePrincipal(space);
                 const mortgageInterest = getMortgageTransferInterest(space);
                 const transferInterestPaid = Boolean(propState?.mortgaged && propState.mortgageInterestPaid === true);
+                const deferredTransferInterest = Math.max(0, Math.floor(Number(propState?.mortgageTransferInterestDue) || 0));
                 const unmCost = getMortgageRedemptionCost(space, propState?.mortgaged ? propState : null);
 
                 return `
@@ -8386,7 +8389,8 @@
                     <div class="grid grid-cols-2 gap-1 text-[10.5px] opacity-95">
                         <span>गिरवी मूलधन (50%): <strong>${formatRupee(mortgagePrincipal)}</strong></span>
                         <span>हस्तांतरण ब्याज (10%): <strong>${formatRupee(mortgageInterest)}</strong></span>
-                        <div class="col-span-2 text-amber-300">${transferInterestPaid ? "हस्तांतरण ब्याज पहले चुकाया गया; शेष मूलधन" : "सामान्य छुड़ाने की लागत (मूलधन + ब्याज)"}: <strong>${formatRupee(unmCost)}</strong></div>
+                        <div class="col-span-2 text-amber-300">${transferInterestPaid ? "हस्तांतरण ब्याज पहले चुका; बाद में अतिरिक्त 10% सहित छुड़ाना" : "सामान्य छुड़ाने की लागत (मूलधन + 10% ब्याज)"}: <strong>${formatRupee(unmCost)}</strong></div>
+                        ${deferredTransferInterest > 0 ? `<div class="col-span-2 text-rose-300">स्थगित हस्तांतरण ब्याज: <strong>${formatRupee(deferredTransferInterest)}</strong></div>` : ""}
                     </div>
                 `;
             } else {
@@ -8475,7 +8479,8 @@
                     `;
                 } else {
                     const unmCost = getMortgageRedemptionCost(space, propState);
-                    const unmLabel = propState.mortgageInterestPaid === true ? "50% (हस्तांतरण ब्याज पहले चुकाया)" : "55% (10% ब्याज सहित)";
+                    const deferredInterest = Math.max(0, Math.floor(Number(propState.mortgageTransferInterestDue) || 0));
+                    const unmLabel = deferredInterest > 0 ? "55% + स्थगित हस्तांतरण ब्याज" : (propState.mortgageInterestPaid === true ? "55% (अतिरिक्त 10% ब्याज सहित)" : "55% (10% ब्याज सहित)");
                     const canUnm = currentPlayer.cash >= unmCost;
                     html += `
                         <button onclick="handleToggleMortgage(${space.id})" ${!canUnm ? 'disabled' : ''}
