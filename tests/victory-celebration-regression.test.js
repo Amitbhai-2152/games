@@ -188,7 +188,7 @@ test('winner screen renders real net worth, cash, asset and building counts safe
     assert.equal(c.getNode('victoryNetWorthValue').textContent, '₹12,500');
     assert.equal(c.getNode('victoryCashValue').textContent, '₹8,000');
     assert.equal(c.getNode('victoryPropertiesValue').textContent, '2');
-    assert.equal(c.getNode('victoryBuildingsValue').textContent, '6');
+    assert.equal(c.getNode('victoryBuildingsValue').textContent, '2 / 1');
     assert.equal(c.getNode('victoryPropertyValue').textContent, '₹4,000');
     assert.equal(c.getNode('victoryBuildValue').textContent, '₹1,200');
     assert.equal(c.getNode('victoryMortgageValue').textContent, '−₹500');
