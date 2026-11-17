@@ -10771,9 +10771,9 @@
             return (diceWays[distance] || 0) / 36;
         }
 
-        function getAIExpectedVisitsForSpace(spaceId, ownerId) {
+        function getAIExpectedVisitsForSpace(spaceId, ownerId, includeCurrentlyMortgaged = false) {
             const property = gameState.ownership[spaceId];
-            if (property && property.mortgaged) return 0;
+            if (property && property.mortgaged && !includeCurrentlyMortgaged) return 0;
             const resolvedOwnerId = ownerId !== undefined && ownerId !== null
                 ? ownerId
                 : (property ? property.ownerId : null);
@@ -11085,7 +11085,7 @@
                 const cost = getMortgageRedemptionCost(space, property);
                 if (cost <= 0 || player.cash - cost < reserve) return;
                 const rent = getAIPropertyRent(player, space, { ...property, mortgaged: false });
-                const visits = getAIExpectedVisitsForSpace(spaceId, player.id);
+                const visits = getAIExpectedVisitsForSpace(spaceId, player.id, true);
                 const projectedIncome = rent * visits * horizon * 0.86;
                 const group = getAIGroupContext(player, space);
                 const strategicBonus = group.completesGroup ? space.price * 0.28 : 0;
