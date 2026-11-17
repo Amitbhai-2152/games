@@ -9,6 +9,7 @@ on:
       - 'tests/trade-consent-regression.test.js'
       - 'tests/gameplay-regression.test.js'
       - 'tests/situational-dialogue-regression.test.js'
+      - 'tests/indexeddb-save-resume.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
   pull_request:
     branches: [main]
@@ -18,6 +19,7 @@ on:
       - 'tests/trade-consent-regression.test.js'
       - 'tests/gameplay-regression.test.js'
       - 'tests/situational-dialogue-regression.test.js'
+      - 'tests/indexeddb-save-resume.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
 
 jobs:
@@ -38,3 +40,5 @@ jobs:
         run: node tests/gameplay-regression.test.js
       - name: Run situational live-dialogue regression tests
         run: node tests/situational-dialogue-regression.test.js
+      - name: Run IndexedDB save/resume regression tests
+        run: node tests/indexeddb-save-resume.test.js
