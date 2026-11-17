@@ -9860,44 +9860,18 @@
                 return;
             }
 
-            // AI valuation remains immediate as before. Human recipients always decide explicitly.
-            if (partner.isAI && requestPropId !== null) {
-                const reqSpace = BOARD_SPACES[requestPropId];
-                if (reqSpace.type === 'city' && hasGroupMonopoly(partner.id, reqSpace.group)) {
+            // AI recipients compare the full strategic value of both sides, including monopoly impact and liquidity.
+            if (partner.isAI) {
+                const assessment = getAITradeOfferAssessment(partner, proposal);
+                if (!assessment.accepted) {
                     sfxPay();
                     banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                    banner.textContent = `व्यापार अस्वीकृत (${partner.name}): वे अपना पूर्ण रंग एकाधिकार (${GROUP_COLORS[reqSpace.group].name}) नहीं तोड़ेंगे!`;
+                    banner.textContent = "व्यापार अस्वीकृत (" + partner.name + "): " + assessment.reason +
+                        " (AI लाभ: " + formatRupee(assessment.netGain) + ")।";
+                    addLog("🤖 AI व्यापार तर्क (" + partner.name + "): " + assessment.reason + "।", "amber");
                     return;
                 }
-
-                const requestPropertyValue = gameState.ownership[requestPropId].mortgaged
-                    ? Math.floor(reqSpace.price * 0.45)
-                    : reqSpace.price;
-                const offerPropertyValue = offerPropId !== null
-                    ? (gameState.ownership[offerPropId].mortgaged
-                        ? Math.floor(BOARD_SPACES[offerPropId].price * 0.45)
-                        : BOARD_SPACES[offerPropId].price)
-                    : 0;
-                let requestValue = requestPropertyValue + requestCash;
-                const offerValue = offerPropertyValue + offerCash;
-
-                if (reqSpace.type === 'city') {
-                    const givesCallerMonopoly = BOARD_SPACES.filter(s => s.group === reqSpace.group && s.id !== reqSpace.id)
-                        .every(s => gameState.ownership[s.id]?.ownerId === currentPlayer.id);
-                    const givesAIMonopoly = offerPropId !== null && BOARD_SPACES[offerPropId].type === 'city' &&
-                        BOARD_SPACES.filter(s => s.group === BOARD_SPACES[offerPropId].group && s.id !== offerPropId)
-                            .every(s => gameState.ownership[s.id]?.ownerId === partner.id);
-                    if (givesCallerMonopoly && !givesAIMonopoly) requestValue = Math.ceil(requestValue * 1.35);
-                }
-
-                if (offerValue < requestValue) {
-                    const diff = requestValue - offerValue;
-                    sfxPay();
-                    banner.className = 'mb-3 p-2.5 rounded-xl text-xs font-bold text-center bg-rose-950 text-rose-200 border border-rose-400';
-                    banner.textContent = `व्यापार अस्वीकृत (${partner.name}): प्रस्ताव मूल्य अंतर ${formatRupee(diff)} कम है (अपेक्षित मूल्य: ${formatRupee(requestValue)})।`;
-                    addLog(`🤖 AI व्यापार तर्क (${partner.name}): प्रस्ताव अस्वीकृत क्योंकि संपत्ति मूल्य अंतर ${formatRupee(diff)} कम था।`, 'amber');
-                    return;
-                }
+                addLog("🤖 AI व्यापार तर्क (" + partner.name + "): संपत्ति, समूह-नियंत्रण और नकदी मूल्यांकन के बाद प्रस्ताव स्वीकार किया।", "emerald");
             }
 
             if (!partner.isAI) {
@@ -10871,6 +10845,62 @@
                 completesGroup: group.completesGroup,
                 blocksRivalMonopoly: group.blocksRivalMonopoly,
                 netValue: marketValue - space.price
+            };
+        }
+
+
+        function getAITradePropertyValue(player, spaceId) {
+            if (spaceId === null || spaceId === undefined) return 0;
+            const space = BOARD_SPACES[spaceId];
+            const property = gameState.ownership[spaceId];
+            if (!space || !property) return 0;
+            const valuation = getAIPropertyValuation(player, space);
+            if (property.mortgaged) {
+                return Math.max(Math.floor(space.price * 0.45), Math.round(valuation.marketValue * 0.40));
+            }
+            return valuation.marketValue;
+        }
+
+        function getAITradeOfferAssessment(aiPlayer, proposal) {
+            const offeredPropertyValue = getAITradePropertyValue(aiPlayer, proposal.offerPropId);
+            const requestedPropertyValue = getAITradePropertyValue(aiPlayer, proposal.requestPropId);
+            const transferFee = proposal.offerPropId !== null
+                ? getTradeTransferFee(proposal.offerPropId)
+                : 0;
+            let valueRequestedFromAI = requestedPropertyValue + proposal.requestCash + transferFee;
+            const valueOfferedToAI = offeredPropertyValue + proposal.offerCash;
+
+            // Do not give away the last missing city that would create a rival monopoly.
+            if (proposal.requestPropId !== null) {
+                const requestedSpace = BOARD_SPACES[proposal.requestPropId];
+                if (requestedSpace && requestedSpace.type === "city") {
+                    const givesCallerMonopoly = BOARD_SPACES.filter(item =>
+                        item.type === "city" && item.group === requestedSpace.group && item.id !== requestedSpace.id
+                    ).every(item => gameState.ownership[item.id]?.ownerId === proposal.proposerId);
+                    if (givesCallerMonopoly) valueRequestedFromAI += requestedPropertyValue * 0.35;
+                }
+            }
+
+            const netGain = valueOfferedToAI - valueRequestedFromAI;
+            const cashAfterTrade = aiPlayer.cash + proposal.offerCash - proposal.requestCash - transferFee;
+            const minimumCash = Math.min(getAIReserveCash(aiPlayer), Math.max(250, Math.round(aiPlayer.cash * 0.08)));
+            const minimumEdge = Math.max(100, valueRequestedFromAI * 0.04);
+            const cashSafe = cashAfterTrade >= minimumCash;
+            const accepted = cashSafe && netGain >= minimumEdge;
+
+            let reason = "प्रस्ताव AI की संपत्ति और नकदी के रणनीतिक मूल्य से कम है";
+            if (!cashSafe) reason = "व्यापार के बाद आवश्यक नकदी रिज़र्व सुरक्षित नहीं रहेगा";
+            else if (accepted) reason = "प्रस्ताव का रणनीतिक मूल्य AI के देने वाले मूल्य से पर्याप्त अधिक है";
+
+            return {
+                accepted,
+                reason,
+                valueOfferedToAI,
+                valueRequestedFromAI,
+                netGain,
+                cashAfterTrade,
+                minimumCash,
+                transferFee
             };
         }
 
