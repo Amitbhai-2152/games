@@ -263,7 +263,7 @@ async function test(name, fn) {
         const record = h.context.buildGameSaveRecord();
         assert.equal(await h.context.writeStoredGameSave(record), true);
         const loaded = await h.context.readStoredGameSave();
-        assert.deepEqual(loaded, record);
+        assert.equal(JSON.stringify(loaded), JSON.stringify(record));
         assert.equal(await h.context.deleteStoredGameSave(), true);
         assert.equal(await h.context.readStoredGameSave(), null);
     });
@@ -280,7 +280,8 @@ async function test(name, fn) {
 
         h.gameState.round = 1;
         h.gameState.players[0].cash = 10;
-        h.context.pendingGameSaveRecord = record;
+        h.context.__testRecord = record;
+        h.evaluate('pendingGameSaveRecord = __testRecord');
         const resumed = await h.context.resumeSavedGame();
         assert.equal(resumed, true);
         assert.equal(h.gameState.round, 8);
@@ -302,7 +303,8 @@ async function test(name, fn) {
         h.setupConfig.slots[0].isAI = true;
         const record = h.context.buildGameSaveRecord();
         assert.ok(record);
-        h.context.pendingGameSaveRecord = record;
+        h.context.__testRecord = record;
+        h.evaluate('pendingGameSaveRecord = __testRecord');
         const resumed = await h.context.resumeSavedGame();
         assert.equal(resumed, true);
         assert.equal(h.gameState.phase, 'ACTION_DECISION');
@@ -331,15 +333,15 @@ async function test(name, fn) {
 
     await test('manual save refuses unstable phases without overwriting the last checkpoint', async () => {
         const h = createHarness();
-        h.context.gamePersistenceEnabled = true;
+        h.evaluate('gamePersistenceEnabled = true');
         const initial = h.context.buildGameSaveRecord();
         await h.context.writeStoredGameSave(initial);
         h.gameState.phase = 'DEBT_SETTLEMENT';
         h.gameState.pendingDebt = { amount: 500, onComplete() {} };
         assert.equal(await h.context.saveGameNow(), false);
         const stored = await h.context.readStoredGameSave();
-        assert.deepEqual(stored, initial);
-        assert.match(h.getElement('gameSaveStatus').textContent, /ऋण/);
+        assert.equal(JSON.stringify(stored), JSON.stringify(initial));
+        assert.match(h.getElement('gameSaveStatus').textContent, /चाल अभी पूरी/);
     });
 
     await test('rendering schedules autosave and the header exposes manual save', () => {
