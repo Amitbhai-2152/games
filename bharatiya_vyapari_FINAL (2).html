@@ -5768,9 +5768,12 @@
             const key = String(eventKey || 'general');
             const isDiceRollTaunt = key === 'doubles' || key === 'dice-jackpot';
             const previousEventAt = autoTauntEventTimes[key];
-            if (now - lastAutoTauntAt < AUTO_TAUNT_GLOBAL_COOLDOWN_MS) return false;
-            if (previousEventAt !== undefined && now - previousEventAt < AUTO_TAUNT_EVENT_COOLDOWN_MS) return false;
-            if (isDiceRollTaunt && now - lastAutoDiceTauntAt < AUTO_TAUNT_DICE_COOLDOWN_MS) return false;
+            // A final victory is a one-time priority event; cooldowns must not hide the winner reaction.
+            if (!isFinalVictory) {
+                if (now - lastAutoTauntAt < AUTO_TAUNT_GLOBAL_COOLDOWN_MS) return false;
+                if (previousEventAt !== undefined && now - previousEventAt < AUTO_TAUNT_EVENT_COOLDOWN_MS) return false;
+                if (isDiceRollTaunt && now - lastAutoDiceTauntAt < AUTO_TAUNT_DICE_COOLDOWN_MS) return false;
+            }
 
             const layer = document.getElementById('floatingTauntLayer');
             if (layer && typeof layer.querySelector === 'function' && layer.querySelector('.taunt-floating-pill')) return false;
