@@ -552,6 +552,8 @@ test('creditor bankruptcy transfers remaining cash and properties and applies mo
     assert.equal(c.gameState.pendingDebt, null);
     assert.equal(c.ledger.some(row => String(row[1]).includes('निर्माण') && row[2] === 200), true);
     assert.equal(c.ledger.some(row => String(row[1]).includes('हस्तांतरण ब्याज') && row[2] === -25), true);
+    assert.equal(c.gameState.ownership[1].mortgageInterestPaid, true);
+    assert.equal(c.gameState.ownership[1].mortgageTransferInterestDue, undefined);
 });
 
 test('bankruptcy defers full transfer interest when the creditor cannot pay it', () => {
@@ -568,6 +570,8 @@ test('bankruptcy defers full transfer interest when the creditor cannot pay it',
     c.confirmBankruptcy();
     assert.equal(c.gameState.ownership[1].ownerId, 1);
     assert.equal(c.gameState.ownership[1].mortgageInterestPaid, false);
+    assert.equal(c.gameState.ownership[1].mortgageTransferInterestDue, 25);
+    assert.equal(c.gameState.players[1].cash, 0, 'creditor cannot afford transfer interest');
     assert.equal(c.gameState.players[1].cash, 0, 'do not take a partial interest payment');
     assert.equal(c.gameState.jackpotPot, 100);
     assert.equal(c.ledger.some(row => String(row[1]).includes('हस्तांतरण ब्याज')), false);
