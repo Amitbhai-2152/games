@@ -9874,7 +9874,7 @@
                         const requestValue = (requestSpace ? Math.floor(requestSpace.price * (gameState.ownership[requestSpace.id]?.mortgaged ? 0.45 : 1)) : 0) + proposal.requestCash;
                         const offerValue = (offerSpace ? Math.floor(offerSpace.price * (gameState.ownership[offerSpace.id]?.mortgaged ? 0.45 : 1)) : 0) + proposal.offerCash;
                         const netGain = offerValue - requestValue;
-                        return { accepted: netGain >= Math.max(100, requestValue * 0.04), reason: 'प्रस्ताव का नाममात्र मूल्य AI की न्यूनतम सीमा तक नहीं पहुँचा', netGain };
+                        return { accepted: netGain >= 0, reason: 'प्रस्ताव का नाममात्र मूल्य AI के देने वाले मूल्य से कम है', netGain };
                     })();
                 if (!assessment.accepted) {
                     sfxPay();
