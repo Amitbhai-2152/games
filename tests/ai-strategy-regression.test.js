@@ -217,6 +217,7 @@ test('IT Raid is reserved for a meaningful cash-leading opponent', () => {
     assert.equal(c.getAIStrategicPowerPlan(ai).raidIndex, 0);
 
     c.gameState.players[1].cash = 1000;
+    c.gameState.players[2].cash = 1000;
     assert.equal(c.getAIStrategicPowerPlan(ai).raidIndex, -1);
 });
 
