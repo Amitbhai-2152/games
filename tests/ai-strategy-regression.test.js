@@ -276,7 +276,7 @@ test('Magnet Trap targets a payable high-rent opportunity and avoids an active s
     const opportunity = c.getAIBestTrapOpportunity(ai);
     assert.ok(opportunity);
     assert.equal(opportunity.targetSpace.id, 1);
-    c.gameState.players[1].rentShieldActive = true;
+    c.gameState.players[2].rentShieldActive = true;
     assert.equal(c.getAIBestTrapOpportunity(ai), null);
 });
 
