@@ -6216,12 +6216,21 @@
                 ![15000, 25000, 40000].includes(config.startingCash) ||
                 typeof config.jailRentAllowed !== 'boolean' ||
                 typeof config.progressiveElimination !== 'boolean') return false;
+            for (let i = 0; i < config.playerCount; i++) {
+                const slot = config.slots[i];
+                if (!slot || typeof slot.name !== 'string' || typeof slot.tokenTitle !== 'string' ||
+                    typeof slot.color !== 'string' || typeof slot.icon !== 'string' ||
+                    typeof slot.isAI !== 'boolean') return false;
+            }
 
             if (state.started !== true || !GAME_SAVEABLE_PHASES.includes(state.phase) ||
                 !Array.isArray(state.players) || state.players.length !== config.playerCount ||
                 !Number.isInteger(state.currentPlayerIndex) ||
                 state.currentPlayerIndex < 0 || state.currentPlayerIndex >= state.players.length ||
                 !Number.isInteger(state.round) || state.round < 1 ||
+                !Number.isInteger(state.doublesStreak) || state.doublesStreak < 0 ||
+                !Number.isInteger(state.selectedSpaceId) || state.selectedSpaceId < 0 ||
+                state.selectedSpaceId >= BOARD_SPACES.length ||
                 !Array.isArray(state.lastDice) || state.lastDice.length !== 2 ||
                 !state.lastDice.every(n => Number.isInteger(n) && n >= 1 && n <= 6) ||
                 !state.ownership || typeof state.ownership !== 'object' ||
@@ -6252,7 +6261,8 @@
             if (state.phase === 'ACTION_DECISION') {
                 const current = state.players[state.currentPlayerIndex];
                 const landingSpace = BOARD_SPACES[current.position];
-                if (!landingSpace || !['city', 'utility'].includes(landingSpace.type) ||
+                if (typeof state.pendingBonusTurn !== 'boolean' ||
+                    !landingSpace || !['city', 'utility'].includes(landingSpace.type) ||
                     state.ownership[landingSpace.id]) return false;
             }
             if (state.activeWorldEventId &&
