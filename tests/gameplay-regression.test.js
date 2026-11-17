@@ -553,7 +553,7 @@ test('creditor bankruptcy transfers remaining cash and properties and applies mo
     assert.equal(c.ledger.some(row => String(row[1]).includes('निर्माण') && row[2] === 200), true);
     assert.equal(c.ledger.some(row => String(row[1]).includes('हस्तांतरण ब्याज') && row[2] === -25), true);
     assert.equal(c.gameState.ownership[1].mortgageInterestPaid, true);
-    assert.equal(c.gameState.ownership[1].mortgageTransferInterestDue, undefined);
+    assert.equal(c.gameState.ownership[1].mortgageTransferInterestDue, 0);
 });
 
 test('bankruptcy defers full transfer interest when the creditor cannot pay it', () => {
@@ -575,7 +575,7 @@ test('bankruptcy defers full transfer interest when the creditor cannot pay it',
     assert.equal(c.gameState.players[1].cash, 0, 'do not take a partial interest payment');
     assert.equal(c.gameState.jackpotPot, 100);
     assert.equal(c.ledger.some(row => String(row[1]).includes('हस्तांतरण ब्याज')), false);
-    assert.match(c.logs.join(' '), /ब्याज स्थगित है/);
+    assert.match(c.logs.join(' '), /पूरा शुल्क स्थगित है/);
 });
 
 test('bank-debt bankruptcy releases the debtor properties back to the market', () => {
