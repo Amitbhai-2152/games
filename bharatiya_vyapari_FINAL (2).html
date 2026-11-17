@@ -4224,6 +4224,164 @@
             .victory-confetti-piece { display:none!important; }
         }
 
+
+        /* Full-game mobile and tablet layout: keep the board readable and every panel reachable. */
+        html { scroll-padding-top: 6.5rem; }
+        body { min-width: 320px; }
+        body > main, #leftPanelSection, #centerBoardSection, #rightPanelSection { min-width: 0; }
+        #leftPanelSection, #centerBoardSection, #rightPanelSection {
+            scroll-margin-top: calc(5.5rem + env(safe-area-inset-top));
+        }
+        #mobileQuickNav {
+            padding: .35rem .35rem calc(.35rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(.35rem + env(safe-area-inset-bottom));
+        }
+        #mobileQuickNav button {
+            min-width: 0;
+            min-height: 44px;
+            flex: 1 1 0;
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 767px) {
+            body { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important; }
+            body.laptop-cockpit-mode {
+                height: auto !important;
+                min-height: 100vh;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+            }
+            body.laptop-cockpit-mode main {
+                height: auto !important;
+                min-height: 0;
+                overflow: visible !important;
+                align-items: stretch;
+            }
+            body > header > div { align-items: flex-start; }
+            body > header > div > div:first-child { flex: 1 1 100%; }
+            body > header > div > div:last-child {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: .35rem;
+            }
+            body > header button {
+                min-height: 40px;
+                padding-inline: .55rem !important;
+                touch-action: manipulation;
+            }
+            body > main {
+                grid-template-columns: minmax(0, 1fr);
+                gap: .8rem;
+                padding-inline: .55rem !important;
+                padding-bottom: 1rem;
+            }
+            #centerBoardSection { grid-column: auto; gap: .65rem; }
+            #leftPanelSection, #rightPanelSection { grid-column: auto; gap: .75rem; }
+            .board-perspective-stage {
+                width: 100%;
+                overflow: visible;
+                padding: .15rem 0 .4rem;
+            }
+            .physical-board-wrapper {
+                width: min(100%, calc(100vw - 22px));
+                max-width: 740px;
+                padding: 5px;
+                border-width: 2px;
+                border-radius: 14px;
+            }
+            .physical-board-wrapper.view-3d {
+                transform: rotateX(8deg) scale(.985);
+                transform-origin: center center;
+            }
+            .vyapari-board { border-width: 1.5px; }
+            .board-center { padding: 3px; }
+            .tile { min-width: 0; padding: 0; border-width: .75px; }
+            .tile:hover { transform: none; }
+            #worldEventBanner { align-items: flex-start; }
+            #centerActionButtons {
+                width: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: .4rem;
+            }
+            #centerActionButtons button {
+                min-height: 44px;
+                justify-content: center;
+                padding: .6rem .72rem;
+                touch-action: manipulation;
+            }
+            #playersListContainer {
+                max-height: none;
+                overflow: visible;
+                grid-template-columns: minmax(0, 1fr);
+                padding-right: 0;
+            }
+            #ownedPropertiesList { max-height: min(52vh, 340px); }
+            #spotlightActionArea { gap: .5rem; }
+            #spotlightActionArea button, .power-card-item {
+                min-height: 42px;
+                touch-action: manipulation;
+            }
+            #mobileQuickNav { gap: .15rem; }
+            #mobileQuickNav button { min-height: 48px; padding: .35rem .1rem; }
+            #mobileQuickNav button i { font-size: .95rem; }
+            #mobileQuickNav button span {
+                display: block;
+                max-width: 100%;
+                font-size: clamp(.52rem, 2.2vw, .64rem);
+                line-height: 1.15;
+                text-align: center;
+                white-space: normal;
+            }
+            body > div[id$="Modal"]:not(#victoryModal) {
+                padding: max(.55rem, env(safe-area-inset-top)) .55rem max(.55rem, env(safe-area-inset-bottom));
+            }
+            body > div[id$="Modal"]:not(#victoryModal) > div:first-child {
+                width: 100%;
+                max-height: calc(100dvh - 1.1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+        }
+
+        @media (min-width: 420px) and (max-width: 767px) {
+            #playersListContainer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 380px) {
+            #headerJackpotBadge { max-width: 130px; overflow: hidden; }
+            #toggle3DLabel { display: none; }
+            #mobileQuickNav button span { font-size: .52rem; }
+            .physical-board-wrapper { width: calc(100vw - 18px); padding: 4px; }
+            .board-center { padding: 2px; }
+            .victory-panel { padding: .85rem; }
+        }
+
+        @media (min-width: 768px) and (max-width: 1023px) {
+            body.laptop-cockpit-mode {
+                height: auto !important;
+                overflow-y: auto !important;
+            }
+            body.laptop-cockpit-mode main {
+                height: auto !important;
+                overflow: visible !important;
+            }
+            body > main { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+            #centerBoardSection { grid-column: 1 / -1; order: 0; }
+            #leftPanelSection { grid-column: 1; order: 1; }
+            #rightPanelSection { grid-column: 2; order: 2; }
+            .physical-board-wrapper { width: min(100%, 720px); }
+        }
+
+        @media (max-width: 767px) and (orientation: landscape) {
+            #mobileQuickNav { padding-top: .15rem; }
+            #mobileQuickNav button { min-height: 40px; }
+        }
+
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
@@ -4643,7 +4801,7 @@
     </main>
 
     <!-- मोबाइल बॉटम नेविगेशन बार (Mobile Quick Navigation Bar) -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-wood-950/95 backdrop-blur-md border-t-2 border-gold-600/60 px-2 py-1.5 flex items-center justify-around shadow-2xl">
+    <nav id="mobileQuickNav" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-wood-950/95 backdrop-blur-md border-t-2 border-gold-600/60 px-2 py-1.5 flex items-center justify-around shadow-2xl">
         <button onclick="scrollToSection('centerBoardSection')" class="flex flex-col items-center text-[10px] font-bold text-gold-300 py-1 px-2">
             <i class="fa-solid fa-chess-board text-sm mb-0.5"></i>
             <span>बोर्ड</span>

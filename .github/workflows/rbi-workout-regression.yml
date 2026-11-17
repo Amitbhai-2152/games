@@ -11,6 +11,7 @@ on:
       - 'tests/situational-dialogue-regression.test.js'
       - 'tests/indexeddb-save-resume.test.js'
       - 'tests/victory-celebration-regression.test.js'
+      - 'tests/mobile-layout-regression.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
   pull_request:
     branches: [main]
@@ -22,6 +23,7 @@ on:
       - 'tests/situational-dialogue-regression.test.js'
       - 'tests/indexeddb-save-resume.test.js'
       - 'tests/victory-celebration-regression.test.js'
+      - 'tests/mobile-layout-regression.test.js'
       - '.github/workflows/rbi-workout-regression.yml'
 
 jobs:
@@ -46,3 +48,5 @@ jobs:
         run: node tests/indexeddb-save-resume.test.js
       - name: Run premium victory presentation regression tests
         run: node tests/victory-celebration-regression.test.js
+      - name: Run mobile and tablet layout regression tests
+        run: node tests/mobile-layout-regression.test.js
