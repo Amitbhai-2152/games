@@ -5,11 +5,16 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'bharatiya_vyapari_FINAL (2).html'), 'utf8');
+const mortgageHelperStart = html.indexOf('        function getMortgagePrincipal(space) {');
+const mortgageHelperEnd = html.indexOf('        function getDeedDetailsHTML(', mortgageHelperStart);
 const start = html.indexOf('        function isTradeableProperty(spaceId, ownerId) {');
 const endTitle = html.indexOf('सख्त घर/होटल निर्माण एवं 55% गिरवी प्रबंधन', start);
 const end = endTitle === -1 ? -1 : html.lastIndexOf('        /*', endTitle);
+assert.notEqual(mortgageHelperStart, -1, 'missing mortgage calculation helpers');
+assert.ok(mortgageHelperEnd > mortgageHelperStart, 'missing mortgage helper end');
 assert.notEqual(start, -1, 'missing trade implementation start');
 assert.ok(end > start, 'missing trade implementation end');
+const mortgageHelperCode = html.slice(mortgageHelperStart, mortgageHelperEnd);
 const tradeCode = html.slice(start, end);
 
 function test(name, fn) {
@@ -115,7 +120,7 @@ function createGame(options = {}) {
         toasts
     };
     vm.createContext(context);
-    vm.runInContext(tradeCode, context, { timeout: 1000 });
+    vm.runInContext(mortgageHelperCode + '\n' + tradeCode, context, { timeout: 1000 });
     node('tradePartnerSelect').value = '1';
     node('tradeOfferPropSelect').value = '';
     node('tradeRequestPropSelect').value = '2';
@@ -268,16 +273,38 @@ test('mortgaged property transfer fees are previewed and charged to each recipie
     };
     const c = createGame({ ownership });
     sendHumanOffer(c, { offerPropId: 1, requestPropId: 2, offerCash: 500, requestCash: 200 });
+    const previewNode = c.document.getElementById('tradeMortgageFeePreview');
+    c.document.getElementById('tradeOfferPropSelect').value = '1';
+    c.document.getElementById('tradeRequestPropSelect').value = '2';
+    c.renderTradeMortgageFeeDisclosure();
+    assert.match(previewNode.textContent, /Player B को Patna मिलेगी: अभी बैंक ब्याज ₹25/);
+    assert.match(previewNode.textContent, /Player A को Ranchi मिलेगी: अभी बैंक ब्याज ₹30/);
+    sendHumanOffer(c, { offerPropId: 1, requestPropId: 2, offerCash: 500, requestCash: 200 });
     const summary = c.document.getElementById('tradeResponseSummary').textContent;
-    assert.match(summary, /आपका गिरवी हस्तांतरण शुल्क: ₹60/);
-    assert.match(summary, /उनका गिरवी हस्तांतरण शुल्क: ₹50/);
+    assert.match(summary, /आपका हस्तांतरण ब्याज \(मूलधन का 10%\): ₹30/);
+    assert.match(summary, /प्राप्तकर्ता का हस्तांतरण ब्याज \(मूलधन का 10%\): ₹25/);
+    assert.match(summary, /बाद में छुड़ाने का शेष मूलधन: ₹300/);
     c.acceptTradeOffer();
 
     assert.equal(c.gameState.ownership[1].ownerId, 1);
     assert.equal(c.gameState.ownership[2].ownerId, 0);
-    assert.equal(c.gameState.players[0].cash, 9640);
-    assert.equal(c.gameState.players[1].cash, 10250);
-    assert.equal(c.gameState.jackpotPot, 1055);
+    assert.equal(c.gameState.ownership[1].mortgageInterestPaid, true);
+    assert.equal(c.gameState.ownership[2].mortgageInterestPaid, true);
+    assert.equal(c.gameState.players[0].cash, 9670);
+    assert.equal(c.gameState.players[1].cash, 10275);
+    assert.equal(c.gameState.jackpotPot, 1028);
+    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[1], c.gameState.ownership[1]), 250,
+        'paid transfer interest must not be charged a second time at redemption');
+    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[2], c.gameState.ownership[2]), 300);
+});
+
+test('untransferred and legacy mortgaged properties retain principal-plus-interest redemption cost', () => {
+    const c = createGame();
+    const legacyProperty = { ownerId: 0, houses: 0, buildCosts: [], mortgaged: true };
+    assert.equal(Object.hasOwn(legacyProperty, 'mortgageInterestPaid'), false);
+    assert.equal(c.getMortgagePrincipal(c.BOARD_SPACES[1]), 250);
+    assert.equal(c.getMortgageTransferInterest(c.BOARD_SPACES[1]), 25);
+    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[1], legacyProperty), 275);
 });
 
 test('AI trade valuation and immediate acceptance path remain active', () => {
