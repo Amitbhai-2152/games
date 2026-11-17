@@ -297,6 +297,8 @@ test('mortgaged property transfer fees are previewed and charged to each recipie
     assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[1], c.gameState.ownership[1]), 275,
         'later redemption carries additional interest after transfer interest was paid');
     assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[2], c.gameState.ownership[2]), 330);
+    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[1], { mortgaged: true, mortgageTransferInterestDue: 25 }), 300,
+        'unpaid transfer interest must be carried into the later redemption cost');
 });
 
 test('untransferred and legacy mortgaged properties retain principal-plus-interest redemption cost', () => {
