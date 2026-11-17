@@ -4207,6 +4207,12 @@
                     <i id="soundIcon" class="fa-solid fa-volume-high"></i>
                 </button>
 
+                <button id="saveGameNowBtn" type="button" onclick="saveGameNow()" class="px-2 py-1 rounded-lg bg-teal-950/90 hover:bg-teal-900 border border-teal-400/50 text-teal-200 text-[11px] font-bold flex items-center gap-1 transition shadow" title="अभी सुरक्षित सेव बनाएं; सामान्य खेल में ऑटो-सेव भी चलता है">
+                    <i class="fa-solid fa-floppy-disk text-teal-300"></i>
+                    <span class="hidden sm:inline">सेव</span>
+                </button>
+                <span id="gameSaveStatus" class="hidden xl:inline text-[9px] text-teal-200/80" aria-live="polite">ऑटो-सेव चालू</span>
+
                 <button onclick="openSetupModal()" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-gold-400 via-amber-500 to-yellow-600 hover:from-gold-300 hover:to-amber-400 text-wood-950 font-black text-[11px] flex items-center gap-1 shadow-md transition">
                     <i class="fa-solid fa-users-gear"></i>
                     <span>नया खेल</span>
@@ -4722,6 +4728,26 @@
     <!-- ==========================================
          मोडल 4: नया खेल एवं 2–8 खिलाड़ी सेटअप (2–8 PLAYER SETUP MODAL)
          ========================================== -->
+    <div id="resumeGameModal" class="fixed inset-0 z-[95] hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="resumeGameTitle">
+        <div class="w-full max-w-md rounded-3xl border-2 border-teal-400/70 bg-wood-900 p-5 sm:p-6 shadow-2xl">
+            <div class="text-center mb-4">
+                <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-500/15 text-teal-300 text-3xl border border-teal-400/40"><i class="fa-solid fa-floppy-disk"></i></div>
+                <h2 id="resumeGameTitle" class="font-royal text-2xl text-teal-200">पिछला खेल सुरक्षित मिला</h2>
+                <p class="mt-2 text-sm text-amber-100/80">आपका पिछला मुकाबला IndexedDB में सुरक्षित है। क्या आप वहीं से आगे खेलना चाहेंगे?</p>
+                <p id="resumeGameDetails" class="mt-3 rounded-xl border border-teal-400/25 bg-black/30 p-3 text-xs leading-relaxed text-teal-100" aria-live="polite"></p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button type="button" onclick="resumeSavedGame()" class="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3 text-sm font-black text-white shadow-lg hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-200">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> खेल जारी रखें
+                </button>
+                <button type="button" onclick="startFreshGameFromResumePrompt()" class="rounded-xl border border-amber-400/50 bg-wood-800 px-4 py-3 text-sm font-bold text-amber-100 hover:bg-wood-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+                    नया खेल शुरू करें
+                </button>
+            </div>
+            <p class="mt-3 text-center text-[10px] text-amber-200/60">नया खेल शुरू करने पर पुराना सेव हट जाएगा।</p>
+        </div>
+    </div>
+
     <div id="setupModal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 overflow-y-auto">
         <div class="bg-wood-900 border-2 border-gold-400 rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl my-auto max-h-[94vh] overflow-y-auto">
             <div class="text-center mb-4">
@@ -5992,6 +6018,419 @@
             }
         }
 
+
+        /* ==============================================================
+           PHASE 3 — SAFE GAME SAVE / RESUME (INDEXEDDB)
+           Only stable, restartable checkpoints are persisted. In-flight
+           animations, auctions, debt callbacks, and human trade responses
+           are deliberately excluded to prevent partial transaction replay.
+           ============================================================== */
+        const GAME_SAVE_DB_NAME = 'bharatiya-vyapari-save';
+        const GAME_SAVE_DB_VERSION = 1;
+        const GAME_SAVE_STORE_NAME = 'game-saves';
+        const GAME_SAVE_RECORD_ID = 'active-match';
+        const GAME_SAVE_SCHEMA_VERSION = 1;
+        const GAME_SAVEABLE_PHASES = ['PRE_ROLL', 'POST_ROLL', 'ACTION_DECISION'];
+        const GAME_SAVE_DEBOUNCE_MS = 500;
+
+        let gamePersistenceEnabled = false;
+        let pendingGameSaveTimer = null;
+        let pendingGameSaveRecord = null;
+        let gameSaveWriteInProgress = false;
+
+        function updateGameSaveStatus(message, state = 'neutral') {
+            const label = document.getElementById('gameSaveStatus');
+            if (!label) return;
+            label.textContent = message;
+            label.setAttribute('data-save-state', state);
+            label.title = message;
+        }
+
+        function openGameSaveDatabase() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB || typeof window.indexedDB.open !== 'function') {
+                    reject(new Error('IndexedDB is not available in this browser.'));
+                    return;
+                }
+
+                let request;
+                try {
+                    request = window.indexedDB.open(GAME_SAVE_DB_NAME, GAME_SAVE_DB_VERSION);
+                } catch (error) {
+                    reject(error);
+                    return;
+                }
+
+                request.onupgradeneeded = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains(GAME_SAVE_STORE_NAME)) {
+                        db.createObjectStore(GAME_SAVE_STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = () => {
+                    const db = request.result;
+                    if (db && typeof db.close === 'function') {
+                        db.onversionchange = () => db.close();
+                    }
+                    resolve(db);
+                };
+                request.onerror = () => reject(request.error || new Error('Could not open the game save database.'));
+                request.onblocked = () => reject(new Error('The game save database is blocked by another tab.'));
+            });
+        }
+
+        async function readStoredGameSave() {
+            const db = await openGameSaveDatabase();
+            return new Promise((resolve, reject) => {
+                let value = null;
+                let settled = false;
+                const finish = (error) => {
+                    if (settled) return;
+                    settled = true;
+                    if (typeof db.close === 'function') db.close();
+                    if (error) reject(error);
+                    else resolve(value);
+                };
+                try {
+                    const tx = db.transaction(GAME_SAVE_STORE_NAME, 'readonly');
+                    const request = tx.objectStore(GAME_SAVE_STORE_NAME).get(GAME_SAVE_RECORD_ID);
+                    request.onsuccess = () => { value = request.result || null; };
+                    request.onerror = () => finish(request.error || new Error('Could not read the saved game.'));
+                    tx.oncomplete = () => finish(null);
+                    tx.onerror = () => finish(tx.error || new Error('Could not read the saved game.'));
+                    tx.onabort = () => finish(tx.error || new Error('Reading the saved game was aborted.'));
+                } catch (error) {
+                    finish(error);
+                }
+            });
+        }
+
+        async function writeStoredGameSave(record) {
+            const db = await openGameSaveDatabase();
+            return new Promise((resolve, reject) => {
+                let settled = false;
+                const finish = (error) => {
+                    if (settled) return;
+                    settled = true;
+                    if (typeof db.close === 'function') db.close();
+                    if (error) reject(error);
+                    else resolve(true);
+                };
+                try {
+                    const tx = db.transaction(GAME_SAVE_STORE_NAME, 'readwrite');
+                    tx.objectStore(GAME_SAVE_STORE_NAME).put(record);
+                    tx.oncomplete = () => finish(null);
+                    tx.onerror = () => finish(tx.error || new Error('Could not write the saved game.'));
+                    tx.onabort = () => finish(tx.error || new Error('Saving the game was aborted.'));
+                } catch (error) {
+                    finish(error);
+                }
+            });
+        }
+
+        async function deleteStoredGameSave() {
+            const db = await openGameSaveDatabase();
+            return new Promise((resolve, reject) => {
+                let settled = false;
+                const finish = (error) => {
+                    if (settled) return;
+                    settled = true;
+                    if (typeof db.close === 'function') db.close();
+                    if (error) reject(error);
+                    else resolve(true);
+                };
+                try {
+                    const tx = db.transaction(GAME_SAVE_STORE_NAME, 'readwrite');
+                    tx.objectStore(GAME_SAVE_STORE_NAME).delete(GAME_SAVE_RECORD_ID);
+                    tx.oncomplete = () => finish(null);
+                    tx.onerror = () => finish(tx.error || new Error('Could not remove the previous saved game.'));
+                    tx.onabort = () => finish(tx.error || new Error('Removing the saved game was aborted.'));
+                } catch (error) {
+                    finish(error);
+                }
+            });
+        }
+
+        function getGameSaveEligibility() {
+            if (!gameState || gameState.started !== true) return { allowed: false, reason: 'अभी कोई सक्रिय खेल नहीं है।' };
+            if (!GAME_SAVEABLE_PHASES.includes(gameState.phase)) {
+                return { allowed: false, reason: 'खेल की चाल अभी पूरी हो रही है; अगला सुरक्षित चरण आने पर सेव होगा।' };
+            }
+            if (gameState.pendingDebt || gameState.pendingTradeOffer || gameState.auction || gameState.rbiAuditContext) {
+                return { allowed: false, reason: 'ऋण, व्यापार, नीलामी या RBI ऑडिट पूरा होने के बाद सेव होगा।' };
+            }
+            if (!Array.isArray(gameState.players) || gameState.players.length < 2 ||
+                !gameState.players[gameState.currentPlayerIndex]) {
+                return { allowed: false, reason: 'खेल की स्थिति सेव करने योग्य नहीं है।' };
+            }
+            if (gameState.phase === 'ACTION_DECISION') {
+                const player = gameState.players[gameState.currentPlayerIndex];
+                const space = BOARD_SPACES[player.position];
+                if (!space || !['city', 'utility'].includes(space.type) || gameState.ownership[space.id]) {
+                    return { allowed: false, reason: 'संपत्ति निर्णय की स्थिति मान्य नहीं है।' };
+                }
+            }
+            return { allowed: true, reason: '' };
+        }
+
+        function buildGameSaveRecord() {
+            const eligibility = getGameSaveEligibility();
+            if (!eligibility.allowed) return null;
+
+            const savedState = JSON.parse(JSON.stringify(gameState, (key, value) => {
+                if (key === 'aiTimer' || key === 'activeTimers' || key === 'activeWorldEvent') return undefined;
+                if (typeof value === 'function') return undefined;
+                return value;
+            }));
+            savedState.activeWorldEventId = gameState.activeWorldEvent?.id || null;
+            savedState.activeWorldEvent = null;
+
+            const savedConfig = JSON.parse(JSON.stringify({
+                playerCount: setupConfig.playerCount,
+                startingCash: setupConfig.startingCash,
+                jailRentAllowed: setupConfig.jailRentAllowed,
+                progressiveElimination: setupConfig.progressiveElimination,
+                slots: setupConfig.slots
+            }));
+
+            return {
+                id: GAME_SAVE_RECORD_ID,
+                schemaVersion: GAME_SAVE_SCHEMA_VERSION,
+                savedAt: new Date().toISOString(),
+                setupConfig: savedConfig,
+                gameState: savedState
+            };
+        }
+
+        function validateGameSaveRecord(record) {
+            if (!record || record.id !== GAME_SAVE_RECORD_ID ||
+                record.schemaVersion !== GAME_SAVE_SCHEMA_VERSION ||
+                typeof record.savedAt !== 'string' || !Number.isFinite(Date.parse(record.savedAt))) return false;
+
+            const config = record.setupConfig;
+            const state = record.gameState;
+            if (!config || !state || !Number.isInteger(config.playerCount) ||
+                config.playerCount < 2 || config.playerCount > 8 ||
+                !Array.isArray(config.slots) || config.slots.length < config.playerCount ||
+                ![15000, 25000, 40000].includes(config.startingCash) ||
+                typeof config.jailRentAllowed !== 'boolean' ||
+                typeof config.progressiveElimination !== 'boolean') return false;
+
+            if (state.started !== true || !GAME_SAVEABLE_PHASES.includes(state.phase) ||
+                !Array.isArray(state.players) || state.players.length !== config.playerCount ||
+                !Number.isInteger(state.currentPlayerIndex) ||
+                state.currentPlayerIndex < 0 || state.currentPlayerIndex >= state.players.length ||
+                !Number.isInteger(state.round) || state.round < 1 ||
+                !Array.isArray(state.lastDice) || state.lastDice.length !== 2 ||
+                !state.lastDice.every(n => Number.isInteger(n) && n >= 1 && n <= 6) ||
+                !state.ownership || typeof state.ownership !== 'object' ||
+                Array.isArray(state.ownership) || !Array.isArray(state.ledger) ||
+                !Array.isArray(state.rollAuditLog) || !state.diceSumCounts ||
+                !Number.isFinite(state.jackpotPot) || !Number.isFinite(state.inflationMultiplier)) return false;
+
+            const playerIds = new Set();
+            for (let i = 0; i < state.players.length; i++) {
+                const player = state.players[i];
+                if (!player || player.id !== i || typeof player.name !== 'string' ||
+                    !Number.isFinite(player.cash) || !Number.isInteger(player.position) ||
+                    player.position < 0 || player.position >= BOARD_SPACES.length ||
+                    typeof player.isAI !== 'boolean' || typeof player.bankrupt !== 'boolean' ||
+                    !Array.isArray(player.powerCards)) return false;
+                playerIds.add(player.id);
+            }
+
+            for (const [spaceIdText, property] of Object.entries(state.ownership)) {
+                const spaceId = Number(spaceIdText);
+                if (!Number.isInteger(spaceId) || !BOARD_SPACES[spaceId] ||
+                    !property || !playerIds.has(property.ownerId) ||
+                    !Number.isInteger(property.houses) || property.houses < 0 || property.houses > 4 ||
+                    typeof property.mortgaged !== 'boolean' ||
+                    !Array.isArray(property.buildCosts)) return false;
+            }
+
+            if (state.phase === 'ACTION_DECISION') {
+                const current = state.players[state.currentPlayerIndex];
+                const landingSpace = BOARD_SPACES[current.position];
+                if (!landingSpace || !['city', 'utility'].includes(landingSpace.type) ||
+                    state.ownership[landingSpace.id]) return false;
+            }
+            if (state.activeWorldEventId &&
+                !WORLD_EVENTS_POOL.some(event => event.id === state.activeWorldEventId)) return false;
+            return true;
+        }
+
+        function queueGameSave() {
+            if (!gamePersistenceEnabled) return;
+            if (pendingGameSaveTimer !== null) clearTimeout(pendingGameSaveTimer);
+            const eligibility = getGameSaveEligibility();
+            if (!eligibility.allowed) return;
+
+            pendingGameSaveTimer = setTimeout(async () => {
+                pendingGameSaveTimer = null;
+                await persistCurrentGameSave(false);
+            }, GAME_SAVE_DEBOUNCE_MS);
+        }
+
+        async function persistCurrentGameSave(manual = false) {
+            if (!gamePersistenceEnabled || gameSaveWriteInProgress) return false;
+            const eligibility = getGameSaveEligibility();
+            if (!eligibility.allowed) {
+                if (manual) updateGameSaveStatus(eligibility.reason, 'pending');
+                return false;
+            }
+
+            const record = buildGameSaveRecord();
+            if (!record) return false;
+
+            gameSaveWriteInProgress = true;
+            updateGameSaveStatus('💾 सेव हो रहा है…', 'saving');
+            try {
+                await writeStoredGameSave(record);
+                updateGameSaveStatus('💾 सेव सुरक्षित', 'saved');
+                return true;
+            } catch (error) {
+                console.warn('Game save failed:', error);
+                updateGameSaveStatus('सेव उपलब्ध नहीं', 'error');
+                return false;
+            } finally {
+                gameSaveWriteInProgress = false;
+            }
+        }
+
+        async function saveGameNow() {
+            if (!gamePersistenceEnabled) {
+                updateGameSaveStatus('इस ब्राउज़र में IndexedDB उपलब्ध नहीं', 'error');
+                return false;
+            }
+            if (pendingGameSaveTimer !== null) {
+                clearTimeout(pendingGameSaveTimer);
+                pendingGameSaveTimer = null;
+            }
+            return persistCurrentGameSave(true);
+        }
+
+        function showResumeGamePrompt(record) {
+            pendingGameSaveRecord = record;
+            const current = record.gameState.players[record.gameState.currentPlayerIndex];
+            const details = document.getElementById('resumeGameDetails');
+            if (details) {
+                const phaseNames = {
+                    PRE_ROLL: 'पासा फेंकने से पहले',
+                    POST_ROLL: 'बारी समाप्त करने से पहले',
+                    ACTION_DECISION: 'संपत्ति का निर्णय बाकी'
+                };
+                details.textContent = `राउंड ${record.gameState.round} • ${current.name} की बारी • ${phaseNames[record.gameState.phase] || record.gameState.phase} • सेव: ${new Date(record.savedAt).toLocaleString()}`;
+            }
+            document.getElementById('resumeGameModal').classList.remove('hidden');
+            updateGameSaveStatus('पुराना खेल उपलब्ध', 'saved');
+        }
+
+        async function initializeGamePersistence() {
+            try {
+                if (!window.indexedDB) throw new Error('IndexedDB is not available.');
+                gamePersistenceEnabled = true;
+                const record = await readStoredGameSave();
+                if (record) {
+                    if (record.schemaVersion !== GAME_SAVE_SCHEMA_VERSION) {
+                        gamePersistenceEnabled = false;
+                        updateGameSaveStatus('पुराना सेव संस्करण असंगत', 'error');
+                        initGameFromConfig();
+                        return;
+                    }
+                    if (validateGameSaveRecord(record)) {
+                        showResumeGamePrompt(record);
+                        return;
+                    }
+                    try { await deleteStoredGameSave(); } catch (_) { /* Continue with a clean game if corrupt storage cannot be removed. */ }
+                    updateGameSaveStatus('खराब सेव हटाया गया; नया खेल तैयार', 'pending');
+                } else {
+                    updateGameSaveStatus('ऑटो-सेव चालू', 'saved');
+                }
+                initGameFromConfig();
+            } catch (error) {
+                gamePersistenceEnabled = false;
+                console.warn('IndexedDB game persistence unavailable:', error);
+                updateGameSaveStatus('ऑटो-सेव उपलब्ध नहीं', 'error');
+                initGameFromConfig();
+            }
+        }
+
+        async function resumeSavedGame() {
+            const record = pendingGameSaveRecord;
+            if (!validateGameSaveRecord(record)) {
+                updateGameSaveStatus('सेव मान्य नहीं; नया खेल शुरू करें', 'error');
+                return false;
+            }
+
+            clearAllGameTimers();
+            setupConfig = JSON.parse(JSON.stringify(record.setupConfig));
+            const restoredState = JSON.parse(JSON.stringify(record.gameState));
+            delete restoredState.activeWorldEventId;
+            Object.keys(gameState).forEach(key => { delete gameState[key]; });
+            Object.assign(gameState, restoredState);
+            gameState.activeWorldEvent = record.gameState.activeWorldEventId
+                ? WORLD_EVENTS_POOL.find(event => event.id === record.gameState.activeWorldEventId) || null
+                : null;
+            gameState.aiTimer = null;
+            gameState.activeTimers = [];
+            gameState.pendingDebt = null;
+            gameState.pendingTradeOffer = null;
+            gameState.auction = null;
+            gameState.rbiAuditContext = null;
+
+            pendingGameSaveRecord = null;
+            document.getElementById('resumeGameModal').classList.add('hidden');
+            document.getElementById('setupModal').classList.add('hidden');
+            ['debtModal', 'auctionModal', 'powerCardTargetModal', 'rbiAuditModal',
+                'tradeResponseModal', 'victoryModal', 'deedModal'].forEach(id => {
+                const modal = document.getElementById(id);
+                if (modal) modal.classList.add('hidden');
+            });
+            document.getElementById('actionLogContainer').innerHTML = '';
+            renderSetupModalUI();
+            renderAll();
+            selectSpace(gameState.selectedSpaceId);
+            addLog(`💾 पिछला खेल सुरक्षित बिंदु से पुनः शुरू हुआ — राउंड ${gameState.round}।`, 'emerald');
+
+            const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+            if (currentPlayer?.isAI) {
+                if (gameState.phase === 'PRE_ROLL') {
+                    checkAndTriggerAITurn();
+                } else if (gameState.phase === 'POST_ROLL') {
+                    gameState.aiTimer = scheduleGameTimeout(() => {
+                        if (gameState.phase !== 'POST_ROLL' ||
+                            gameState.currentPlayerIndex !== currentPlayer.id ||
+                            currentPlayer.bankrupt) return;
+                        executeAIPostTurnMaintenance(currentPlayer);
+                        handleEndTurn();
+                    }, 720);
+                } else if (gameState.phase === 'ACTION_DECISION') {
+                    gameState.aiTimer = scheduleGameTimeout(() => {
+                        if (gameState.phase === 'ACTION_DECISION' &&
+                            gameState.currentPlayerIndex === currentPlayer.id) {
+                            executeAIDecisionOnLanding(currentPlayer, BOARD_SPACES[currentPlayer.position]);
+                        }
+                    }, 650);
+                }
+            }
+            updateGameSaveStatus('💾 सेव सुरक्षित', 'saved');
+            return true;
+        }
+
+        async function startFreshGameFromResumePrompt() {
+            document.getElementById('resumeGameModal').classList.add('hidden');
+            pendingGameSaveRecord = null;
+            try {
+                await deleteStoredGameSave();
+                updateGameSaveStatus('नया खेल शुरू हो रहा है…', 'pending');
+            } catch (error) {
+                console.warn('Could not clear the previous saved game:', error);
+                updateGameSaveStatus('पुराना सेव हट नहीं सका', 'error');
+            }
+            initGameFromConfig();
+        }
+        /* INDEXEDDB GAME SAVE END */
+
         /* ==============================================================
            प्रारंभिक लोड एवं 2–8 सेटअप नियंत्रण
            ============================================================== */
@@ -6001,7 +6440,7 @@
             populateLuckFortuneModalTables();
             renderSetupModalUI();
             buildBoardDOM();
-            initGameFromConfig();
+            initializeGamePersistence();
         };
 
         function setSetupPlayerCount(count) {
@@ -6363,6 +6802,7 @@
             const jpCenter = document.getElementById('centerJackpotAmount');
             if (jpHeader) jpHeader.textContent = formatRupee(gameState.jackpotPot);
             if (jpCenter) jpCenter.textContent = formatRupee(gameState.jackpotPot);
+            queueGameSave();
         }
 
         function renderRbiEliminationTracker() {
