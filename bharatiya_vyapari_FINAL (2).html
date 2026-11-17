@@ -4123,6 +4123,107 @@
             #tradeResponseModal .trade-response-panel { padding: 1rem; }
             .trade-response-summary { font-size: .82rem; }
         }
+
+        /* Premium final-match victory presentation */
+        #victoryModal {
+            position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center;
+            box-sizing:border-box; overflow-y:auto; overflow-x:hidden;
+            padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+            background:radial-gradient(ellipse at 50% 8%,rgba(251,191,36,.2),transparent 38%),radial-gradient(ellipse at 15% 75%,rgba(16,185,129,.10),transparent 34%),radial-gradient(ellipse at 88% 70%,rgba(99,102,241,.13),transparent 34%),rgba(3,5,12,.94);
+            -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
+        }
+        #victoryModal.hidden { display:none !important; }
+        #victoryModal:not(.hidden) { display:flex; animation:victoryBackdropReveal .55s ease-out both; }
+        #victoryModal::before {
+            content:""; position:fixed; inset:-20%; pointer-events:none; opacity:.28;
+            background:repeating-conic-gradient(from -8deg at 50% 42%,rgba(255,223,130,.10) 0deg 5deg,transparent 5deg 15deg);
+            mask-image:radial-gradient(ellipse at center,#000 0%,transparent 68%);
+            animation:victoryLightSweep 22s linear infinite;
+        }
+        .victory-confetti-layer { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+        .victory-confetti-piece {
+            position:absolute; top:-3vh; width:9px; height:15px; opacity:0;
+            border-radius:2px; background:var(--confetti-color,#facc15);
+            box-shadow:0 0 8px rgba(255,255,255,.12);
+            animation:victoryConfettiFall var(--victory-duration,4s) var(--victory-delay,0s) cubic-bezier(.2,.65,.35,1) forwards;
+        }
+        .victory-confetti-piece:nth-child(4n){width:6px;height:11px;border-radius:50%}
+        .victory-confetti-piece:nth-child(4n+1){--confetti-color:#fbbf24}
+        .victory-confetti-piece:nth-child(4n+2){--confetti-color:#34d399}
+        .victory-confetti-piece:nth-child(4n+3){--confetti-color:#f8fafc}
+        .victory-confetti-piece:nth-child(4n+4){--confetti-color:#a78bfa}
+        .victory-panel {
+            --winner-accent:#fbbf24; position:relative; z-index:1; isolation:isolate; box-sizing:border-box;
+            border-top:2px solid var(--winner-accent);
+            width:min(100%,47rem); max-height:min(92dvh,920px); overflow-y:auto; overscroll-behavior:contain;
+            margin:auto; padding:clamp(1rem,3.2vw,2rem); color:#fff7df;
+            border:1px solid rgba(252,211,77,.58); border-radius:clamp(1.25rem,3vw,2rem);
+            background:radial-gradient(ellipse at 50% -8%,rgba(245,158,11,.22),transparent 48%),radial-gradient(ellipse at 100% 100%,rgba(30,64,175,.16),transparent 42%),linear-gradient(145deg,rgba(35,18,10,.98),rgba(13,15,29,.98) 58%,rgba(8,24,26,.98));
+            box-shadow:0 35px 100px rgba(0,0,0,.72),0 0 0 5px rgba(251,191,36,.055),0 0 65px rgba(251,191,36,.14);
+            animation:victoryPanelRise .82s cubic-bezier(.16,1,.3,1) both;
+        }
+        .victory-panel::before { content:""; position:absolute; inset:8px; z-index:-1; border:1px solid rgba(255,255,255,.075); border-radius:1.25rem; pointer-events:none; }
+        .victory-topline { display:flex; align-items:center; justify-content:space-between; gap:.65rem; padding-bottom:.9rem; border-bottom:1px solid rgba(252,211,77,.18); }
+        .victory-brand { display:flex; align-items:center; gap:.5rem; color:#fde68a; font-size:.68rem; font-weight:1000; letter-spacing:.16em; text-transform:uppercase; }
+        .victory-brand i { color:#fbbf24; font-size:.9rem; }
+        .victory-round { color:rgba(254,243,199,.65); font:800 .62rem/1 ui-monospace,monospace; letter-spacing:.13em; }
+        .victory-hero { position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; padding:1.3rem .25rem 1rem; }
+        .victory-medal-orbit { position:relative; width:clamp(7.1rem,19vw,9.5rem); height:clamp(7.1rem,19vw,9.5rem); display:grid; place-items:center; margin:0 auto 1rem; }
+        .victory-medal-orbit::before,.victory-medal-orbit::after { content:""; position:absolute; inset:3%; border:1px solid rgba(252,211,77,.35); border-radius:50%; box-shadow:0 0 22px rgba(251,191,36,.12),inset 0 0 18px rgba(251,191,36,.08); }
+        .victory-medal-orbit::after { inset:-7%; border-style:dashed; border-color:rgba(253,230,138,.28); animation:victoryOrbitSpin 28s linear infinite; }
+        .victory-medal { width:74%; height:74%; display:grid; place-items:center; border-radius:50%; color:#452006; font-size:clamp(2.5rem,7vw,3.6rem); border:4px solid #fff0b7; background:radial-gradient(circle at 35% 25%,#fff8d6 0%,#fcd34d 28%,#d97706 76%,#78350f 100%); box-shadow:0 0 0 7px rgba(245,158,11,.14),0 12px 35px rgba(0,0,0,.48),0 0 45px rgba(251,191,36,.5); animation:victoryMedalPop .95s cubic-bezier(.16,1,.3,1) .16s both; }
+        .victory-medal i { filter:drop-shadow(0 2px 2px rgba(255,255,255,.38)); }
+        .victory-orbit-star { position:absolute; color:#fde68a; text-shadow:0 0 13px rgba(251,191,36,.9); font-size:1.25rem; animation:victoryStarTwinkle 1.8s ease-in-out infinite alternate; }
+        .victory-orbit-star-a { top:4%; left:8%; }.victory-orbit-star-b { top:19%; right:0; animation-delay:.45s; }.victory-orbit-star-c { bottom:5%; left:2%; animation-delay:.8s; }
+        .victory-result-badge { display:inline-flex; align-items:center; gap:.4rem; padding:.38rem .85rem; border:1px solid rgba(253,230,138,.5); border-radius:999px; color:#fef3c7; background:linear-gradient(90deg,rgba(146,64,14,.58),rgba(120,53,15,.28)); font-size:.61rem; font-weight:1000; letter-spacing:.19em; box-shadow:0 0 22px rgba(251,191,36,.09); }
+        .victory-tagline { margin-top:.72rem; color:#fbbf24; font-size:.63rem; font-weight:1000; letter-spacing:.34em; text-shadow:0 0 20px rgba(251,191,36,.28); }
+        .victory-winner-name { max-width:100%; margin:.4rem 0 .35rem; color:#fff2c2; font-family:Georgia,serif; font-size:clamp(1.7rem,5.6vw,3rem); font-weight:900; line-height:1.12; letter-spacing:-.035em; text-wrap:balance; overflow-wrap:anywhere; text-shadow:0 4px 30px rgba(251,191,36,.2); }
+        .victory-winner-subtext { max-width:34rem; margin:0 auto; color:rgba(255,247,221,.76); font-size:clamp(.76rem,2vw,.92rem); line-height:1.65; text-wrap:balance; }
+        .victory-stats-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.6rem; margin-top:.7rem; }
+        .victory-stat-card { min-width:0; padding:.8rem .55rem .75rem; border:1px solid rgba(253,230,138,.16); border-radius:1rem; background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); text-align:center; }
+        .victory-stat-primary { border-color:rgba(251,191,36,.5); background:linear-gradient(155deg,rgba(180,83,9,.3),rgba(120,53,15,.12)); box-shadow:inset 0 0 22px rgba(251,191,36,.055); }
+        .victory-stat-label { display:flex; align-items:center; justify-content:center; gap:.35rem; min-height:1.5rem; color:rgba(253,230,138,.76); font-size:.55rem; font-weight:1000; letter-spacing:.1em; }
+        .victory-stat-label i { color:#fbbf24; }
+        .victory-stat-value { display:block; margin-top:.35rem; color:#fff7df; font-size:clamp(1.05rem,3vw,1.55rem); font-weight:1000; line-height:1.15; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+        .victory-stat-primary .victory-stat-value { color:#fde68a; }
+        .victory-stat-foot { display:block; margin-top:.28rem; color:rgba(255,247,221,.55); font-size:.62rem; }
+        .victory-breakdown { margin-top:.8rem; padding:.85rem 1rem; border:1px solid rgba(45,212,191,.22); border-radius:1rem; background:rgba(4,47,46,.24); }
+        .victory-breakdown-heading { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.55rem; color:#99f6e4; font-size:.68rem; font-weight:900; }
+        .victory-breakdown-heading span:last-child { color:rgba(153,246,228,.52); font:800 .56rem/1 ui-monospace,monospace; letter-spacing:.12em; }
+        .victory-breakdown-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.42rem 1rem; }
+        .victory-breakdown-grid>div { display:flex; justify-content:space-between; gap:.7rem; color:rgba(255,247,221,.7); font-size:.68rem; }
+        .victory-breakdown-grid strong { color:#fef3c7; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .victory-breakdown-grid .victory-debt-row,.victory-breakdown-grid .victory-debt-row strong { color:#fda4af; }
+        .victory-draw-message { margin-top:.4rem; padding:1.2rem; border:1px solid rgba(148,163,184,.35); border-radius:1.15rem; background:rgba(30,41,59,.48); text-align:center; }
+        .victory-draw-icon { display:grid; place-items:center; width:3rem; height:3rem; margin:0 auto .65rem; border:1px solid rgba(203,213,225,.4); border-radius:50%; color:#e2e8f0; background:rgba(148,163,184,.12); font-size:1.3rem; }
+        .victory-actions { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:.65rem; margin-top:1.15rem; }
+        .victory-actions button { min-height:3.2rem; display:flex; align-items:center; justify-content:center; gap:.55rem; padding:.75rem .9rem; border-radius:.95rem; font-size:.78rem; font-weight:1000; transition:transform .2s ease,filter .2s ease,box-shadow .2s ease; cursor:pointer; }
+        .victory-actions button:hover { transform:translateY(-2px); filter:brightness(1.08); }.victory-actions button:active { transform:translateY(0) scale(.985); }
+        .victory-secondary-action { border:1px solid rgba(94,234,212,.38); color:#ccfbf1; background:rgba(13,148,136,.13); }
+        .victory-primary-action { border:1px solid #fde68a; color:#422006; background:linear-gradient(105deg,#fde68a,#f59e0b 70%,#d97706); box-shadow:0 8px 24px rgba(217,119,6,.22),inset 0 1px rgba(255,255,255,.62); }
+        .victory-footer-note { display:flex; align-items:center; justify-content:center; gap:.45rem; margin:.9rem 0 0; color:rgba(253,230,138,.48); font-size:.6rem; letter-spacing:.06em; }.victory-footer-note i { color:#fbbf24; }
+        .taunt-floating-pill.victory-taunt-pill { top:max(1rem,env(safe-area-inset-top)); bottom:auto; animation:victoryTauntDrop 2.85s cubic-bezier(.16,1,.3,1) forwards; }
+        @keyframes victoryBackdropReveal { from{opacity:0} to{opacity:1} }
+        @keyframes victoryPanelRise { 0%{opacity:0;transform:translateY(28px) scale(.96);filter:blur(7px)} 72%{opacity:1;transform:translateY(-3px) scale(1.006);filter:blur(0)} 100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)} }
+        @keyframes victoryMedalPop { 0%{opacity:0;transform:scale(.25) rotate(-22deg)} 68%{opacity:1;transform:scale(1.12) rotate(5deg)} 100%{opacity:1;transform:scale(1) rotate(0)} }
+        @keyframes victoryOrbitSpin { to{transform:rotate(360deg)} } @keyframes victoryLightSweep { to{transform:rotate(360deg)} }
+        @keyframes victoryStarTwinkle { from{opacity:.38;transform:scale(.82)} to{opacity:1;transform:scale(1.16)} }
+        @keyframes victoryConfettiFall { 0%{opacity:0;transform:translate3d(0,-8vh,0) rotate(0)} 12%{opacity:1} 100%{opacity:0;transform:translate3d(var(--victory-drift),112vh,0) rotate(var(--victory-spin))} }
+        @keyframes victoryTauntDrop { 0%{opacity:0;transform:translate(-50%,-18px) scale(.92)} 15%{opacity:1;transform:translate(-50%,0) scale(1.02)} 28%,78%{opacity:1;transform:translate(-50%,0) scale(1)} 100%{opacity:0;transform:translate(-50%,-32px) scale(.96)} }
+        @media (max-width:640px) {
+            #victoryModal { align-items:flex-start; }
+            .victory-panel { width:100%; max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px); padding:1rem; margin:auto; }
+            .victory-topline { padding-bottom:.7rem; }.victory-hero { padding:.9rem .1rem .7rem; }.victory-medal-orbit { margin-bottom:.75rem; }
+            .victory-stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; }.victory-stat-card { padding:.72rem .4rem; }
+            .victory-actions { grid-template-columns:1fr; }.victory-actions button { min-height:3rem; }
+            .victory-breakdown { padding:.75rem; }.victory-breakdown-grid { gap:.5rem .65rem; }.victory-breakdown-grid>div { font-size:.62rem; }
+        }
+        @media (max-width:360px) { .victory-breakdown-grid { grid-template-columns:1fr; }.victory-brand { font-size:.59rem; }.victory-result-badge { font-size:.52rem; letter-spacing:.13em; }.victory-tagline { letter-spacing:.23em; } }
+        @media (prefers-reduced-motion:reduce) {
+            #victoryModal::before,.victory-panel,.victory-medal,.victory-medal-orbit::after,.victory-orbit-star,.victory-confetti-piece,.taunt-floating-pill.victory-taunt-pill { animation:none!important; transition:none!important; }
+            .victory-confetti-piece { display:none!important; }
+        }
+
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
@@ -5339,17 +5440,71 @@
     <!-- ==========================================
          मोडल 7: विजय उत्सव (VICTORY CELEBRATION MODAL)
          ========================================== -->
-    <div id="victoryModal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-wood-900 border-4 border-gold-400 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
-            <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-gold-300 to-amber-600 flex items-center justify-center text-wood-950 text-4xl shadow-xl border-2 border-white">
-                <i class="fa-solid fa-trophy"></i>
+    <div id="victoryModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="winnerNameHeading" aria-describedby="winnerSubtext">
+        <div id="victoryConfetti" class="victory-confetti-layer" aria-hidden="true"></div>
+        <section id="victoryPanel" class="victory-panel" tabindex="-1">
+            <div class="victory-topline">
+                <span class="victory-brand"><i class="fa-solid fa-landmark"></i> भारतीय व्यापारी</span>
+                <span id="victoryRoundValue" class="victory-round">ROUND 01</span>
             </div>
-            <h2 id="winnerNameHeading" class="font-royal text-2xl sm:text-3xl text-gold-300 mb-1">व्यापार सम्राट की विजय!</h2>
-            <p id="winnerSubtext" class="text-xs sm:text-sm text-amber-100/90 mb-5">ने पूरे भारतीय बाज़ार पर अपना एकाधिकार स्थापित कर लिया है!</p>
-            <button onclick="openSetupModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-gold-400 to-amber-500 text-wood-950 font-black text-sm shadow-lg">
-                नया शाही मुकाबला खेलें
-            </button>
-        </div>
+            <div class="victory-hero">
+                <div class="victory-medal-orbit" aria-hidden="true">
+                    <span class="victory-orbit-star victory-orbit-star-a">✦</span>
+                    <span class="victory-orbit-star victory-orbit-star-b">✧</span>
+                    <span class="victory-orbit-star victory-orbit-star-c">✦</span>
+                    <div class="victory-medal"><i id="victoryWinnerIcon" class="fa-solid fa-trophy"></i></div>
+                </div>
+                <div id="victoryResultBadge" class="victory-result-badge">CHAMPION CROWNED</div>
+                <div id="victoryTagline" class="victory-tagline">THE LAST TYCOON</div>
+                <h2 id="winnerNameHeading" class="victory-winner-name">व्यापार सम्राट की विजय!</h2>
+                <p id="winnerSubtext" class="victory-winner-subtext">पूरे भारतीय बाज़ार के नए सम्राट का स्वागत है।</p>
+            </div>
+            <div id="victoryDrawMessage" class="victory-draw-message hidden">
+                <span class="victory-draw-icon"><i class="fa-solid fa-handshake"></i></span>
+                <p class="font-black text-amber-50 text-sm">इस मुकाबले में कोई विजेता घोषित नहीं हुआ।</p>
+                <p class="text-xs text-amber-100/75 mt-1">अंतिम खिलाड़ी भी खेल से बाहर हो गए। सभी खिलाड़ियों का अंतिम वित्तीय रिकॉर्ड खाता-बही में उपलब्ध है।</p>
+            </div>
+            <div id="victoryStats" class="victory-stats-grid hidden">
+                <div class="victory-stat-card victory-stat-primary">
+                    <span class="victory-stat-label"><i class="fa-solid fa-gem"></i> FINAL NET WORTH</span>
+                    <strong id="victoryNetWorthValue" class="victory-stat-value">₹0</strong>
+                    <span class="victory-stat-foot">कुल शुद्ध संपत्ति</span>
+                </div>
+                <div class="victory-stat-card">
+                    <span class="victory-stat-label"><i class="fa-solid fa-wallet"></i> CASH RESERVE</span>
+                    <strong id="victoryCashValue" class="victory-stat-value">₹0</strong>
+                    <span class="victory-stat-foot">हाथ में नकद</span>
+                </div>
+                <div class="victory-stat-card">
+                    <span class="victory-stat-label"><i class="fa-solid fa-city"></i> ASSETS</span>
+                    <strong id="victoryPropertiesValue" class="victory-stat-value">0</strong>
+                    <span class="victory-stat-foot">शहर और सेवाएँ</span>
+                </div>
+                <div class="victory-stat-card">
+                    <span class="victory-stat-label"><i class="fa-solid fa-house-chimney"></i> HOUSES / HOTELS</span>
+                    <strong id="victoryBuildingsValue" class="victory-stat-value">0</strong>
+                    <span class="victory-stat-foot">घर और होटल</span>
+                </div>
+            </div>
+            <div id="victoryBreakdown" class="victory-breakdown hidden">
+                <div class="victory-breakdown-heading"><span>विजेता का वित्तीय सारांश</span><span>FINAL STATEMENT</span></div>
+                <div class="victory-breakdown-grid">
+                    <div><span>शहर / सेवा मूल्य</span><strong id="victoryPropertyValue">₹0</strong></div>
+                    <div><span>निर्माण मूल्य</span><strong id="victoryBuildValue">₹0</strong></div>
+                    <div class="victory-debt-row"><span>बंधक कटौती</span><strong id="victoryMortgageValue">−₹0</strong></div>
+                    <div class="victory-debt-row"><span>RBI बचाव ऋण</span><strong id="victoryLoanValue">−₹0</strong></div>
+                </div>
+            </div>
+            <div class="victory-actions">
+                <button id="victoryLedgerButton" type="button" onclick="openFinalLedgerFromVictory()" class="victory-secondary-action">
+                    <i class="fa-solid fa-receipt"></i><span>अंतिम खाता-बही</span>
+                </button>
+                <button id="victoryNewGameButton" type="button" onclick="openSetupModal()" class="victory-primary-action">
+                    <i class="fa-solid fa-crown"></i><span>नया शाही मुकाबला</span><i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+            <p class="victory-footer-note"><i class="fa-solid fa-medal"></i><span id="victoryFooterNote">एक बाज़ार। अनेक व्यापारी। एक सम्राट।</span></p>
+        </section>
     </div>
 
     <script>
@@ -5429,6 +5584,15 @@
         function sfxFanfare() {
             const notes = [523.25, 659.25, 783.99, 1046.5];
             notes.forEach((n, idx) => playTone(n, 'triangle', 0.24, idx * 0.11, 0.16));
+        }
+
+        function sfxVictoryFanfare() {
+            [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((n, idx) => {
+                playTone(n, 'triangle', 0.34, idx * 0.13, 0.13);
+            });
+            [659.25, 783.99, 1046.5].forEach((n, idx) => {
+                playTone(n, 'sine', 0.42, 0.58 + idx * 0.09, 0.055);
+            });
         }
 
         function sfxTaunt(index) {
@@ -7762,6 +7926,7 @@
             // मुख्य 3D डायलॉग बबल
             const pill = document.createElement('div');
             pill.className = `taunt-floating-pill bg-gradient-to-r ${taunt.bg} border-2 border-gold-200 rounded-2xl px-5 py-3 text-white flex items-center gap-3 min-w-[260px] max-w-[90vw]`;
+            if (gameState.phase === 'GAME_OVER') pill.classList.add('victory-taunt-pill');
             pill.innerHTML = `
                 <div class="text-3xl sm:text-4xl drop-shadow-lg animate-bounce">${taunt.emoji}</div>
                 <div class="text-left">
@@ -10225,22 +10390,104 @@
             return getNetWorthBreakdown(playerId).total;
         }
 
+
+        function renderVictoryPresentation(winner) {
+            const modal = document.getElementById('victoryModal');
+            const panel = document.getElementById('victoryPanel');
+            const stats = document.getElementById('victoryStats');
+            const breakdownPanel = document.getElementById('victoryBreakdown');
+            const drawMessage = document.getElementById('victoryDrawMessage');
+            const icon = document.getElementById('victoryWinnerIcon');
+            const round = Math.max(1, Number(gameState.round) || 1);
+
+            document.getElementById('victoryRoundValue').textContent = 'ROUND ' + String(round).padStart(2, '0');
+            panel.style.setProperty('--winner-accent', winner && /^#[0-9a-f]{6}$/i.test(winner.color || '') ? winner.color : '#fbbf24');
+
+            if (!winner) {
+                modal.dataset.result = 'draw';
+                document.getElementById('victoryResultBadge').textContent = 'MATCH COMPLETE · NO CHAMPION';
+                document.getElementById('victoryTagline').textContent = 'A MARKET WITHOUT A TYCOON';
+                document.getElementById('winnerNameHeading').textContent = 'खेल बराबरी में समाप्त!';
+                document.getElementById('winnerSubtext').textContent = 'इस मुकाबले में कोई खिलाड़ी शेष नहीं रहा।';
+                icon.className = 'fa-solid fa-handshake';
+                stats.classList.add('hidden');
+                breakdownPanel.classList.add('hidden');
+                drawMessage.classList.remove('hidden');
+                document.getElementById('victoryFooterNote').textContent = 'फिर से शुरुआत करें और अगला सम्राट तय करें।';
+            } else {
+                modal.dataset.result = 'champion';
+                document.getElementById('victoryResultBadge').textContent = 'CHAMPION CROWNED · THE LAST TYCOON';
+                document.getElementById('victoryTagline').textContent = 'THE MARKET HAS A NEW EMPEROR';
+                document.getElementById('winnerNameHeading').textContent = winner.name + ' की शाही विजय!';
+                document.getElementById('winnerSubtext').textContent = 'राउंड ' + round + ' के बाद पूरे भारतीय बाज़ार पर आपका राज कायम हुआ।';
+                const safeIcon = /^fa-[a-z0-9-]+$/.test(winner.icon || '') ? winner.icon : 'fa-user';
+                icon.className = 'fa-solid ' + safeIcon;
+
+                const netWorth = getNetWorthBreakdown(winner.id);
+                const ownedProperties = Object.entries(gameState.ownership || {}).filter(entry => entry[1] && entry[1].ownerId === winner.id);
+                const buildingCounts = ownedProperties.reduce((counts, entry) => {
+                    const level = Math.max(0, Number(entry[1].houses) || 0);
+                    if (level === 4) counts.hotels += 1;
+                    else counts.houses += level;
+                    return counts;
+                }, { houses: 0, hotels: 0 });
+                const signedNetWorth = netWorth.total < 0 ? '−' + formatRupee(netWorth.total) : formatRupee(netWorth.total);
+
+                document.getElementById('victoryNetWorthValue').textContent = signedNetWorth;
+                document.getElementById('victoryCashValue').textContent = formatRupee(netWorth.cash);
+                document.getElementById('victoryPropertiesValue').textContent = String(ownedProperties.length);
+                document.getElementById('victoryBuildingsValue').textContent = buildingCounts.houses + ' / ' + buildingCounts.hotels;
+                document.getElementById('victoryPropertyValue').textContent = formatRupee(netWorth.propVal);
+                document.getElementById('victoryBuildValue').textContent = formatRupee(netWorth.buildVal);
+                document.getElementById('victoryMortgageValue').textContent = '−' + formatRupee(netWorth.mortgageDeduction);
+                document.getElementById('victoryLoanValue').textContent = '−' + formatRupee(netWorth.rescueLoanDebt || 0);
+                stats.classList.remove('hidden');
+                breakdownPanel.classList.remove('hidden');
+                drawMessage.classList.add('hidden');
+                document.getElementById('victoryFooterNote').textContent = 'एक बाज़ार। अनेक व्यापारी। एक सम्राट।';
+            }
+
+            modal.classList.remove('hidden');
+            const primaryAction = document.getElementById('victoryNewGameButton');
+            if (primaryAction && typeof primaryAction.focus === 'function') primaryAction.focus();
+        }
+
+        function launchVictoryConfetti() {
+            const layer = document.getElementById('victoryConfetti');
+            if (!layer) return;
+            layer.replaceChildren();
+            for (let i = 0; i < 42; i++) {
+                const piece = document.createElement('span');
+                piece.className = 'victory-confetti-piece';
+                piece.style.left = (Math.random() * 100).toFixed(2) + '%';
+                piece.style.setProperty('--victory-drift', (Math.random() * 220 - 110).toFixed(0) + 'px');
+                piece.style.setProperty('--victory-duration', (3.4 + Math.random() * 1.7).toFixed(2) + 's');
+                piece.style.setProperty('--victory-delay', (Math.random() * 0.65).toFixed(2) + 's');
+                piece.style.setProperty('--victory-spin', (360 + Math.random() * 720).toFixed(0) + 'deg');
+                layer.appendChild(piece);
+            }
+            scheduleGameTimeout(function () { layer.replaceChildren(); }, 5600);
+        }
+
+        function openFinalLedgerFromVictory() {
+            document.getElementById('victoryModal').classList.add('hidden');
+            openLedgerModal();
+        }
+
         function checkWinCondition() {
+            if (gameState.phase === 'GAME_OVER') return true;
             const alive = gameState.players.filter(p => !p.bankrupt);
             if (alive.length === 0) {
                 gameState.phase = 'GAME_OVER';
-                document.getElementById('winnerNameHeading').textContent = 'खेल बराबरी में समाप्त!';
-                document.getElementById('winnerSubtext').textContent = 'सभी सक्रिय खिलाड़ी दिवालिया या RBI ऑडिट में बाहर हो गए। कोई विजेता घोषित नहीं किया गया।';
-                document.getElementById('victoryModal').classList.remove('hidden');
+                renderVictoryPresentation(null);
                 return true;
             }
             if (alive.length === 1) {
                 gameState.phase = 'GAME_OVER';
                 const winner = alive[0];
-                sfxFanfare();
-                document.getElementById('winnerNameHeading').textContent = `${winner.name} की शाही विजय!`;
-                document.getElementById('winnerSubtext').textContent = `कुल ${formatRupee(calculateNetWorth(winner.id))} की संपत्ति के साथ पूरे भारतीय बाज़ार के सम्राट बने!`;
-                document.getElementById('victoryModal').classList.remove('hidden');
+                renderVictoryPresentation(winner);
+                sfxVictoryFanfare();
+                launchVictoryConfetti();
                 if (typeof triggerAutomaticTaunt === 'function') triggerAutomaticTaunt(4, 'game-victory', winner.name);
                 return true;
             }
