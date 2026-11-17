@@ -277,13 +277,15 @@ test('mortgaged property transfer fees are previewed and charged to each recipie
     c.document.getElementById('tradeOfferPropSelect').value = '1';
     c.document.getElementById('tradeRequestPropSelect').value = '2';
     c.renderTradeMortgageFeeDisclosure();
-    assert.match(previewNode.textContent, /Player B को Patna मिलेगी: अभी बैंक ब्याज ₹25/);
-    assert.match(previewNode.textContent, /Player A को Ranchi मिलेगी: अभी बैंक ब्याज ₹30/);
+    assert.match(previewNode.textContent, /Player B को Patna मिलेगी: अभी बैंक हस्तांतरण ब्याज ₹25/);
+    assert.match(previewNode.textContent, /बाद में छुड़ाने की लागत ₹275 होगी/);
+    assert.match(previewNode.textContent, /Player A को Ranchi मिलेगी: अभी बैंक हस्तांतरण ब्याज ₹30/);
+    assert.match(previewNode.textContent, /बाद में छुड़ाने की लागत ₹330 होगी/);
     sendHumanOffer(c, { offerPropId: 1, requestPropId: 2, offerCash: 500, requestCash: 200 });
     const summary = c.document.getElementById('tradeResponseSummary').textContent;
-    assert.match(summary, /आपका हस्तांतरण ब्याज \(मूलधन का 10%\): ₹30/);
-    assert.match(summary, /प्राप्तकर्ता का हस्तांतरण ब्याज \(मूलधन का 10%\): ₹25/);
-    assert.match(summary, /बाद में छुड़ाने का शेष मूलधन: ₹300/);
+    assert.match(summary, /आपका अभी देय हस्तांतरण ब्याज: ₹30/);
+    assert.match(summary, /प्राप्तकर्ता का अभी देय हस्तांतरण ब्याज: ₹25/);
+    assert.match(summary, /बाद में गिरवी छुड़ाने की लागत \(मूलधन \+ अतिरिक्त 10% ब्याज\): ₹330/);
     c.acceptTradeOffer();
 
     assert.equal(c.gameState.ownership[1].ownerId, 1);
@@ -293,9 +295,9 @@ test('mortgaged property transfer fees are previewed and charged to each recipie
     assert.equal(c.gameState.players[0].cash, 9670);
     assert.equal(c.gameState.players[1].cash, 10275);
     assert.equal(c.gameState.jackpotPot, 1028);
-    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[1], c.gameState.ownership[1]), 250,
-        'paid transfer interest must not be charged a second time at redemption');
-    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[2], c.gameState.ownership[2]), 300);
+    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[1], c.gameState.ownership[1]), 275,
+        'later redemption carries additional interest after transfer interest was paid');
+    assert.equal(c.getMortgageRedemptionCost(c.BOARD_SPACES[2], c.gameState.ownership[2]), 330);
 });
 
 test('untransferred and legacy mortgaged properties retain principal-plus-interest redemption cost', () => {
