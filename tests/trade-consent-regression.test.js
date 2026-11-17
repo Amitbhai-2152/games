@@ -272,7 +272,6 @@ test('mortgaged property transfer fees are previewed and charged to each recipie
         2: { ownerId: 1, houses: 0, buildCosts: [], mortgaged: true }
     };
     const c = createGame({ ownership });
-    sendHumanOffer(c, { offerPropId: 1, requestPropId: 2, offerCash: 500, requestCash: 200 });
     const previewNode = c.document.getElementById('tradeMortgageFeePreview');
     c.document.getElementById('tradeOfferPropSelect').value = '1';
     c.document.getElementById('tradeRequestPropSelect').value = '2';
