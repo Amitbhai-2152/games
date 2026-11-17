@@ -7272,7 +7272,7 @@
                 if (!sellableIds.length) break;
 
                 // कम मूल्य के शहरों के निर्माण पहले बेचें ताकि महंगे एकाधिकार बचे रहें
-                sellableIds.sort((a, b) => BOARD_SPACES[a].price - BOARD_SPACES[b].price);
+                sellableIds.sort((a, b) => getAIStructureSalePriority(aiPlayer, a) - getAIStructureSalePriority(aiPlayer, b));
                 const chosenId = sellableIds[0];
                 const sp = BOARD_SPACES[chosenId];
                 const prop = gameState.ownership[chosenId];
@@ -7306,14 +7306,7 @@
                     .filter(id => canMortgageSpace(aiPlayer.id, id));
                 if (!mortgageableIds.length) break;
 
-                mortgageableIds.sort((a, b) => {
-                    const spA = BOARD_SPACES[a], spB = BOARD_SPACES[b];
-                    const monoA = hasGroupMonopoly(aiPlayer.id, spA.group);
-                    const monoB = hasGroupMonopoly(aiPlayer.id, spB.group);
-                    if (!monoA && monoB) return -1;
-                    if (monoA && !monoB) return 1;
-                    return spA.price - spB.price;
-                });
+                mortgageableIds.sort((a, b) => getAIMortgageLiquidationPriority(aiPlayer, a) - getAIMortgageLiquidationPriority(aiPlayer, b));
 
                 const chosenId = mortgageableIds[0];
                 const sp = BOARD_SPACES[chosenId];
@@ -8281,10 +8274,9 @@
                 }
 
                 if (p.isAI) {
-                    // AI अपने रंग समूह को पूरा करने वाले या सबसे कीमती अफोर्डेबल खाली शहर को चुनता है
-                    const affordable = unownedSpaces.filter(s => p.cash >= s.price + 400);
-                    const pick = affordable.length > 0 ? affordable[affordable.length - 1] : unownedSpaces[0];
-                    executeVandeBharatMove(cardIndex, pick.id);
+                    const bestTarget = getAIBestVandeBharatTarget(p);
+                    if (bestTarget) executeVandeBharatMove(cardIndex, bestTarget.space.id);
+                    else setToast("वन्दे भारत पास अभी उपयोगी संपत्ति अवसर नहीं देता; कार्ड सुरक्षित रखा गया।");
                 } else {
                     openVandeBharatModal(cardIndex, unownedSpaces);
                 }
@@ -9417,19 +9409,30 @@
             if(!gameState.auction.humanBidders.length)scheduleGameTimeout(resolveSealedAuctionBids,720);
         }
 
-        function getAISealedAuctionBid(bidder,space,auction) {
-            const groupSpaces=space.type==='city'?BOARD_SPACES.filter(s=>s.type==='city'&&s.group===space.group&&s.id!==space.id):[];
-            const completesOwnSet=groupSpaces.length>0&&groupSpaces.every(s=>gameState.ownership[s.id]?.ownerId===bidder.id);
-            const blocksOpponentSet=groupSpaces.length>0&&gameState.players.some(other=>other.id!==bidder.id&&!other.bankrupt&&groupSpaces.every(s=>gameState.ownership[s.id]?.ownerId===other.id));
-            let maxWilling=Math.floor(space.price*.92),ratio=.72,reason='सूची मूल्य से नीचे सुरक्षित मूल्यांकन';
-            if(completesOwnSet){maxWilling=Math.floor(space.price*1.35);ratio=1.12;reason='रंग समूह पूरा करने का रणनीतिक मूल्य';}
-            else if(blocksOpponentSet){maxWilling=Math.floor(space.price*1.2);ratio=.98;reason='प्रतिद्वंद्वी का एकाधिकार रोकने का मूल्य';}
-            const cap=Math.min(maxWilling,Math.max(0,bidder.cash-500));
-            if(cap<auction.minimumBid)return {bid:0,reason:'नकदी सुरक्षित रखने के लिए पास'};
-            let bid=Math.max(auction.minimumBid,Math.min(cap,Math.floor(space.price*ratio/100)*100));
-            if(bid>bidder.cash)bid=bidder.cash;
-            if(bid<auction.minimumBid)bid=0;
-            return {bid,reason:`${reason}; सार्वजनिक मूल्यांकन ${formatRupee(bid)}`};
+
+        function getAISealedAuctionBid(bidder, space, auction) {
+            const valuation = getAIPropertyValuation(bidder, space);
+            const reserve = getAIReserveCash(bidder);
+            const protectedReserve = valuation.completesGroup
+                ? Math.max(350, reserve * 0.52)
+                : valuation.blocksRivalMonopoly
+                    ? Math.max(450, reserve * 0.76)
+                    : reserve;
+            const cashBudget = Math.max(0, bidder.cash - protectedReserve);
+            const strategicCap = Math.min(space.price * 1.42, valuation.marketValue * 0.91);
+            const maxBid = Math.floor(Math.min(cashBudget, strategicCap) / 100) * 100;
+            if (maxBid < auction.minimumBid) {
+                return { bid: 0, reason: "सुरक्षित नकदी रिज़र्व बनाए रखने के लिए बोली से विरत" };
+            }
+            const preferredRatio = valuation.completesGroup ? 1.16 : valuation.blocksRivalMonopoly ? 1.01 : 0.92;
+            const preferredBid = Math.floor(space.price * preferredRatio / 100) * 100;
+            const bid = Math.max(auction.minimumBid, Math.min(maxBid, preferredBid));
+            const reason = valuation.completesGroup
+                ? "रंग समूह पूरा करने के लिए नियंत्रित प्रीमियम बोली"
+                : valuation.blocksRivalMonopoly
+                    ? "प्रतिद्वंद्वी का एकाधिकार रोकने के लिए प्रतिस्पर्धी बोली"
+                    : "मूल्यांकन और रिज़र्व के भीतर नियंत्रित बोली";
+            return { bid: bid >= auction.minimumBid ? bid : 0, reason: reason + "; स्वीकृत सीमा " + formatRupee(maxBid) };
         }
 
         function renderAuctionModal() {
@@ -10354,7 +10357,7 @@
                     .map(Number)
                     .filter(id => canSellEvenlyOnSpace(aiPlayer.id, id).allowed);
                 if (!sellableSpaces.length) break;
-                sellableSpaces.sort((a, b) => BOARD_SPACES[a].price - BOARD_SPACES[b].price);
+                sellableSpaces.sort((a, b) => getAIStructureSalePriority(aiPlayer, a) - getAIStructureSalePriority(aiPlayer, b));
                 handleSellStructure(sellableSpaces[0]);
             }
 
@@ -10378,14 +10381,7 @@
                     .filter(id => canMortgageSpace(aiPlayer.id, id));
                 if (!mortgageable.length) break;
 
-                mortgageable.sort((a, b) => {
-                    const spA = BOARD_SPACES[a], spB = BOARD_SPACES[b];
-                    const monoA = hasGroupMonopoly(aiPlayer.id, spA.group);
-                    const monoB = hasGroupMonopoly(aiPlayer.id, spB.group);
-                    if (!monoA && monoB) return -1;
-                    if (monoA && !monoB) return 1;
-                    return spA.price - spB.price;
-                });
+                mortgageable.sort((a, b) => getAIMortgageLiquidationPriority(aiPlayer, a) - getAIMortgageLiquidationPriority(aiPlayer, b));
 
                 handleToggleMortgage(mortgageable[0]);
             }
@@ -10743,107 +10739,466 @@
             renderAll();
             checkAndTriggerAITurn();
         }
-        function checkAndTriggerAITurn() {
-            const p=gameState.players[gameState.currentPlayerIndex];
-            if(!p||p.bankrupt||gameState.phase==='GAME_OVER')return;
-            if(!p.isAI)return;
 
-            gameState.aiTimer=scheduleGameTimeout(()=>{
-                // स्मार्ट AI पासा फेंकने से पहले रणनीतिक रूप से अपने सीक्रेट पावर कार्ड्स का भी उपयोग करता है
-                const shieldIdx = (p.powerCards || []).findIndex(c => c.type === 'RENT_SHIELD' && !c.used);
-                if (shieldIdx !== -1 && !p.rentShieldActive && Object.keys(gameState.ownership).length >= 10) {
-                    activatePowerCard(shieldIdx);
+        /* ==============================================================
+           Strategic AI engine: probabilities, investment value, risk and opportunity cost.
+           It uses only public game state; it never reads dice or sealed opponent bids.
+           ============================================================== */
+        function getAIActiveOpponents(player) {
+            return gameState.players.filter(other => other && other.id !== player.id && !other.bankrupt);
+        }
+
+        function getAIPlayerLandingProbability(player, spaceId) {
+            if (!player || player.bankrupt || !BOARD_SPACES.length) return 0;
+            const distance = (Number(spaceId) - (Number(player.position) || 0) + BOARD_SPACES.length) % BOARD_SPACES.length;
+            if (distance < 2 || distance > 12) return 0;
+            if (player.inJail && (Number(player.jailTurns) || 0) < 2) {
+                return distance % 2 === 0 ? 1 / 36 : 0;
+            }
+            if (player.inJail && player.cash < 500) {
+                return distance % 2 === 0 ? 1 / 36 : 0;
+            }
+            const diceWays = { 2:1, 3:2, 4:3, 5:4, 6:5, 7:6, 8:5, 9:4, 10:3, 11:2, 12:1 };
+            return (diceWays[distance] || 0) / 36;
+        }
+
+        function getAIExpectedVisitsForSpace(spaceId, ownerId) {
+            const property = gameState.ownership[spaceId];
+            if (property && property.mortgaged) return 0;
+            const resolvedOwnerId = ownerId !== undefined && ownerId !== null
+                ? ownerId
+                : (property ? property.ownerId : null);
+            const owner = resolvedOwnerId !== null ? gameState.players[resolvedOwnerId] : null;
+            if (owner && owner.inJail && setupConfig && setupConfig.jailRentAllowed === false) return 0;
+            return gameState.players.reduce((visits, other) => {
+                if (!other || other.bankrupt || other.id === resolvedOwnerId) return visits;
+                return visits + getAIPlayerLandingProbability(other, spaceId);
+            }, 0);
+        }
+
+        function getAIPropertyRent(player, space, propState) {
+            if (!player || !space || !propState || propState.mortgaged) return 0;
+            let baseRent = 0;
+            if (space.type === "city") {
+                const houses = Math.max(0, Math.min(4, Number(propState.houses) || 0));
+                if (houses > 0) {
+                    baseRent = Number(space.rents && space.rents[houses]) || 0;
                 } else {
-                    const raidIdx = (p.powerCards || []).findIndex(c => c.type === 'IT_RAID' && !c.used);
-                    if (raidIdx !== -1 && Math.random() < 0.35) {
-                        activatePowerCard(raidIdx);
-                    }
+                    const groupSpaces = BOARD_SPACES.filter(item => item.type === "city" && item.group === space.group);
+                    const groupComplete = groupSpaces.length > 1 && groupSpaces.every(item => {
+                        if (item.id === space.id) return true;
+                        const state = gameState.ownership[item.id];
+                        return Boolean(state && state.ownerId === player.id && !state.mortgaged);
+                    });
+                    baseRent = (Number(space.rents && space.rents[0]) || 0) * (groupComplete ? 2 : 1);
                 }
+            } else if (space.type === "utility") {
+                const ownedUtilities = BOARD_SPACES.filter(item => {
+                    if (item.type !== "utility") return false;
+                    if (item.id === space.id) return true;
+                    const state = gameState.ownership[item.id];
+                    return Boolean(state && state.ownerId === player.id && !state.mortgaged);
+                }).length;
+                const utilityScale = [0, 250, 600, 1200, 2200, 3500, 5000];
+                baseRent = utilityScale[Math.min(ownedUtilities, utilityScale.length - 1)] || 250;
+            }
+            let eventMultiplier = 1;
+            if (gameState.activeWorldEvent && typeof gameState.activeWorldEvent.rentMultiplierFn === "function") {
+                try {
+                    eventMultiplier = Number(gameState.activeWorldEvent.rentMultiplierFn(space)) || 1;
+                } catch (_) {
+                    eventMultiplier = 1;
+                }
+            }
+            const inflationMultiplier = setupConfig && setupConfig.progressiveElimination
+                ? (Number(gameState.inflationMultiplier) || 1)
+                : 1;
+            const finalShowdownMultiplier = gameState.players.filter(item => item && !item.bankrupt).length === 2 ? 1.25 : 1;
+            return Math.max(0, Math.round(baseRent * eventMultiplier * inflationMultiplier * finalShowdownMultiplier));
+        }
 
-                if (gameState.phase !== 'PRE_ROLL' || p.bankrupt || gameState.phase === 'GAME_OVER') return;
+        function getAIGroupContext(player, space) {
+            if (!player || !space || space.type !== "city") {
+                return { groupSpaces: [], ownedByPlayer: 0, completesGroup: false, blocksRivalMonopoly: false, groupProgress: 0 };
+            }
+            const groupSpaces = BOARD_SPACES.filter(item => item.type === "city" && item.group === space.group);
+            const otherSpaces = groupSpaces.filter(item => item.id !== space.id);
+            const ownedByPlayer = otherSpaces.filter(item => {
+                const state = gameState.ownership[item.id];
+                return state && state.ownerId === player.id && !state.mortgaged;
+            }).length;
+            const completesGroup = otherSpaces.length > 0 && ownedByPlayer === otherSpaces.length;
+            const rivals = getAIActiveOpponents(player);
+            const blocksRivalMonopoly = otherSpaces.length > 0 && rivals.some(rival =>
+                otherSpaces.every(item => {
+                    const state = gameState.ownership[item.id];
+                    return state && state.ownerId === rival.id && !state.mortgaged;
+                })
+            );
+            return {
+                groupSpaces,
+                ownedByPlayer,
+                completesGroup,
+                blocksRivalMonopoly,
+                groupProgress: otherSpaces.length ? ownedByPlayer / otherSpaces.length : 0
+            };
+        }
 
-                if (p.inJail && p.cash >= 2000) {
-                    showAIReasoning(`🤖 ${p.name}: तिजोरी में पर्याप्त नकदी (${formatRupee(p.cash)}) होने के कारण ₹500 ज़ुर्माना भरकर जेल से बाहर निकले।`);
+        function getAIPropertyValuation(player, space) {
+            if (!player || !space || (space.type !== "city" && space.type !== "utility") || !(Number(space.price) > 0)) {
+                return { marketValue: 0, expectedRentPerRound: 0, groupProgress: 0, completesGroup: false, blocksRivalMonopoly: false, netValue: 0 };
+            }
+            const group = getAIGroupContext(player, space);
+            const opponents = getAIActiveOpponents(player);
+            const immediateVisits = getAIExpectedVisitsForSpace(space.id, player.id);
+            const expectedVisits = immediateVisits * 0.35 + (opponents.length / Math.max(1, BOARD_SPACES.length)) * 0.65;
+            const rent = getAIPropertyRent(player, space, { ownerId: player.id, houses: 0, mortgaged: false });
+            const round = Math.max(1, Number(gameState.round) || 1);
+            const horizon = Math.max(6, 14 - Math.floor((round - 1) / 4));
+            const expectedRentPerRound = expectedVisits * rent;
+            const rentValue = Math.min(space.price * 0.82, expectedRentPerRound * horizon * 0.82);
+            const groupBonus = space.type === "city"
+                ? (group.completesGroup ? space.price * 0.90 : space.price * 0.25 * group.groupProgress)
+                : 0;
+            const blockingBonus = group.blocksRivalMonopoly ? space.price * 0.42 : 0;
+            const marketValue = Math.min(space.price * 1.9, Math.round(space.price + rentValue + groupBonus + blockingBonus));
+            return {
+                marketValue,
+                expectedRentPerRound,
+                expectedVisits,
+                rent,
+                groupProgress: group.groupProgress,
+                completesGroup: group.completesGroup,
+                blocksRivalMonopoly: group.blocksRivalMonopoly,
+                netValue: marketValue - space.price
+            };
+        }
+
+        function getAIReserveCash(player) {
+            if (!player) return 0;
+            let expectedExposure = 0;
+            let worstReachableRent = 0;
+            BOARD_SPACES.forEach(space => {
+                if (space.type !== "city" && space.type !== "utility") return;
+                const property = gameState.ownership[space.id];
+                if (!property || property.ownerId === player.id || property.mortgaged) return;
+                const owner = gameState.players[property.ownerId];
+                if (!owner || owner.bankrupt || (owner.inJail && setupConfig && setupConfig.jailRentAllowed === false)) return;
+                const probability = getAIPlayerLandingProbability(player, space.id);
+                if (probability <= 0) return;
+                const rent = getAIPropertyRent(owner, space, property);
+                expectedExposure += probability * rent;
+                worstReachableRent = Math.max(worstReachableRent, rent);
+            });
+            let reserve = Math.max(
+                650,
+                Math.round((Number(player.cash) || 0) * 0.12),
+                Math.ceil(worstReachableRent * 0.90),
+                Math.ceil(expectedExposure * 2.0)
+            );
+            if (setupConfig && setupConfig.progressiveElimination && typeof RBI_AUDIT_INTERVAL === "number") {
+                const roundsToAudit = (RBI_AUDIT_INTERVAL - (gameState.round % RBI_AUDIT_INTERVAL)) % RBI_AUDIT_INTERVAL;
+                if (roundsToAudit <= 1) {
+                    const auditStage = Math.floor((Math.max(1, gameState.round) - 1) / RBI_AUDIT_INTERVAL) + 1;
+                    const upcomingFee = typeof getScheduledLicenseFee === "function" ? getScheduledLicenseFee(auditStage) : 0;
+                    reserve = Math.max(reserve, upcomingFee + (player.rbiHearingPending ? 500 : 0));
+                }
+            }
+            return Math.min(reserve, Math.max(0, (Number(player.cash) || 0) - 250));
+        }
+
+        function getAIPurchaseDecision(player, space) {
+            if (!player || !space || player.bankrupt || gameState.ownership[space.id] || player.cash < space.price) {
+                return { shouldBuy: false, reason: "नकदी या उपलब्धता की शर्त पूरी नहीं हुई", reserve: 0, valuation: null };
+            }
+            const valuation = getAIPropertyValuation(player, space);
+            const reserve = getAIReserveCash(player);
+            const protectedReserve = valuation.completesGroup
+                ? Math.max(350, reserve * 0.55)
+                : valuation.blocksRivalMonopoly
+                    ? Math.max(450, reserve * 0.78)
+                    : reserve;
+            const cashAfterPurchase = player.cash - space.price;
+            const valueRatio = valuation.marketValue / Math.max(1, space.price);
+            const hasStrategicValue = valueRatio >= 1.035 || valuation.completesGroup;
+            const shouldBuy = cashAfterPurchase >= protectedReserve && hasStrategicValue;
+            let reason = "खरीद के बाद नकदी रिज़र्व सुरक्षित रखना बेहतर है";
+            if (shouldBuy && valuation.completesGroup) reason = "रंग समूह पूरा होगा और निर्माण से किराया तेज़ी से बढ़ेगा";
+            else if (shouldBuy && valuation.blocksRivalMonopoly) reason = "प्रतिद्वंद्वी का एकाधिकार रोकना लाभदायक है";
+            else if (shouldBuy) reason = "किराया संभावना और संपत्ति मूल्य नकदी लागत से बेहतर हैं";
+            else if (!hasStrategicValue) reason = "इस संपत्ति का अनुमानित लाभ खरीद मूल्य को उचित नहीं ठहराता";
+            return { shouldBuy, reason, reserve: protectedReserve, cashAfterPurchase, valuation };
+        }
+
+        function getAIBestVandeBharatTarget(player) {
+            const candidates = BOARD_SPACES.filter(space =>
+                (space.type === "city" || space.type === "utility") &&
+                !gameState.ownership[space.id] &&
+                getAIPurchaseDecision(player, space).shouldBuy
+            );
+            if (!candidates.length) return null;
+            return candidates.map(space => {
+                const valuation = getAIPropertyValuation(player, space);
+                const steps = (space.id - player.position + BOARD_SPACES.length) % BOARD_SPACES.length || BOARD_SPACES.length;
+                const crossesStart = player.position + steps >= BOARD_SPACES.length;
+                const salary = crossesStart
+                    ? (setupConfig.progressiveElimination ? getScheduledStartSalary(gameState.round) : (gameState.activeWorldEvent?.startBonus || 1500))
+                    : 0;
+                const score = valuation.netValue + (valuation.completesGroup ? space.price * 0.35 : 0) + salary;
+                return { space, valuation, score };
+            }).sort((a, b) => b.score - a.score)[0];
+        }
+
+        function getAIImmediateRentThreat(player) {
+            let expectedLoss = 0;
+            let maxRent = 0;
+            let mostDangerousSpace = null;
+            BOARD_SPACES.forEach(space => {
+                if (space.type !== "city" && space.type !== "utility") return;
+                const property = gameState.ownership[space.id];
+                if (!property || property.ownerId === player.id || property.mortgaged) return;
+                const owner = gameState.players[property.ownerId];
+                if (!owner || owner.bankrupt || (owner.inJail && setupConfig && setupConfig.jailRentAllowed === false)) return;
+                const probability = getAIPlayerLandingProbability(player, space.id);
+                if (probability <= 0) return;
+                const rent = getAIPropertyRent(owner, space, property);
+                expectedLoss += probability * rent;
+                if (rent > maxRent) {
+                    maxRent = rent;
+                    mostDangerousSpace = space;
+                }
+            });
+            return { expectedLoss, maxRent, mostDangerousSpace };
+        }
+
+        function shouldAIPayBail(player) {
+            if (!player || !player.inJail || player.cash < 500) return false;
+            if ((Number(player.jailTurns) || 0) >= 2) return true;
+            const reserve = getAIReserveCash(player);
+            return player.cash >= Math.max(6500, reserve + 3000);
+        }
+
+        function getAIBestBuildOption(player) {
+            if (!player) return null;
+            const reserve = getAIReserveCash(player);
+            const horizon = Math.max(6, 14 - Math.floor((Math.max(1, gameState.round) - 1) / 4));
+            let best = null;
+            Object.keys(gameState.ownership).forEach(id => {
+                const spaceId = Number(id);
+                const space = BOARD_SPACES[spaceId];
+                const property = gameState.ownership[spaceId];
+                if (!space || !property || property.ownerId !== player.id || space.type !== "city") return;
+                const eligibility = canBuildEvenlyOnSpace(player.id, spaceId);
+                if (!eligibility.allowed) return;
+                const cost = getEffectiveHouseCost(space);
+                if (cost <= 0 || player.cash - cost < reserve) return;
+                const currentRent = getAIPropertyRent(player, space, property);
+                const nextProperty = { ...property, houses: Math.min(4, (Number(property.houses) || 0) + 1), mortgaged: false };
+                const nextRent = getAIPropertyRent(player, space, nextProperty);
+                const expectedVisits = getAIExpectedVisitsForSpace(spaceId, player.id);
+                const projectedIncome = Math.max(0, nextRent - currentRent) * expectedVisits * horizon * 0.88;
+                const netGain = projectedIncome - cost;
+                const roi = netGain / cost;
+                if (projectedIncome < cost * 1.12) return;
+                if (!best || roi > best.roi) {
+                    best = { spaceId, space, cost, currentRent, nextRent, projectedIncome, netGain, roi };
+                }
+            });
+            return best;
+        }
+
+        function getAIBestMortgageRedemption(player) {
+            if (!player) return null;
+            const reserve = getAIReserveCash(player);
+            const horizon = Math.max(6, 14 - Math.floor((Math.max(1, gameState.round) - 1) / 4));
+            let best = null;
+            Object.keys(gameState.ownership).forEach(id => {
+                const spaceId = Number(id);
+                const space = BOARD_SPACES[spaceId];
+                const property = gameState.ownership[spaceId];
+                if (!space || !property || property.ownerId !== player.id || !property.mortgaged) return;
+                const cost = getMortgageRedemptionCost(space, property);
+                if (cost <= 0 || player.cash - cost < reserve) return;
+                const rent = getAIPropertyRent(player, space, { ...property, mortgaged: false });
+                const visits = getAIExpectedVisitsForSpace(spaceId, player.id);
+                const projectedIncome = rent * visits * horizon * 0.86;
+                const group = getAIGroupContext(player, space);
+                const strategicBonus = group.completesGroup ? space.price * 0.28 : 0;
+                const projectedValue = projectedIncome + strategicBonus;
+                const roi = (projectedValue - cost) / cost;
+                if (projectedValue < cost * 1.15) return;
+                if (!best || roi > best.roi) {
+                    best = { spaceId, space, cost, projectedIncome, projectedValue, roi };
+                }
+            });
+            return best;
+        }
+
+        function getAIBestTrapOpportunity(player) {
+            if (!player) return null;
+            const ownProperties = Object.keys(gameState.ownership)
+                .map(Number)
+                .filter(id => {
+                    const property = gameState.ownership[id];
+                    const space = BOARD_SPACES[id];
+                    return property && property.ownerId === player.id && !property.mortgaged &&
+                        space && (space.type === "city" || space.type === "utility");
+                })
+                .map(id => ({
+                    space: BOARD_SPACES[id],
+                    rent: getAIPropertyRent(player, BOARD_SPACES[id], gameState.ownership[id])
+                }))
+                .sort((a, b) => b.rent - a.rent);
+            const victims = getAIActiveOpponents(player)
+                .filter(other => !other.inJail && other.cash >= 200)
+                .sort((a, b) => b.cash - a.cash);
+            if (!ownProperties.length || !victims.length) return null;
+            const targetSpace = ownProperties[0].space;
+            const victim = victims[0];
+            const rent = ownProperties[0].rent;
+            if (victim.rentShieldActive || rent < Math.max(350, player.cash * 0.025) || victim.cash < rent) return null;
+            return { targetSpace, victim, rent };
+        }
+
+        function getAIStrategicPowerPlan(player) {
+            const plan = { shieldIndex: -1, raidIndex: -1, trainIndex: -1, trainTarget: null };
+            if (!player) return plan;
+            const cards = player.powerCards || [];
+            plan.shieldIndex = cards.findIndex(card => card.type === "RENT_SHIELD" && !card.used);
+            if (plan.shieldIndex !== -1 && !player.rentShieldActive) {
+                const threat = getAIImmediateRentThreat(player);
+                if (threat.expectedLoss < Math.max(220, player.cash * 0.035) && threat.maxRent < Math.max(700, player.cash * 0.10)) {
+                    plan.shieldIndex = -1;
+                }
+            } else {
+                plan.shieldIndex = -1;
+            }
+            plan.raidIndex = cards.findIndex(card => card.type === "IT_RAID" && !card.used);
+            if (plan.raidIndex !== -1) {
+                const rivals = getAIActiveOpponents(player).sort((a, b) => b.cash - a.cash);
+                const richest = rivals[0];
+                const raid = richest ? Math.floor(richest.cash * 0.10) : 0;
+                const strongLead = richest && (richest.cash >= player.cash * 1.25 || richest.cash - player.cash >= 1500);
+                const lateDuel = rivals.length === 1 && richest && richest.cash > player.cash;
+                if (!richest || raid < 250 || (!strongLead && !lateDuel)) plan.raidIndex = -1;
+            }
+            plan.trainIndex = cards.findIndex(card => card.type === "VANDE_BHARAT" && !card.used);
+            if (plan.trainIndex !== -1 && gameState.phase === "PRE_ROLL" && !player.inJail) {
+                plan.trainTarget = getAIBestVandeBharatTarget(player);
+                if (!plan.trainTarget ||
+                    (!plan.trainTarget.valuation.completesGroup && plan.trainTarget.score < Math.max(450, plan.trainTarget.space.price * 0.12))) {
+                    plan.trainIndex = -1;
+                    plan.trainTarget = null;
+                }
+            } else {
+                plan.trainIndex = -1;
+            }
+            return plan;
+        }
+
+        function getAIStructureSalePriority(player, spaceId) {
+            const space = BOARD_SPACES[spaceId];
+            const property = gameState.ownership[spaceId];
+            if (!space || !property || property.ownerId !== player.id || property.houses <= 0) return Infinity;
+            const costs = Array.isArray(property.buildCosts) ? property.buildCosts : [];
+            const lastCost = Number(costs.length ? costs[costs.length - 1] : space.houseCost) || Number(space.houseCost) || 0;
+            const refund = Math.max(1, Math.floor(lastCost / 2));
+            const currentRent = getAIPropertyRent(player, space, property);
+            const afterRent = getAIPropertyRent(player, space, { ...property, houses: Math.max(0, property.houses - 1) });
+            const visits = getAIExpectedVisitsForSpace(spaceId, player.id);
+            const lostIncome = Math.max(0, currentRent - afterRent) * visits * 6;
+            return lostIncome / refund;
+        }
+
+        function getAIMortgageLiquidationPriority(player, spaceId) {
+            const space = BOARD_SPACES[spaceId];
+            const property = gameState.ownership[spaceId];
+            if (!space || !property || property.ownerId !== player.id || property.mortgaged) return Infinity;
+            const mortgageValue = Math.max(1, getMortgagePrincipal(space));
+            const rent = getAIPropertyRent(player, space, property);
+            const visits = getAIExpectedVisitsForSpace(spaceId, player.id);
+            const group = getAIGroupContext(player, space);
+            const lostIncome = rent * visits * 6 + (group.completesGroup ? space.price * 0.28 : 0);
+            return lostIncome / mortgageValue;
+        }
+
+
+        function checkAndTriggerAITurn() {
+            const p = gameState.players[gameState.currentPlayerIndex];
+            if (!p || p.bankrupt || gameState.phase === "GAME_OVER" || !p.isAI) return;
+            gameState.aiTimer = scheduleGameTimeout(() => {
+                if (gameState.currentPlayerIndex !== p.id || gameState.phase !== "PRE_ROLL" || p.bankrupt) return;
+                const powerPlan = getAIStrategicPowerPlan(p);
+                if (powerPlan.shieldIndex !== -1) {
+                    const threat = getAIImmediateRentThreat(p);
+                    showAIReasoning("🤖 " + p.name + ": अगले पासे के संभावित किराया जोखिम (" + formatRupee(threat.expectedLoss) + ") को देखते हुए रेंट शील्ड सक्रिय किया।");
+                    activatePowerCard(powerPlan.shieldIndex);
+                }
+                if (gameState.phase !== "PRE_ROLL" || p.bankrupt) return;
+                if (powerPlan.raidIndex !== -1) {
+                    showAIReasoning("🤖 " + p.name + ": नकदी में आगे चल रहे प्रतिद्वंद्वी पर आयकर छापा लगाकर उसकी बढ़त कम की।");
+                    activatePowerCard(powerPlan.raidIndex);
+                }
+                if (gameState.phase !== "PRE_ROLL" || p.bankrupt) return;
+                if (p.inJail && shouldAIPayBail(p)) {
+                    showAIReasoning("🤖 " + p.name + ": जेल में प्रतीक्षा करने की तुलना में ₹500 देकर अभी चाल चलना बेहतर है।");
                     handlePayBail();
                 }
-
-                const trainIdx = (p.powerCards || []).findIndex(c => c.type === 'VANDE_BHARAT' && !c.used);
-                if (trainIdx !== -1 && !p.inJail && Math.random() < 0.25) {
-                    const available = BOARD_SPACES.filter(space => (space.type === 'city' || space.type === 'utility') && !gameState.ownership[space.id]);
-                    const affordable = available.filter(space => p.cash >= space.price + 500);
-                    if (affordable.length) {
-                        const target = affordable.sort((a, b) => b.price - a.price)[0];
-                        showAIReasoning(`🤖 ${p.name}: वन्दे भारत पास से ${target.name} पर सीधी लैंडिंग का प्रयास।`);
-                        activatePowerCard(trainIdx);
-                        return;
-                    }
+                if (gameState.phase !== "PRE_ROLL" || p.bankrupt) return;
+                if (powerPlan.trainIndex !== -1 && powerPlan.trainTarget) {
+                    const target = powerPlan.trainTarget.space;
+                    showAIReasoning("🤖 " + p.name + ": वन्दे भारत पास से रणनीतिक रूप से सबसे मूल्यवान अवसर " + target.name + " चुना।");
+                    activatePowerCard(powerPlan.trainIndex);
+                    return;
                 }
                 handleRollDice();
             }, 780);
         }
 
         function executeAIDecisionOnLanding(aiPlayer, space) {
-            const completesGroup = space.type === 'city' &&
-                BOARD_SPACES.filter(s => s.group === space.group && s.id !== space.id)
-                    .every(s => gameState.ownership[s.id]?.ownerId === aiPlayer.id);
-
-            if (aiPlayer.cash >= space.price && (aiPlayer.cash - space.price >= 500 || completesGroup)) {
-                const reason = completesGroup
-                    ? `🤖 AI तर्क (${aiPlayer.name}): रंग समूह पूरा करने हेतु ${space.name} को ${formatRupee(space.price)} में खरीदा।`
-                    : `🤖 AI तर्क (${aiPlayer.name}): किराया आय बढ़ाने हेतु ${space.name} को ${formatRupee(space.price)} में खरीदा।`;
+            const decision = getAIPurchaseDecision(aiPlayer, space);
+            if (decision.shouldBuy) {
+                const value = decision.valuation;
+                const reason = value.completesGroup
+                    ? "🤖 AI तर्क (" + aiPlayer.name + "): " + space.name + " खरीदकर रंग समूह पूरा होगा; अनुमानित मूल्य " + formatRupee(value.marketValue) + " है।"
+                    : value.blocksRivalMonopoly
+                        ? "🤖 AI तर्क (" + aiPlayer.name + "): " + space.name + " खरीदकर प्रतिद्वंद्वी का एकाधिकार रोका; सुरक्षित रिज़र्व " + formatRupee(decision.reserve) + " रहेगा।"
+                        : "🤖 AI तर्क (" + aiPlayer.name + "): किराया संभावना और मूल्यांकन " + formatRupee(value.marketValue) + " होने से " + space.name + " खरीदा।";
                 showAIReasoning(reason);
-                addLog(reason, 'amber');
+                addLog(reason, "amber");
                 handleBuyProperty();
             } else {
-                const reason = `🤖 AI तर्क (${aiPlayer.name}): नकदी रिज़र्व सुरक्षित रखने हेतु ${space.name} को नीलामी में छोड़ा।`;
+                const reason = "🤖 AI तर्क (" + aiPlayer.name + "): " + space.name + " खरीदने से नकदी सुरक्षा या निवेश प्रतिफल कम होगा; नीलामी का विकल्प चुना।";
                 showAIReasoning(reason);
-                addLog(reason, 'slate');
+                addLog(reason, "slate");
                 handlePassProperty();
             }
         }
 
         function executeAIPostTurnMaintenance(aiPlayer) {
-            // 1. यदि पर्याप्त नकदी है तो 55% देकर गिरवी शहर छुड़ाएं
-            Object.keys(gameState.ownership).forEach(id => {
-                const o = gameState.ownership[id];
-                if (o.ownerId === aiPlayer.id && o.mortgaged) {
-                    const sp = BOARD_SPACES[id];
-                    const cost = Math.ceil(sp.price * 0.55);
-                    if (aiPlayer.cash - cost >= 1600) {
-                        showAIReasoning(`🤖 AI तर्क (${aiPlayer.name}): किराया चालू करने हेतु ${sp.name} को गिरवी से छुड़ाया।`);
-                        handleToggleMortgage(Number(id));
-                    }
-                }
-            });
-
-            // 2. समान निर्माण नियम (Even Building Rule) का पालन करते हुए घर बनाएं
-            let builtAny = true;
-            let safety = 0;
-            while (builtAny && safety < 6) {
-                builtAny = false;
-                safety++;
-                Object.keys(gameState.ownership).forEach(id => {
-                    const sp = BOARD_SPACES[id];
-                    const check = canBuildEvenlyOnSpace(aiPlayer.id, Number(id));
-                    const effCost = getEffectiveHouseCost(sp);
-                    if (check.allowed && aiPlayer.cash - effCost >= 1200) {
-                        showAIReasoning(`🤖 AI तर्क (${aiPlayer.name}): समान निर्माण नियम से ${sp.name} में घर बनाया।`);
-                        handleBuildStructure(Number(id));
-                        builtAny = true;
-                    }
-                });
+            let redemptionCount = 0;
+            while (redemptionCount < 4) {
+                const plan = getAIBestMortgageRedemption(aiPlayer);
+                if (!plan) break;
+                showAIReasoning("🤖 " + aiPlayer.name + ": " + plan.space.name + " छुड़ाने का अनुमानित किराया प्रतिफल " + formatRupee(plan.projectedIncome) + " है।");
+                handleToggleMortgage(plan.spaceId);
+                redemptionCount++;
             }
-
-            // 3. यदि AI के पास मैग्नेट ट्रैप कार्ड है और उसने अपने किसी शहर पर घर बना लिया है, तो उसका उपयोग करे
-            const magnetIdx = (aiPlayer.powerCards || []).findIndex(c => c.type === 'MAGNET_TRAP' && !c.used);
-            const hasDevelopedCity = Object.keys(gameState.ownership).some(
-                id => gameState.ownership[id].ownerId === aiPlayer.id && (gameState.ownership[id].houses || 0) >= 1
-            );
-            if (magnetIdx !== -1 && hasDevelopedCity && Math.random() < 0.5) {
+            let buildCount = 0;
+            while (buildCount < 8) {
+                const plan = getAIBestBuildOption(aiPlayer);
+                if (!plan) break;
+                showAIReasoning("🤖 " + aiPlayer.name + ": " + plan.space.name + " में घर का अनुमानित किराया लाभ " + formatRupee(plan.projectedIncome) + " बनाम लागत " + formatRupee(plan.cost) + " है।");
+                handleBuildStructure(plan.spaceId);
+                buildCount++;
+            }
+            const magnetIdx = (aiPlayer.powerCards || []).findIndex(card => card.type === "MAGNET_TRAP" && !card.used);
+            const trap = getAIBestTrapOpportunity(aiPlayer);
+            if (magnetIdx !== -1 && trap) {
+                showAIReasoning("🤖 " + aiPlayer.name + ": " + trap.victim.name + " से " + trap.targetSpace.name + " का " + formatRupee(trap.rent) + " किराया वसूलने हेतु मैग्नेट ट्रैप चलाया।");
                 activatePowerCard(magnetIdx);
             }
         }
-
         /* ==============================================================
            क्राइप्टो निष्पक्षता ऑडिट एवं वित्तीय खाता-बही (FAIRNESS & LEDGER MODALS)
            ============================================================== */
