@@ -9316,7 +9316,7 @@
             addPreview(document.getElementById("tradeRequestPropSelect").value, proposer);
             preview.textContent = lines.length
                 ? `गिरवी हस्तांतरण का स्पष्ट हिसाब:\n${lines.join("\n")}`
-                : "गिरवी संपत्ति चुनी नहीं गई है। यदि कोई पक्ष गिरवी संपत्ति प्राप्त करता है, तो वही बैंक को गिरवी मूलधन का 10% ब्याज देगा; भुगतान के बाद छुड़ाने में केवल मूलधन बाकी रहेगा।";
+                : "गिरवी संपत्ति चुनी नहीं गई है। यदि कोई पक्ष गिरवी संपत्ति प्राप्त करता है और उसे गिरवी रखता है, तो वही बैंक को गिरवी मूलधन का 10% हस्तांतरण ब्याज देगा; बाद में छुड़ाने पर मूलधन के साथ अतिरिक्त 10% ब्याज भी देना होगा।";
         }
         function getTradeTransferFee(spaceId) {
             if (spaceId === null || spaceId === undefined) return 0;
