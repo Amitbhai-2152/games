@@ -6258,6 +6258,7 @@
                     !Number.isInteger(property.houses) || property.houses < 0 || property.houses > 4 ||
                     typeof property.mortgaged !== 'boolean' ||
                     (property.mortgageInterestPaid !== undefined && typeof property.mortgageInterestPaid !== 'boolean') ||
+                    (property.mortgageTransferInterestDue !== undefined && (!Number.isSafeInteger(property.mortgageTransferInterestDue) || property.mortgageTransferInterestDue < 0)) ||
                     !Array.isArray(property.buildCosts)) return false;
             }
 
@@ -8326,8 +8327,9 @@
         function getMortgageRedemptionCost(space, property) {
             const principal = getMortgagePrincipal(space);
             if (principal <= 0) return 0;
-            const interestDue = property?.mortgageInterestPaid === true ? 0 : getMortgageTransferInterest(space);
-            return principal + interestDue;
+            const additionalRedemptionInterest = getMortgageTransferInterest(space);
+            const deferredTransferInterest = Math.max(0, Math.floor(Number(property?.mortgageTransferInterestDue) || 0));
+            return principal + additionalRedemptionInterest + deferredTransferInterest;
         }
         function getDeedDetailsHTML(space, propState) {
             if (space.type === 'city') {
