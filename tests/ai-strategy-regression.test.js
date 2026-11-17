@@ -128,6 +128,7 @@ function test(name, fn) {
 test('two-dice landing probabilities match the exact 2–12 distribution', () => {
     const c = createContext();
     const rival = c.gameState.players[1];
+    rival.position = 0;
     assert.ok(Math.abs(c.getAIPlayerLandingProbability(rival, 2) - 1 / 36) < 1e-10);
     assert.ok(Math.abs(c.getAIPlayerLandingProbability(rival, 7) - 6 / 36) < 1e-10);
     assert.equal(c.getAIPlayerLandingProbability(rival, 13), 0);
@@ -158,7 +159,7 @@ test('buying a property that would make the rival monopolist is valued as a bloc
 test('purchase policy preserves a cash reserve instead of spending down to a flat tiny balance', () => {
     const c = createContext();
     const ai = c.gameState.players[0];
-    ai.cash = 1400;
+    ai.cash = 1800;
     const decision = c.getAIPurchaseDecision(ai, c.BOARD_SPACES[5]);
     assert.equal(decision.shouldBuy, false);
     assert.ok(decision.cashAfterPurchase < decision.reserve);
@@ -340,4 +341,4 @@ test('AI turn, buying and maintenance decisions no longer use arbitrary random o
 });
 
 console.log('RESULT ' + passed + ' strategic AI regression tests passed');
-if (passed !== 14) process.exitCode = 1;
+if (passed !== 15) process.exitCode = 1;
