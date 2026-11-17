@@ -4154,6 +4154,7 @@
         .victory-confetti-piece:nth-child(4n+4){--confetti-color:#a78bfa}
         .victory-panel {
             --winner-accent:#fbbf24; position:relative; z-index:1; isolation:isolate; box-sizing:border-box;
+            border-top:2px solid var(--winner-accent);
             width:min(100%,47rem); max-height:min(92dvh,920px); overflow-y:auto; overscroll-behavior:contain;
             margin:auto; padding:clamp(1rem,3.2vw,2rem); color:#fff7df;
             border:1px solid rgba(252,211,77,.58); border-radius:clamp(1.25rem,3vw,2rem);
@@ -5480,7 +5481,7 @@
                     <span class="victory-stat-foot">शहर और सेवाएँ</span>
                 </div>
                 <div class="victory-stat-card">
-                    <span class="victory-stat-label"><i class="fa-solid fa-house-chimney"></i> BUILDINGS</span>
+                    <span class="victory-stat-label"><i class="fa-solid fa-house-chimney"></i> HOUSES / HOTELS</span>
                     <strong id="victoryBuildingsValue" class="victory-stat-value">0</strong>
                     <span class="victory-stat-foot">घर और होटल</span>
                 </div>
@@ -10424,13 +10425,18 @@
 
                 const netWorth = getNetWorthBreakdown(winner.id);
                 const ownedProperties = Object.entries(gameState.ownership || {}).filter(entry => entry[1] && entry[1].ownerId === winner.id);
-                const buildingCount = ownedProperties.reduce((sum, entry) => sum + Math.max(0, Number(entry[1].houses) || 0), 0);
+                const buildingCounts = ownedProperties.reduce((counts, entry) => {
+                    const level = Math.max(0, Number(entry[1].houses) || 0);
+                    if (level === 4) counts.hotels += 1;
+                    else counts.houses += level;
+                    return counts;
+                }, { houses: 0, hotels: 0 });
                 const signedNetWorth = netWorth.total < 0 ? '−' + formatRupee(netWorth.total) : formatRupee(netWorth.total);
 
                 document.getElementById('victoryNetWorthValue').textContent = signedNetWorth;
                 document.getElementById('victoryCashValue').textContent = formatRupee(netWorth.cash);
                 document.getElementById('victoryPropertiesValue').textContent = String(ownedProperties.length);
-                document.getElementById('victoryBuildingsValue').textContent = String(buildingCount);
+                document.getElementById('victoryBuildingsValue').textContent = buildingCounts.houses + ' / ' + buildingCounts.hotels;
                 document.getElementById('victoryPropertyValue').textContent = formatRupee(netWorth.propVal);
                 document.getElementById('victoryBuildValue').textContent = formatRupee(netWorth.buildVal);
                 document.getElementById('victoryMortgageValue').textContent = '−' + formatRupee(netWorth.mortgageDeduction);
