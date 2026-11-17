@@ -218,7 +218,7 @@ test('six original manual buttons and taunt texts remain present; duplicate dial
 
 test('ordinary dice rolls stay silent; doubles and 6+6 use their intended existing reactions', () => {
     const rollStart = html.indexOf('function handleRollDice()');
-    const nextFunction = html.indexOf('\n        function ', rollStart + 1);
+    const nextFunction = html.indexOf(String.fromCharCode(10) + '        function ', rollStart + 1);
     assert.notEqual(rollStart, -1, 'missing dice roll handler');
     assert.ok(nextFunction > rollStart, 'could not isolate dice roll handler');
     const rollHandler = html.slice(rollStart, nextFunction);
@@ -231,7 +231,7 @@ test('ordinary dice rolls stay silent; doubles and 6+6 use their intended existi
         rollHandler.includes("triggerAutomaticTaunt(0, 'dice-jackpot', p.name);"),
         '6+6 should trigger the jackpot reaction'
     );
-    assert.equal((rollHandler.match(/triggerAutomaticTaunt\(/g) || []).length, 2,
+    assert.equal(rollHandler.split('triggerAutomaticTaunt(').length - 1, 2,
         'ordinary rolls must not contain any automatic dialogue trigger');
 });
 
