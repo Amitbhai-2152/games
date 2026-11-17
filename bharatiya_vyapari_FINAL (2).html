@@ -6184,7 +6184,7 @@
                 return value;
             }));
             savedState.activeWorldEventId = gameState.activeWorldEvent?.id || null;
-            savedState.activeWorldEvent = null;
+            delete savedState.activeWorldEvent;
 
             const savedConfig = JSON.parse(JSON.stringify({
                 playerCount: setupConfig.playerCount,
