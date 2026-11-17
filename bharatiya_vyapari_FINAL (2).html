@@ -4382,6 +4382,95 @@
             #mobileQuickNav button { min-height: 40px; }
         }
 
+
+        /* Laptop purchase screen: full viewport, existing cream/amber/charcoal palette, independently scrollable details. */
+        @media (min-width: 1024px) {
+            #deedModal {
+                position: fixed;
+                inset: 0;
+                z-index: 50;
+                padding: 0;
+                align-items: stretch;
+                justify-content: stretch;
+                overflow: hidden;
+                background: rgba(0, 0, 0, .80);
+            }
+            #deedModal.hidden { display: none !important; }
+            #deedModal:not(.hidden) { display: flex; }
+
+            #deedModalPanel {
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                width: 100vw;
+                height: 100vh;
+                height: 100dvh;
+                max-width: none !important;
+                max-height: none;
+                min-height: 0;
+                margin: 0;
+                overflow: hidden;
+                border-radius: 0;
+            }
+            #deedModalHeader {
+                flex: 0 0 auto;
+                padding: clamp(1rem, 2vw, 1.75rem);
+            }
+            #deedModalTitle {
+                font-size: clamp(2rem, 3.2vw, 3.5rem);
+                line-height: 1.12;
+            }
+            #deedModalBody {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                align-items: start;
+                align-content: start;
+                gap: clamp(1rem, 2vw, 2rem);
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                padding: clamp(1rem, 2vw, 2rem);
+            }
+            #deedModalBody.has-actions {
+                grid-template-columns: minmax(0, 1fr) minmax(280px, min(32vw, 440px));
+            }
+            #deedModalContent {
+                min-width: 0;
+                max-width: none;
+            }
+            #deedModalContent > div {
+                min-height: 100%;
+                padding: clamp(1rem, 2vw, 2rem);
+            }
+            #deedModalActions {
+                position: sticky;
+                top: 0;
+                align-self: start;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: .75rem;
+                min-width: 0;
+                padding: clamp(1rem, 1.5vw, 1.5rem);
+                border: 1px solid rgba(180, 83, 9, .35);
+                border-radius: 1rem;
+                background: #FEF3C7;
+                color: #1e293b;
+                box-shadow: 0 8px 24px rgba(120, 53, 15, .12);
+            }
+            #deedModalActions:empty { display: none; }
+            #deedModalActions button {
+                width: 100%;
+                min-height: 3.25rem;
+                flex: 0 0 auto;
+                justify-content: center;
+                padding: .9rem 1rem;
+                font-size: .95rem;
+            }
+            #deedModalActions .flex-1 { flex: 0 0 auto; }
+        }
+
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between pb-16 lg:pb-0">
@@ -4828,7 +4917,7 @@
          मोडल 1: संपत्ति अधिकार पत्र (PHYSICAL TITLE DEED MODAL)
          ========================================== -->
     <div id="deedModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-3">
-        <div class="bg-[#FFFBEB] text-slate-900 border-4 border-double border-amber-700 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+        <div id="deedModalPanel" class="bg-[#FFFBEB] text-slate-900 border-4 border-double border-amber-700 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
             <div id="deedModalHeader" class="p-4 text-center border-b-2 border-amber-800 relative">
                 <div class="text-[11px] font-bold uppercase tracking-widest opacity-90" id="deedModalSub">संपत्ति अधिकार पत्र</div>
                 <h2 id="deedModalTitle" class="font-royal text-2xl sm:text-3xl font-black mt-0.5">मुंबई</h2>
@@ -4836,7 +4925,7 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="p-4 space-y-3 text-xs sm:text-sm">
+            <div id="deedModalBody" class="p-4 space-y-3 text-xs sm:text-sm">
                 <div id="deedModalContent" class="space-y-2"></div>
                 <div id="deedModalActions" class="pt-3 border-t border-amber-300 flex flex-wrap gap-2"></div>
             </div>
@@ -8856,6 +8945,7 @@
             const title = document.getElementById('deedModalTitle');
             const content = document.getElementById('deedModalContent');
             const actions = document.getElementById('deedModalActions');
+            const modalBody = document.getElementById('deedModalBody');
 
             title.textContent = space.name;
             if (space.type === 'city') {
@@ -8875,6 +8965,7 @@
 
             content.innerHTML = `<div class="bg-slate-900 text-amber-50 p-3.5 rounded-xl space-y-2">${getDeedDetailsHTML(space, propState)}</div>`;
             actions.innerHTML = getPropertyActionButtonsHTML(space, propState, currentPlayer);
+            if (modalBody) modalBody.classList.toggle('has-actions', Boolean(actions.innerHTML.trim()));
             document.getElementById('deedModal').classList.remove('hidden');
         }
 
@@ -9246,6 +9337,7 @@
                         scheduleGameTimeout(() => executeAIDecisionOnLanding(player, space), 650);
                     } else {
                         setToast(`${space.name} उपलब्ध है (${formatRupee(space.price)})। खरीदें या नीलामी में छोड़ें!`);
+                        openDeedModal(space.id);
                     }
                 } else if (prop.ownerId === player.id) {
                     setToast(`${player.name} अपने ही शहर ${space.name} में पधारे हैं।`);
